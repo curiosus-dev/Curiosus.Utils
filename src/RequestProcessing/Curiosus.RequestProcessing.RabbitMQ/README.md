@@ -84,7 +84,7 @@ The receiver uses RabbitMQ automatic recovery and additionally reconnects manual
 channel failures such as consumer timeouts. Rejected messages are not requeued.
 
 A complete consumer and producer is in
-[samples/RequestProcessing/RabbitMQ](https://github.com/curiosus-dev/Curiosus.Utils/tree/master/samples/RequestProcessing/RabbitMQ).
+[samples/RequestProcessing/RabbitMQ](https://github.com/curiosus-dev/Curiosus.Utils/tree/main/samples/RequestProcessing/RabbitMQ).
 
 ## See also
 

@@ -65,5 +65,5 @@ for `SensitiveDataFieldNames`. Implement `IWebAppConfigurationWithPublicDomain` 
 
 - [Curiosus.Hosting](https://www.nuget.org/packages/Curiosus.Hosting) — bootstrappers for console tools and services
 - [Curiosus.Tools.Web](https://www.nuget.org/packages/Curiosus.Tools.Web) — middleware, model binders and web helpers
-- [Sample web app](https://github.com/curiosus-dev/Curiosus.Utils/blob/master/samples/Curiosus.SampleWebApp/Program.cs)
+- [Sample web app](https://github.com/curiosus-dev/Curiosus.Utils/blob/main/samples/Curiosus.SampleWebApp/Program.cs)
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages
