@@ -1,0 +1,1 @@
+../../../src/FileData/Curiosus.FileDataReaderWriters.Npoi/README.md

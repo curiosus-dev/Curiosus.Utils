@@ -1,0 +1,1 @@
+../../../src/RequestProcessing/Curiosus.RequestProcessing.RabbitMQ/README.md
