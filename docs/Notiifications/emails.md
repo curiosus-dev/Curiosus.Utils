@@ -47,7 +47,7 @@ sequenceDiagram
 ```csharp
 public class EmailNotification : INotification
 {
-    public string ChannelType => "curiosity.notifications.email";
+    public string ChannelType => "curiosus.notifications.email";
     public string Email { get; }          // Recipient email address
     public string Subject { get; }        // Email subject
     public string Body { get; }           // Email body content

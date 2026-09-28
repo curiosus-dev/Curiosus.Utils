@@ -11,7 +11,7 @@ namespace Curiosus.Notifications.SMS
         /// <summary>
         /// Type of a SMS notification.
         /// </summary>
-        public static readonly string Type = "curiosity.notifications.sms";
+        public static readonly string Type = "curiosus.notifications.sms";
 
         /// <summary>
         /// The type of channel through which the notification will be sent

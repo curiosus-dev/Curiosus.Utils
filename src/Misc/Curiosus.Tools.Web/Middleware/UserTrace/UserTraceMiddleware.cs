@@ -10,7 +10,7 @@ namespace Curiosus.Tools.Web.Middleware
     //todo #5
     public class UserTraceMiddleware
     {
-        private const string UserTraceCookieName = "curiosity-user-trace-id";
+        private const string UserTraceCookieName = "curiosus-user-trace-id";
         
         private readonly RequestDelegate _next;
 

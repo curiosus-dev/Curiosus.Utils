@@ -47,7 +47,7 @@ sequenceDiagram
 ```csharp
 public class SmsNotification : INotification
 {
-    public string ChannelType => "curiosity.notifications.sms";
+    public string ChannelType => "curiosus.notifications.sms";
     public string PhoneNumber { get; }       // Recipient phone number
     public string Message { get; }           // SMS message content
     public ISmsExtraParams? ExtraParams { get; } // Provider-specific parameters

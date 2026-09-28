@@ -5,6 +5,7 @@
 ### Changed
 
 - **Breaking:** package renamed from `Curiosity.Notifications.EMail` to `Curiosus.Notifications.EMail` and now published by the [curiosus-dev](https://www.nuget.org/profiles/curiosus-dev) organization. Namespaces, assemblies and types were renamed accordingly (`Curiosity*` → `Curiosus*`): replace `Curiosity` with `Curiosus` in your code to migrate.
+- **Breaking:** `EmailNotification.Type` changed from `curiosity.notifications.email` to `curiosus.notifications.email`. Update stored or queued notifications and custom builders that use the literal value.
 - Dropped `netstandard2.1` support. Now multi-targeting `net9.0` and `net10.0`.
 
 ## [1.5.0] - 2026-02-13

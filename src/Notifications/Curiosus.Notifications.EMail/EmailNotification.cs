@@ -11,7 +11,7 @@ namespace Curiosus.Notifications.EMail
         /// <summary>
         /// Type of an EMail notification.
         /// </summary>
-        public static readonly string Type = "curiosity.notifications.email";
+        public static readonly string Type = "curiosus.notifications.email";
 
         /// <summary>
         /// The type of channel through which the notification will be sent

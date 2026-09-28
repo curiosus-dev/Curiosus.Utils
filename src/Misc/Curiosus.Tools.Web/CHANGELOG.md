@@ -5,6 +5,7 @@
 ### Changed
 
 - **Breaking:** package renamed from `Curiosity.Tools.Web` to `Curiosus.Tools.Web` and now published by the [curiosus-dev](https://www.nuget.org/profiles/curiosus-dev) organization. Namespaces, assemblies and types were renamed accordingly (`Curiosity*` → `Curiosus*`): replace `Curiosity` with `Curiosus` in your code to migrate.
+- **Breaking:** user trace cookie renamed from `curiosity-user-trace-id` to `curiosus-user-trace-id`: existing visitors get a new trace id once.
 - Dropped `netstandard2.1` support. Now multi-targeting `net9.0` and `net10.0`.
 - `SessionExtensions` use `System.Text.Json` instead of `Newtonsoft.Json`; values stored by previous versions remain readable.
 - Upgraded `Flurl.Http` up to `4.0.2` (drops transitive vulnerable `Newtonsoft.Json` `12.0.2`) and `HtmlSanitizer` up to `9.2.1039` (fixes known vulnerabilities).
