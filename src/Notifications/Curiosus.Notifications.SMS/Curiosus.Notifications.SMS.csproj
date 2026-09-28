@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>$(CuriosusTargetFrameworks)</TargetFrameworks>
+
+        <PackageId>Curiosus.Notifications.SMS</PackageId>
+        <Title>Curiosus.Notifications.SMS</Title>
+        <Description>SMS notifications channel.</Description>
+        <Summary>SMS notifications channel.</Summary>
+        <PackageTags>Curiosus; Notifications; Channels; SMS; siisltd</PackageTags>
+        <Language>English</Language>
+
+        <AssemblyVersion>1.0.0</AssemblyVersion>
+        <FileVersion>1.0.0</FileVersion>
+        <PackageVersion>2.0.0</PackageVersion>
+
+        <Authors>Max Markelow (@markeli), Andrey Ioch (@DevCorvette), Andrei Vinogradov (@anri-vin)</Authors>
+        <Company>SIIS Ltd</Company>
+        <Copyright>SIIS Ltd, 2026</Copyright>
+
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+
+        <PackageProjectUrl>https://github.com/curiosus-dev/Curiosus.Utils</PackageProjectUrl>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://github.com/curiosus-dev/Curiosus.Utils</RepositoryUrl>
+        <PackageReleaseNotes>https://github.com/curiosus-dev/Curiosus.Utils/tree/master/src/Notifications/Curiosus.Notifications.SMS/CHANGELOG.md</PackageReleaseNotes>
+
+        <OutputType>Library</OutputType>
+        <Nullable>enable</Nullable>
+        <IsPackable>true</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Misc\Curiosus.Tools\Curiosus.Tools.csproj" />
+      <ProjectReference Include="..\..\SMS\Curiosus.SMS\Curiosus.SMS.csproj" />
+      <ProjectReference Include="..\Curiosus.Notifications\Curiosus.Notifications.csproj" />
+    </ItemGroup>
+
+    <PropertyGroup>
+        <PackageIcon>siisltd.png</PackageIcon>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DocumentationFile>bin\Release\Curiosus.Notifications.SMS.xml</DocumentationFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\..\siisltd.png" Pack="true" PackagePath="\" />
+    </ItemGroup>
+
+</Project>

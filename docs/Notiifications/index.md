@@ -1,6 +1,6 @@
 # Notifications
 
-The Curiosity.Notifications subsystem provides a flexible, extensible notification system that supports multiple channels (Email, SMS) with queued processing, reliability features, and post-processing capabilities.
+The Curiosus.Notifications subsystem provides a flexible, extensible notification system that supports multiple channels (Email, SMS) with queued processing, reliability features, and post-processing capabilities.
 
 ## Architecture Overview
 
@@ -50,19 +50,19 @@ Convert metadata into channel-specific notifications:
 ### Basic Setup
 
 ```csharp
-services.AddCuriosityNotificator();
+services.AddCuriosusNotificator();
 
 // Add Email channel
-services.AddCuriosityEMailChannel();
-services.AddCuriosityEMailSender(); // Configure email provider
+services.AddCuriosusEMailChannel();
+services.AddCuriosusEMailSender(); // Configure email provider
 
 // Add SMS channel  
-services.AddCuriositySmsChannel();
-services.AddCuriositySmsSender(); // Configure SMS provider
+services.AddCuriosusSmsChannel();
+services.AddCuriosusSmsSender(); // Configure SMS provider
 
 // Add notification builders
-services.AddCuriosityNotificationBuilder<MyEmailNotificationBuilder>();
-services.AddCuriosityNotificationBuilder<MySmsNotificationBuilder>();
+services.AddCuriosusNotificationBuilder<MyEmailNotificationBuilder>();
+services.AddCuriosusNotificationBuilder<MySmsNotificationBuilder>();
 ```
 
 ### Custom Notification Metadata

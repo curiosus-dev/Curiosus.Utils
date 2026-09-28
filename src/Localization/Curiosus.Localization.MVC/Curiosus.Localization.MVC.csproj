@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>$(CuriosusTargetFrameworks)</TargetFrameworks>
+
+        <PackageId>Curiosus.Localization.MVC</PackageId>
+        <Title>Curiosus.Localization.MVC</Title>
+        <Description>Classes for localizing applications in more efficient way than Microsfot's way.</Description>
+        <Summary>Classes for localizing applications in more efficient way than Microsfot's way.</Summary>
+        <PackageTags>Curiosus; Localization; siisltd; MVC</PackageTags>
+        <Language>English</Language>
+
+        <AssemblyVersion>1.0.0</AssemblyVersion>
+        <FileVersion>1.0.0</FileVersion>
+        <PackageVersion>2.0.0</PackageVersion>
+
+        <Authors>Max Markelow (@markeli), Andrei Vinogradov (@anri-vin)</Authors>
+        <Company>SIIS Ltd</Company>
+        <Copyright>SIIS Ltd, 2026</Copyright>
+
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+
+        <PackageProjectUrl>https://github.com/curiosus-dev/Curiosus.Utils</PackageProjectUrl>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://github.com/curiosus-dev/Curiosus.Utils</RepositoryUrl>
+        <PackageReleaseNotes>https://github.com/curiosus-dev/Curiosus.Utils/tree/master/src/Localization/Curiosus.Localization.MVC/CHANGELOG.md</PackageReleaseNotes>
+
+        <OutputType>Library</OutputType>
+        <Nullable>enable</Nullable>
+        <IsPackable>true</IsPackable>
+        
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <PackageIcon>siisltd.png</PackageIcon>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Curiosus.Localization\Curiosus.Localization.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Include="..\..\..\siisltd.png">
+        <Pack>true</Pack>
+        <PackagePath>/</PackagePath>
+        <Link>siisltd.png</Link>
+      </None>
+    </ItemGroup>
+
+</Project>

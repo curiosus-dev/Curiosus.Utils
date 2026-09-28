@@ -1,6 +1,6 @@
 # SMS Notifications
 
-The SMS notification channel (`SmsNotificationChannel`) provides reliable SMS delivery using the Curiosity.SMS infrastructure with queued processing, post-processing capabilities, and comprehensive error handling.
+The SMS notification channel (`SmsNotificationChannel`) provides reliable SMS delivery using the Curiosus.SMS infrastructure with queued processing, post-processing capabilities, and comprehensive error handling.
 
 ## How it works
 
@@ -47,7 +47,7 @@ sequenceDiagram
 ```csharp
 public class SmsNotification : INotification
 {
-    public string ChannelType => "curiosity.notifications.sms";
+    public string ChannelType => "curiosus.notifications.sms";
     public string PhoneNumber { get; }       // Recipient phone number
     public string Message { get; }           // SMS message content
     public ISmsExtraParams? ExtraParams { get; } // Provider-specific parameters
@@ -56,11 +56,11 @@ public class SmsNotification : INotification
 
 ## Available providers
 
-The SMS notification channel uses the `ISmsSender` interface from Curiosity.SMS package, which supports multiple providers:
+The SMS notification channel uses the `ISmsSender` interface from Curiosus.SMS package, which supports multiple providers:
 
 ### Twilio
 ```csharp
-services.AddCuriosityTwilioSender(options =>
+services.AddCuriosusTwilioSender(options =>
 {
     options.AccountSid = "your-account-sid";
     options.AuthToken = "your-auth-token";
@@ -70,7 +70,7 @@ services.AddCuriosityTwilioSender(options =>
 
 ### AWS SNS
 ```csharp
-services.AddCuriosityAwsSnsSender(options =>
+services.AddCuriosusAwsSnsSender(options =>
 {
     options.AccessKey = "your-access-key";
     options.SecretKey = "your-secret-key";
@@ -80,7 +80,7 @@ services.AddCuriosityAwsSnsSender(options =>
 
 ### Nexmo/Vonage
 ```csharp
-services.AddCuriosityNexmoSender(options =>
+services.AddCuriosusNexmoSender(options =>
 {
     options.ApiKey = "your-api-key";
     options.ApiSecret = "your-api-secret";
@@ -90,7 +90,7 @@ services.AddCuriosityNexmoSender(options =>
 
 ### In-Memory (Testing)
 ```csharp
-services.AddCuriosityInMemorySmsSender();
+services.AddCuriosusInMemorySmsSender();
 ```
 
 ## How to add custom provider?
@@ -194,7 +194,7 @@ services.AddCustomSmsSender(options =>
     options.ApiKey = "your-api-key";
 });
 
-services.AddCuriositySmsChannel();
+services.AddCuriosusSmsChannel();
 ```
 
 ### Step 5: Create Custom Builder (Optional)
