@@ -7,15 +7,14 @@
         <Title>Curiosus.DateTime.DbSync</Title>
         <Description>Service for syncrhonizing DateTime via database.</Description>
         <Summary>Service for syncrhonizing DateTime via database.</Summary>
-        <PackageTags>Curiosus; date time tools; tools; database; siisltd</PackageTags>
+        <PackageTags>Curiosus; date time tools; tools; database</PackageTags>
         <Language>English</Language>
 
         <AssemblyVersion>1.0.0</AssemblyVersion>
         <FileVersion>1.0.0</FileVersion>
         <PackageVersion>2.0.0</PackageVersion>
 
-        <Authors>Max Markelow (@markeli), Andrei Vinogradov (@anri-vin)</Authors>
-        <Copyright>SIIS Ltd, 2026</Copyright>
+        <Authors>$(CuriosusAuthors), Andrei Vinogradov (@anri-vin)</Authors>
 
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -28,14 +27,6 @@
         <IsPackable>true</IsPackable>
     </PropertyGroup>
 
-    <PropertyGroup>
-        <PackageIcon>siisltd.png</PackageIcon>
-    </PropertyGroup>
-
-    <ItemGroup>
-        <None Include="..\..\..\siisltd.png" Pack="true" PackagePath="\" />
-    </ItemGroup>
-    
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
       <DocumentationFile>bin\Release\Curiosus.DateTime.DbSync.xml</DocumentationFile>
     </PropertyGroup>

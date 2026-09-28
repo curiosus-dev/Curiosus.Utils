@@ -7,16 +7,14 @@
         <Title>Curiosus.Notifications.SMS</Title>
         <Description>SMS notifications channel.</Description>
         <Summary>SMS notifications channel.</Summary>
-        <PackageTags>Curiosus; Notifications; Channels; SMS; siisltd</PackageTags>
+        <PackageTags>Curiosus; Notifications; Channels; SMS</PackageTags>
         <Language>English</Language>
 
         <AssemblyVersion>1.0.0</AssemblyVersion>
         <FileVersion>1.0.0</FileVersion>
         <PackageVersion>2.0.0</PackageVersion>
 
-        <Authors>Max Markelow (@markeli), Andrey Ioch (@DevCorvette), Andrei Vinogradov (@anri-vin)</Authors>
-        <Company>SIIS Ltd</Company>
-        <Copyright>SIIS Ltd, 2026</Copyright>
+        <Authors>$(CuriosusAuthors), Andrey Ioch (@DevCorvette), Andrei Vinogradov (@anri-vin)</Authors>
 
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -37,16 +35,8 @@
       <ProjectReference Include="..\Curiosus.Notifications\Curiosus.Notifications.csproj" />
     </ItemGroup>
 
-    <PropertyGroup>
-        <PackageIcon>siisltd.png</PackageIcon>
-    </PropertyGroup>
-
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
       <DocumentationFile>bin\Release\Curiosus.Notifications.SMS.xml</DocumentationFile>
     </PropertyGroup>
-
-    <ItemGroup>
-        <None Include="..\..\..\siisltd.png" Pack="true" PackagePath="\" />
-    </ItemGroup>
 
 </Project>

@@ -7,16 +7,14 @@
     <Title>Curiosus.Localization</Title>
     <Description>Classes for localizing applications in more efficient way than Microsfot's way.</Description>
     <Summary>Classes for localizing applications in more efficient way than Microsfot's way.</Summary>
-    <PackageTags>Curiosus; Localization; siisltd</PackageTags>
+    <PackageTags>Curiosus; Localization</PackageTags>
     <Language>English</Language>
 
     <AssemblyVersion>1.0.0</AssemblyVersion>
     <FileVersion>1.0.0</FileVersion> 
     <PackageVersion>2.0.0</PackageVersion>
 
-    <Authors>Max Markelow (@markeli), Andrei Vinogradov (@anri-vin), Adil Mir (@AdilMirSz)</Authors>
-    <Company>SIIS Ltd</Company>
-    <Copyright>SIIS Ltd, 2026</Copyright>
+    <Authors>$(CuriosusAuthors), Andrei Vinogradov (@anri-vin), Adil Mir (@AdilMirSz)</Authors>
 
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -31,21 +29,9 @@
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <PackageIcon>siisltd.png</PackageIcon>
-  </PropertyGroup>
-  
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Localization.Abstractions" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="..\..\..\siisltd.png">
-      <Pack>true</Pack>
-      <PackagePath>/</PackagePath>
-      <Link>siisltd.png</Link>
-    </None>
   </ItemGroup>
 
   <ItemGroup>

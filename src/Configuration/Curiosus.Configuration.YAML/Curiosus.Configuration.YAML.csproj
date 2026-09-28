@@ -7,7 +7,7 @@
         <Title>Curiosus.Configuration.YML</Title>
         <Description>YAML configuration provider.</Description>
         <Summary>YAML configuration provider.</Summary>
-        <PackageTags>Curiosus; configuration; yaml; yml; siisltd</PackageTags>
+        <PackageTags>Curiosus; configuration; yaml; yml</PackageTags>
         <Language>English</Language>
 
         <RootNamespace>Curiosus.Configuration</RootNamespace>
@@ -16,8 +16,7 @@
         <FileVersion>1.0.0</FileVersion>
         <PackageVersion>2.0.0</PackageVersion>
 
-        <Authors>Max Markelow (@markeli), Andrei Vinogradov (@anri-vin)</Authors>
-        <Copyright>SIIS Ltd, 2026</Copyright>
+        <Authors>$(CuriosusAuthors), Andrei Vinogradov (@anri-vin)</Authors>
 
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -30,14 +29,6 @@
         <IsPackable>true</IsPackable>
     </PropertyGroup>
 
-    <PropertyGroup>
-        <PackageIcon>siisltd.png</PackageIcon>
-    </PropertyGroup>
-
-    <ItemGroup>
-        <None Include="..\..\..\siisltd.png" Pack="true" PackagePath="\" />
-    </ItemGroup>
-    
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
       <DocumentationFile>bin\Release\Curiosus.Configuration.YAML.xml</DocumentationFile>
     </PropertyGroup>

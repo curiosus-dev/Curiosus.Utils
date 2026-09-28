@@ -7,16 +7,14 @@
         <Title>Curiosus.DAL.EF.Polly</Title>
         <Description>Poly policies for EF.</Description>
         <Summary>Poly policies for EF.</Summary>
-        <PackageTags>Curiosus; dal; ef; Polly; policies; siisltd</PackageTags>
+        <PackageTags>Curiosus; dal; ef; Polly; policies</PackageTags>
         <Language>English</Language>
 
         <AssemblyVersion>1.0.0</AssemblyVersion>
         <FileVersion>1.0.0</FileVersion>
         <PackageVersion>2.0.0</PackageVersion>
 
-        <Authors>Max Markelow (@markeli), Andrei Vinogradov (@anri-vin)</Authors>
-        <Company>SIIS Ltd</Company>
-        <Copyright>SIIS Ltd, 2026</Copyright>
+        <Authors>$(CuriosusAuthors), Andrei Vinogradov (@anri-vin)</Authors>
 
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -31,14 +29,6 @@
         <IsPackable>true</IsPackable>
     </PropertyGroup>
 
-    <PropertyGroup>
-        <PackageIcon>siisltd.png</PackageIcon>
-    </PropertyGroup>
-
-    <ItemGroup>
-        <None Include="..\..\..\siisltd.png" Pack="true" PackagePath="\" />
-    </ItemGroup>
-    
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
       <DocumentationFile>bin\Release\Curiosus.DAL.EF.Polly.xml</DocumentationFile>
     </PropertyGroup>

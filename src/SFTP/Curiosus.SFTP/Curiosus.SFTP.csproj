@@ -7,16 +7,14 @@
         <Title>Curiosus.SFTP</Title>
         <Description>SFTP Client</Description>
         <Summary>SFTP Client</Summary>
-        <PackageTags>Curiosus; SFTP;siisltd</PackageTags>
+        <PackageTags>Curiosus; SFTP</PackageTags>
         <Language>English</Language>
 
         <AssemblyVersion>1.0.0</AssemblyVersion>
         <FileVersion>1.0.0</FileVersion>
         <PackageVersion>2.0.0</PackageVersion>
 
-        <Authors>Max Markelow (@markeli), Andrei Vinogradov (@anri-vin)</Authors>
-        <Company>SIIS Ltd</Company>
-        <Copyright>SIIS Ltd, 2026</Copyright>
+        <Authors>$(CuriosusAuthors), Andrei Vinogradov (@anri-vin)</Authors>
 
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -30,14 +28,6 @@
         <Nullable>enable</Nullable>
         <IsPackable>true</IsPackable>
     </PropertyGroup>
-
-    <PropertyGroup>
-        <PackageIcon>siisltd.png</PackageIcon>
-    </PropertyGroup>
-
-    <ItemGroup>
-        <None Include="..\..\..\siisltd.png" Pack="true" PackagePath="\" />
-    </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\..\Configuration\Curiosus.Configuration\Curiosus.Configuration.csproj" />
