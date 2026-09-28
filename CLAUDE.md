@@ -47,5 +47,5 @@ Curiosus.Configuration (base)
 - **Nullable reference types:** enabled globally
 - **Central package management:** `Directory.Packages.props` manages all NuGet versions — update versions there, not in individual .csproj files
 - **Test framework:** xUnit + FluentAssertions + Moq
-- **CI/CD and releases:** see `.claude/curiosus.md`; each package has its own `<PackageVersion>` and `CHANGELOG.md` and is released independently
+- **CI/CD and releases:** see `.claude/curiosus.md`; each package has its own `CHANGELOG.md` (its top `## [x.y.z]` section is the package version) and is released independently
 - **Documentation:** MkDocs hosted on ReadTheDocs at https://curiosityutils.readthedocs.io/
