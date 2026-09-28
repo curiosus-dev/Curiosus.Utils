@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>$(CuriosusTargetFrameworks)</TargetFrameworks>
+        
+        <PackageId>Curiosus.FileDataReaderWriters.Npoi</PackageId>
+        <Title>Curiosus.FileDataReaderWriters.Npoi</Title>
+        <Description>Npoi realization for working with xls/xlsx/csv files</Description>
+        <Summary>Single and multifile writing to xlsx file. Uses streaming version of workbook to reduce peak memory consumption.</Summary>
+        <PackageTags>Curiosus; FileDataReaderWriters; Npoi; siisltd</PackageTags>
+        <Language>English</Language>
+
+        <AssemblyVersion>1.0.0</AssemblyVersion>
+        <FileVersion>1.0.0</FileVersion>
+        <PackageVersion>2.0.0</PackageVersion>
+
+        <Authors>Max Markelow (@markeli), Andrei Vinogradov (@anri-vin), Andrey Ioch (@DevCorvette), Timur Sidoriuk (@shockthunder)</Authors>
+        <Company>SIIS Ltd</Company>
+        <Copyright>SIIS Ltd, 2026</Copyright>
+
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+
+        <PackageProjectUrl>https://github.com/curiosus-dev/Curiosus.Utils</PackageProjectUrl>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://github.com/curiosus-dev/Curiosus.Utils</RepositoryUrl>
+        <PackageReleaseNotes>https://github.com/curiosus-dev/Curiosus.Utils/tree/master/src/FileData/Curiosus.FileDataReaderWriters.Npoi/CHANGELOG.md</PackageReleaseNotes>
+        <Nullable>enable</Nullable>
+        <IsPackable>true</IsPackable>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <PackageIcon>siisltd.png</PackageIcon>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\..\siisltd.png" Pack="true" PackagePath="\" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <ProjectReference Include="..\Curiosus.FileDataReaderWriters\Curiosus.FileDataReaderWriters.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="NPOI" />
+    </ItemGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+        <DocumentationFile>bin\Release\Curiosus.FileDataReaderWriters.Npoi.xml</DocumentationFile>
+    </PropertyGroup>
+    
+</Project>

@@ -1,0 +1,64 @@
+# Changelog
+
+## [2.0.0] - 2026-09-27
+
+### Changed
+
+- **Breaking:** package renamed from `Curiosity.EMail.SMTP` to `Curiosus.EMail.SMTP` and now published by the [curiosus-dev](https://www.nuget.org/profiles/curiosus-dev) organization. Namespaces, assemblies and types were renamed accordingly (`Curiosity*` → `Curiosus*`): replace `Curiosity` with `Curiosus` in your code to migrate.
+- Dropped `netstandard2.1` support. Now multi-targeting `net9.0` and `net10.0`.
+- Upgraded `MailKit` up to `4.18.0` (fixes known vulnerabilities).
+
+## [1.5.0] - 2026-02-13
+
+### Changed
+
+- Upgraded `Microsoft`'s packages up to `10.*` versions.
+- Upgraded `MailKit` up to `3.6.0`.
+
+## [1.4.0] - 2023-01-29
+
+### Changed
+
+- Upgraded `Microsoft`'s packages up to `6.*` versions.
+- Upgraded `MailKit` up to `3.4.3`.
+
+## [1.3.1] - 2022-06-20
+
+### Changed
+
+- Changed log level to `warn` instead of `error` at `SmtpEmailSender`.
+
+## [1.3.0] - 2022-05-19
+
+## Added
+
+- Added option for ignoring incorrect extra params type.
+
+## [1.2.1] - 2022-03-09
+
+## Change
+
+- Upgraded `Curiosity.Tools` to `1.4.5`
+
+## [1.2.0] - 2021-12-02
+
+### Changed
+
+- `IEmailLogger` returns `Response` class object.
+
+## [1.1.0] - 2021-09-30
+
+### Added
+
+- Added `IEMailExtraParams` implementation.
+- Added `CancellationToken` to sender.
+
+## [1.0.4] - 2021-03-11
+
+### Added
+
+- Added changelog file.
+
+### Changed
+
+- Upgrade `MailKit` to `v2.10.1`

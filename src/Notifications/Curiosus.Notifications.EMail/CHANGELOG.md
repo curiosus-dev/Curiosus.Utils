@@ -1,0 +1,68 @@
+# Changelog
+
+## [2.0.0] - 2026-09-27
+
+### Changed
+
+- **Breaking:** package renamed from `Curiosity.Notifications.EMail` to `Curiosus.Notifications.EMail` and now published by the [curiosus-dev](https://www.nuget.org/profiles/curiosus-dev) organization. Namespaces, assemblies and types were renamed accordingly (`Curiosity*` → `Curiosus*`): replace `Curiosity` with `Curiosus` in your code to migrate.
+- Dropped `netstandard2.1` support. Now multi-targeting `net9.0` and `net10.0`.
+
+## [1.5.0] - 2026-02-13
+
+### Changed
+
+- Upgraded dependencies.
+
+## [1.4.0] - 2023-01-29
+
+### Changed
+
+- Upgraded dependencies.
+
+## [1.3.3] - 2022-06-17
+
+### Added
+
+- Added `IEmailNotificationChannel`.
+
+## [1.3.2] - 2022-06-17
+
+### Fixed
+
+- Throwing `NotificationException` from channel when sending failed with unexpected exception.
+
+### Changed
+
+- Replaced Task by ValueTask in `IEMailNotificationPostProcessor`.
+
+## [1.3.1] - 2022-03-09
+
+## Change
+
+- Upgraded `Curiosity.Tools` to `1.4.5`
+
+### Changed
+
+## [1.3.0] - 2021-12-02
+
+### Changed
+
+- Supports email result from email sender;
+
+## [1.2.0] - 2021-08-31
+
+### Changed
+
+- Notification infrastructure uses type of metadata class to match metadata and notification builders.
+
+## [1.1.0] - 2021-07-30
+
+### Added
+
+- Added `IEMailExtraParams` implementation.
+- Added `CancellationToken` to sender.
+- Added `IEMailNotificationPostProcessor`.
+
+## [1.0.0] - 2021-03-15
+
+First release.

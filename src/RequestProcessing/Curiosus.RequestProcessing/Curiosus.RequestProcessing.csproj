@@ -1,0 +1,60 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>$(CuriosusTargetFrameworks)</TargetFrameworks>
+
+        <PackageId>Curiosus.RequestProcessing</PackageId>
+        <Title>Curiosus.RequestProcessing</Title>
+        <Description>Infrastructure for processing request/events from an queue.</Description>
+        <Summary>Infrastructure for processing requests/events from a queue.</Summary>
+        <PackageTags>Curiosus; Request; Queue; Workers; Processors</PackageTags>
+        <Language>English</Language>
+
+        <AssemblyVersion>1.0.0</AssemblyVersion>
+        <FileVersion>1.0.0</FileVersion>
+        <PackageVersion>2.0.0</PackageVersion>
+
+        <Authors>Max Markelow (@markeli), Andrei Vinogradov (@anri-vin)</Authors>
+        <Company>SIIS Ltd</Company>
+        <Copyright>SIIS Ltd, 2026</Copyright>
+
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+
+        <PackageProjectUrl>https://github.com/curiosus-dev/Curiosus.Utils</PackageProjectUrl>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://github.com/curiosus-dev/Curiosus.Utils</RepositoryUrl>
+        <PackageReleaseNotes>https://github.com/curiosus-dev/Curiosus.Utils/tree/master/src/RequestProcessing/Curiosus.RequestProcessing/CHANGELOG.md</PackageReleaseNotes>
+
+        <OutputType>Library</OutputType>
+        <Nullable>enable</Nullable>
+        <IsPackable>true</IsPackable>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <PackageIcon>siisltd.png</PackageIcon>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DocumentationFile>bin\Release\Curiosus.RequestProcessing.xml</DocumentationFile>
+    </PropertyGroup>
+    
+    <ItemGroup>
+      <None Include="..\..\..\siisltd.png">
+        <Pack>true</Pack>
+        <PackagePath>/</PackagePath>
+        <Link>siisltd.png</Link>
+      </None>
+    </ItemGroup>
+    
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Extensions.Hosting" />
+      <PackageReference Include="Microsoft.Extensions.Logging" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <ProjectReference Include="..\..\Configuration\Curiosus.Configuration\Curiosus.Configuration.csproj" />
+      <ProjectReference Include="..\..\Misc\Curiosus.Tools\Curiosus.Tools.csproj" />
+    </ItemGroup>
+
+</Project>

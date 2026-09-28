@@ -1,6 +1,6 @@
 # Email Notifications
 
-The Email notification channel (`EmailNotificationChannel`) provides reliable email delivery using the Curiosity.EMail infrastructure with queued processing, post-processing capabilities, and comprehensive error handling.
+The Email notification channel (`EmailNotificationChannel`) provides reliable email delivery using the Curiosus.EMail infrastructure with queued processing, post-processing capabilities, and comprehensive error handling.
 
 ## How it works
 
@@ -58,11 +58,11 @@ public class EmailNotification : INotification
 
 ## Available providers
 
-The email notification channel uses the `IEMailSender` interface from Curiosity.EMail package, which supports multiple providers:
+The email notification channel uses the `IEMailSender` interface from Curiosus.EMail package, which supports multiple providers:
 
 ### Mailgun
 ```csharp
-services.AddCuriosityMailgunSender(options =>
+services.AddCuriosusMailgunSender(options =>
 {
     options.ApiKey = "your-api-key";
     options.Domain = "your-domain.com";
@@ -72,7 +72,7 @@ services.AddCuriosityMailgunSender(options =>
 
 ### SendGrid
 ```csharp
-services.AddCuriositySendGridSender(options =>
+services.AddCuriosusSendGridSender(options =>
 {
     options.ApiKey = "your-api-key";
     options.FromEmail = "noreply@your-domain.com";
@@ -82,7 +82,7 @@ services.AddCuriositySendGridSender(options =>
 
 ### SMTP
 ```csharp
-services.AddCuriositySmtpSender(options =>
+services.AddCuriosusSmtpSender(options =>
 {
     options.Host = "smtp.your-provider.com";
     options.Port = 587;
@@ -94,7 +94,7 @@ services.AddCuriositySmtpSender(options =>
 
 ### In-Memory (Testing)
 ```csharp
-services.AddCuriosityInMemoryEMailSender();
+services.AddCuriosusInMemoryEMailSender();
 ```
 
 ## How to add custom provider?
@@ -186,7 +186,7 @@ services.AddCustomEmailSender(options =>
     options.ApiKey = "your-api-key";
 });
 
-services.AddCuriosityEMailChannel();
+services.AddCuriosusEMailChannel();
 ```
 
 ### Step 5: Create Custom Builder (Optional)
