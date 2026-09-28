@@ -570,3 +570,7 @@ MigrationBackup/
 
 # End of https://www.toptal.com/developers/gitignore/api/rider,visualstudio,cake,aspnetcore,dotnetcore
 samples/Curiosus.SMS.Iqsms.Sample/config.Development.aioch.yml
+
+# Local secrets for Curiosus.Configuration (config.secret.yml, config.<env>.secret.yml, ...)
+*.secret.yml
+*.secret.yaml
