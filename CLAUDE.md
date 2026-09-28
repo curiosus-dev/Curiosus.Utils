@@ -2,31 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+@.claude/curiosus.md
+
 ## Project Overview
 
 Curiosity.Utils is a collection of .NET NuGet utility libraries published under MIT license by SIIS Ltd. It provides reusable components for configuration, data access, email/SMS, file processing, messaging, notifications, hosting, and more.
-
-## Build Commands
-
-Solution-wide operations (build, test, pack, publish) should go through Cake for consistency with CI. Cake is installed as a local dotnet tool (`dotnet tool restore`).
-
-```bash
-# First time after clone — restore Cake dotnet tool
-dotnet tool restore
-
-# Full pipeline (clean, build, unit tests, integration tests)
-dotnet cake
-
-# Specific Cake targets
-dotnet cake --target=Build --exclusive     # Build only
-dotnet cake --target=UnitTests --exclusive # Unit tests only
-dotnet cake --target=Pack --exclusive      # Pack NuGet packages
-dotnet cake --target=GitHubReleases --exclusive --githubReleaseDryRun  # Preview release notes for packed packages (artifacts/release-notes)
-
-# Single-project commands (for focused development)
-dotnet test tests/UnitTests/Misc/Curiosity.Tools.UnitTests/Curiosity.Tools.UnitTests.csproj
-dotnet test --filter "FullyQualifiedName~TestMethodName"
-```
 
 ## Architecture
 
@@ -67,5 +47,5 @@ Curiosity.Configuration (base)
 - **Nullable reference types:** enabled globally
 - **Central package management:** `Directory.Packages.props` manages all NuGet versions — update versions there, not in individual .csproj files
 - **Test framework:** xUnit + FluentAssertions + Moq + coverlet
-- **CI/CD:** GitHub Actions on `ubuntu-latest`. `.github/workflows/build.yml` builds and tests PRs; `release-packages.yml` runs on every push to `master`: tests and packs, then publishes packages whose `<PackageVersion>` is not on nuget.org yet via NuGet Trusted Publishing (OIDC, `NuGet/login`, secret `NUGET_USER`), then creates a `<PackageId>.v<Version>` tag and GitHub release (notes = that version section of the package `CHANGELOG.md`). Publishing logic lives in `build/publish.cake`, shared verbatim with the other Curiosus repositories — do not change it here only. To release a package: bump `<PackageVersion>` and add a `## [x.y.z]` section to its CHANGELOG
+- **CI/CD and releases:** see `.claude/curiosus.md`; each package has its own `<PackageVersion>` and `CHANGELOG.md` and is released independently
 - **Documentation:** MkDocs hosted on ReadTheDocs at https://curiosityutils.readthedocs.io/

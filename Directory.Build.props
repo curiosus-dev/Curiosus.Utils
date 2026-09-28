@@ -1,14 +1,16 @@
 <Project>
 
-	<!--
-		Target frameworks for libraries and tests. Projects opt in via
-		<TargetFrameworks>$(CuriosityTargetFrameworks)</TargetFrameworks>.
-		Not assigned to TargetFrameworks directly: NuGet restore would then pick it up
-		for single-target projects (samples) as well.
-		Per-framework package versions live in Directory.Packages.props.
-	-->
-	<PropertyGroup>
-		<CuriosityTargetFrameworks>net9.0;net10.0</CuriosityTargetFrameworks>
-	</PropertyGroup>
+    <Import Project="$(MSBuildThisFileDirectory)build/Curiosus.props" />
+
+    <!--
+        Target frameworks for libraries and tests. Projects opt in via
+        <TargetFrameworks>$(CuriosityTargetFrameworks)</TargetFrameworks>.
+        Not assigned to TargetFrameworks directly: NuGet restore would then pick it up
+        for single-target projects (samples) as well.
+        Per-framework package versions live in Directory.Packages.props.
+    -->
+    <PropertyGroup>
+        <CuriosityTargetFrameworks>net9.0;net10.0</CuriosityTargetFrameworks>
+    </PropertyGroup>
 
 </Project>
