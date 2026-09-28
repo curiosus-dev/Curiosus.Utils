@@ -46,6 +46,6 @@ Curiosus.Configuration (base)
 - **JSON:** `System.Text.Json` only. `Newtonsoft.Json` remains solely for the obsolete `TrimStringNewtonsoftConverter` in `Curiosus.Tools.Web` (removal tracked in #77) — do not add new usages
 - **Nullable reference types:** enabled globally
 - **Central package management:** `Directory.Packages.props` manages all NuGet versions — update versions there, not in individual .csproj files
-- **Test framework:** xUnit + FluentAssertions + Moq + coverlet
+- **Test framework:** xUnit + FluentAssertions + Moq
 - **CI/CD and releases:** see `.claude/curiosus.md`; each package has its own `<PackageVersion>` and `CHANGELOG.md` and is released independently
 - **Documentation:** MkDocs hosted on ReadTheDocs at https://curiosityutils.readthedocs.io/
