@@ -2,4 +2,7 @@
 // Repository-specific tasks go between #load and RunTarget.
 #load "build/curiosus.cake"
 
+// Line coverage, %: raise it when coverage grows.
+minLineCoverage = 12;
+
 RunTarget(target);
