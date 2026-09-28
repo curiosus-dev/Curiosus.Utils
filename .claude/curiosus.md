@@ -72,13 +72,23 @@ The CHANGELOG is the only place for a version: `build/Curiosus.props` sets `Vers
 
 `.github/workflows/release-packages.yml` runs on every push to the default branch: build, tests, pack, push to nuget.org
 via NuGet Trusted Publishing (no API keys), then a tag and a GitHub release for every package version that has none.
-Versions already on nuget.org are skipped, so to release a package add a `## [x.y.z] - yyyy-mm-dd` section on top of
-its CHANGELOG in the pull request — the section becomes the release notes. Breaking changes get a **Breaking** note with
-the migration steps. Changes not to be released yet go to `## [Unreleased]`.
+Versions already on nuget.org are skipped.
 
-The pull request build lists the packages the merge releases (`ReleaseCheck`, in the run summary) and warns about
-changed packages whose version is already published. The warning doesn't block the merge: changes that need no release
-(docs, refactoring) can go without one. Locally: `dotnet cake --target=ReleaseCheck --since=origin/master`.
+CHANGELOG rules:
+
+- Every change a package consumer can notice (API, behavior, dependencies, target frameworks, fixes) gets an entry in
+  the CHANGELOG of each affected package under `## [Unreleased]`, grouped as `### Added`, `### Changed`,
+  `### Deprecated`, `### Removed`, `### Fixed`, `### Security`. Tests, CI and internal refactoring need no entry.
+- No `## [Unreleased]` section yet: add it on top, above the latest version section.
+- Breaking changes get a **Breaking:** note with the migration steps.
+- Don't add a version section unless asked to release. To release, turn `## [Unreleased]` into
+  `## [x.y.z] - yyyy-mm-dd` (today's date), choosing the bump from its entries by SemVer; the section becomes
+  the release notes.
+
+The `release-check` job of the pull request build (`ReleaseCheck`) keeps a comment on the pull request listing the changed
+packages: released by the merge, with a changelog entry to release later, or ⚠️ without a changelog entry. It never
+blocks the merge: changes consumers won't notice need no entry. Pull requests from forks get it in the run summary only.
+Locally: `dotnet cake --target=ReleaseCheck --since=origin/master`.
 
 Tags are `v<version>` in single-package repositories and `<PackageId>.v<version>` otherwise.
 
