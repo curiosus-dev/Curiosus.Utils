@@ -84,5 +84,5 @@ It registers the worker (transient), the bootstrapper as a hosted service and th
 
 - [Curiosus.RequestProcessing.Postgres](https://www.nuget.org/packages/Curiosus.RequestProcessing.Postgres) — Postgres `LISTEN/NOTIFY` as event source
 - [Curiosus.RequestProcessing.RabbitMQ](https://www.nuget.org/packages/Curiosus.RequestProcessing.RabbitMQ) — RabbitMQ queue as event source
-- [RabbitMQ consumer/producer sample](https://github.com/curiosus-dev/Curiosus.Utils/tree/master/samples/RequestProcessing/RabbitMQ)
+- [RabbitMQ consumer/producer sample](https://github.com/curiosus-dev/Curiosus.Utils/tree/main/samples/RequestProcessing/RabbitMQ)
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

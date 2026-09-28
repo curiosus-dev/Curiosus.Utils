@@ -23,7 +23,6 @@
         <PackageProjectUrl>https://github.com/curiosus-dev/Curiosus.Utils</PackageProjectUrl>
         <RepositoryType>git</RepositoryType>
         <RepositoryUrl>https://github.com/curiosus-dev/Curiosus.Utils</RepositoryUrl>
-        <PackageReleaseNotes>https://github.com/curiosus-dev/Curiosus.Utils/tree/master/src/Configuration/Curiosus.Configuration.YML/CHANGELOG.md</PackageReleaseNotes>
         <Nullable>enable</Nullable>
         <IsPackable>true</IsPackable>
     </PropertyGroup>

@@ -21,7 +21,6 @@
         <PackageProjectUrl>https://github.com/curiosus-dev/Curiosus.Utils</PackageProjectUrl>
         <RepositoryType>git</RepositoryType>
         <RepositoryUrl>https://github.com/curiosus-dev/Curiosus.Utils</RepositoryUrl>
-        <PackageReleaseNotes>https://github.com/curiosus-dev/Curiosus.Utils/tree/master/src/Misc/Curiosus.Cache.MemoryCache/CHANGELOG.md</PackageReleaseNotes>
 
         <OutputType>Library</OutputType>
         <Nullable>enable</Nullable>

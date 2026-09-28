@@ -52,7 +52,7 @@ Main areas:
 - **Diagnostics** — `PerformanceManager.Measure` and `StuckCodeManager.Enter` (call their `Initialize(logger)` first).
 - **IO and HTTP** — temp file streams, stream extensions, `IHttpRequestParamsCalculator` for size-based timeouts.
 
-See the [sample app](https://github.com/curiosus-dev/Curiosus.Utils/tree/master/samples/Curiosus.Tools.Sample)
+See the [sample app](https://github.com/curiosus-dev/Curiosus.Utils/tree/main/samples/Curiosus.Tools.Sample)
 for phone, transliteration and sensitive data examples.
 
 ## See also

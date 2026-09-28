@@ -52,7 +52,7 @@ Notes:
   the raw iqsms.ru response is available in `SmsSentResult.ResponseJson`. Cost and message count are not reported.
 
 A runnable console sample is in
-[samples/Curiosus.SMS.Iqsms.Sample](https://github.com/curiosus-dev/Curiosus.Utils/tree/master/samples/Curiosus.SMS.Iqsms.Sample).
+[samples/Curiosus.SMS.Iqsms.Sample](https://github.com/curiosus-dev/Curiosus.Utils/tree/main/samples/Curiosus.SMS.Iqsms.Sample).
 
 ## See also
 
