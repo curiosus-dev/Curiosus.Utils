@@ -7,16 +7,14 @@
         <Title>Curiosus.Hosting.Web</Title>
         <Description>Hosting tools for Web applications.</Description>
         <Summary>Hosting tools for Web applications.</Summary>
-        <PackageTags>Curiosus; Hosting; Boostrapping; Web; WebAPI; siisltd</PackageTags>
+        <PackageTags>Curiosus; Hosting; Boostrapping; Web; WebAPI</PackageTags>
         <Language>English</Language>
 
         <AssemblyVersion>1.0.0</AssemblyVersion>
         <FileVersion>1.0.0</FileVersion>
         <PackageVersion>2.0.0</PackageVersion>
 
-        <Authors>Max Markelow (@markeli), Andrey Ioch (@DevCorvette), Andrei Vinogradov (@anri-vin)</Authors>
-        <Company>SIIS Ltd</Company>
-        <Copyright>SIIS Ltd, 2026</Copyright>
+        <Authors>$(CuriosusAuthors), Andrey Ioch (@DevCorvette), Andrei Vinogradov (@anri-vin)</Authors>
 
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -30,14 +28,7 @@
         <Nullable>enable</Nullable>
         <IsPackable>true</IsPackable>
     </PropertyGroup>
-    <PropertyGroup>
-        <PackageIcon>siisltd.png</PackageIcon>
-    </PropertyGroup>
 
-    <ItemGroup>
-        <None Include="..\..\..\siisltd.png" Pack="true" PackagePath="\" />
-    </ItemGroup>
-    
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
       <DocumentationFile>bin\Release\Curiosus.Hosting.Web.xml</DocumentationFile>
     </PropertyGroup>

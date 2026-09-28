@@ -5,15 +5,13 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <PackageVersion>2.0.0</PackageVersion>
-        <PackageIcon>siisltd.png</PackageIcon>
         <Title>Curiosus.SMS.Iqsms</Title>
         <Description>Classes for sending SMS via iqsms.ru.</Description>
-        <Copyright>SIIS Ltd, 2026</Copyright>
         <PackageProjectUrl>https://github.com/curiosus-dev/Curiosus.Utils</PackageProjectUrl>
         <RepositoryUrl>https://github.com/curiosus-dev/Curiosus.Utils</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <PackageTags>Curiosus; SMS; siisltd; iqsms</PackageTags>
-        <Authors>Max Markelow (@markeli), Andrey Ioch (@DevCorvette), Andrei Vinogradov (@anri-vin)</Authors>    </PropertyGroup>
+        <PackageTags>Curiosus; SMS; iqsms</PackageTags>
+        <Authors>$(CuriosusAuthors), Andrey Ioch (@DevCorvette), Andrei Vinogradov (@anri-vin)</Authors>    </PropertyGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Curiosus.SMS\Curiosus.SMS.csproj" />
@@ -21,14 +19,6 @@
 
     <ItemGroup>
       <PackageReference Include="RestSharp" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Include="..\..\..\siisltd.png">
-        <Pack>True</Pack>
-        <PackagePath></PackagePath>
-        <Link>siisltd.png</Link>
-      </None>
     </ItemGroup>
 
 </Project>

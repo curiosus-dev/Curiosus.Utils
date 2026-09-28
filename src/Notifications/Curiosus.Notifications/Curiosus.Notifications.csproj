@@ -7,16 +7,14 @@
         <Title>Curiosus.Notifications</Title>
         <Description>Base classes for creating and processing notifications.</Description>
         <Summary>Base classes for creating and processing notifications.</Summary>
-        <PackageTags>Curiosus; Notifications; Channels; siisltd</PackageTags>
+        <PackageTags>Curiosus; Notifications; Channels</PackageTags>
         <Language>English</Language>
 
         <AssemblyVersion>1.0.0</AssemblyVersion>
         <FileVersion>1.0.0</FileVersion>
         <PackageVersion>2.0.0</PackageVersion>
 
-        <Authors>Max Markelow (@markeli), Andrey Ioch (@DevCorvette), Andrei Vinogradov (@anri-vin)</Authors>
-        <Company>SIIS Ltd</Company>
-        <Copyright>SIIS Ltd, 2026</Copyright>
+        <Authors>$(CuriosusAuthors), Andrey Ioch (@DevCorvette), Andrei Vinogradov (@anri-vin)</Authors>
 
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -31,14 +29,6 @@
         <IsPackable>true</IsPackable>
     </PropertyGroup>
 
-    <PropertyGroup>
-        <PackageIcon>siisltd.png</PackageIcon>
-    </PropertyGroup>
-
-    <ItemGroup>
-        <None Include="..\..\..\siisltd.png" Pack="true" PackagePath="\" />
-    </ItemGroup>
-    
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
       <DocumentationFile>bin\Release\Curiosus.Notifications.xml</DocumentationFile>
     </PropertyGroup>

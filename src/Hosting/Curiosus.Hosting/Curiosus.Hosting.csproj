@@ -7,16 +7,14 @@
         <Title>Curiosus.Hosting</Title>
         <Description>Hosting tools</Description>
         <Summary>Hosting tools</Summary>
-        <PackageTags>Curiosus; Hosting; Boostrapping; siisltd</PackageTags>
+        <PackageTags>Curiosus; Hosting; Boostrapping</PackageTags>
         <Language>English</Language>
         
         <AssemblyVersion>1.0.0</AssemblyVersion>
         <FileVersion>1.0.0</FileVersion>
         <PackageVersion>2.0.0</PackageVersion>
 
-        <Authors>Max Markelow (@markeli), Ilya Negrub (@ilya-negrub), Andrei Vinogradov (@anri-vin)</Authors>
-        <Company>SIIS Ltd</Company>
-        <Copyright>SIIS Ltd, 2026</Copyright>
+        <Authors>$(CuriosusAuthors), Ilya Negrub (@ilya-negrub), Andrei Vinogradov (@anri-vin)</Authors>
 
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -31,14 +29,6 @@
         <IsPackable>true</IsPackable>
     </PropertyGroup>
 
-    <PropertyGroup>
-        <PackageIcon>siisltd.png</PackageIcon>
-    </PropertyGroup>
-
-    <ItemGroup>
-        <None Include="..\..\..\siisltd.png" Pack="true" PackagePath="\" />
-    </ItemGroup>
-    
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
       <DocumentationFile>bin\Release\Curiosus.Hosting.xml</DocumentationFile>
     </PropertyGroup>

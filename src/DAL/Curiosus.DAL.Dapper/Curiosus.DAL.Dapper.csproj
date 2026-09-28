@@ -7,15 +7,14 @@
         <Title>Curiosus.DAL.Dapper</Title>
         <Description>SqlExecutor implementaion via Dapper.</Description>
         <Summary>SqlExecutor implementaion via Dapper.</Summary>
-        <PackageTags>Curiosus; dal; Dapper; siisltd</PackageTags>
+        <PackageTags>Curiosus; dal; Dapper</PackageTags>
         <Language>English</Language>
 
         <AssemblyVersion>1.0.0</AssemblyVersion>
         <FileVersion>1.0.0</FileVersion>
         <PackageVersion>2.0.0</PackageVersion>
 
-        <Authors>Max Markelow (@markeli), Andrei Vinogradov (@anri-vin)</Authors>
-        <Copyright>SIIS Ltd, 2026</Copyright>
+        <Authors>$(CuriosusAuthors), Andrei Vinogradov (@anri-vin)</Authors>
 
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -26,17 +25,8 @@
         <PackageReleaseNotes>https://github.com/curiosus-dev/Curiosus.Utils/tree/master/src/DAL/Curiosus.DAL.Dapper/CHANGELOG.md</PackageReleaseNotes>
         <Nullable>enable</Nullable>
         <IsPackable>true</IsPackable>
-        
     </PropertyGroup>
 
-    <PropertyGroup>
-        <PackageIcon>siisltd.png</PackageIcon>
-    </PropertyGroup>
-
-    <ItemGroup>
-        <None Include="..\..\..\siisltd.png" Pack="true" PackagePath="\" />
-    </ItemGroup>
-    
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
       <DocumentationFile>bin\Release\Curiosus.DAL.Dapper.xml</DocumentationFile>
     </PropertyGroup>

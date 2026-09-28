@@ -7,16 +7,14 @@
         <Title>Curiosus.EMail</Title>
         <Description>Base classes for working with EMails</Description>
         <Summary>Base EMail sender, EMail adress validation and attriburtes.</Summary>
-        <PackageTags>Curiosus; EMail; siisltd</PackageTags>
+        <PackageTags>Curiosus; EMail</PackageTags>
         <Language>English</Language>
 
         <AssemblyVersion>1.0.0</AssemblyVersion>
         <FileVersion>1.0.0</FileVersion>
         <PackageVersion>2.0.0</PackageVersion>
 
-        <Authors>Max Markelow (@markeli), Andrey Ioch (@DevCorvette), Andrei Vinogradov (@anri-vin)</Authors>
-        <Company>SIIS Ltd</Company>
-        <Copyright>SIIS Ltd, 2026</Copyright>
+        <Authors>$(CuriosusAuthors), Andrey Ioch (@DevCorvette), Andrei Vinogradov (@anri-vin)</Authors>
 
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -27,17 +25,8 @@
         <PackageReleaseNotes>https://github.com/curiosus-dev/Curiosus.Utils/tree/master/src/EMail/Curiosus.EMail/CHANGELOG.md</PackageReleaseNotes>
         <Nullable>enable</Nullable>
         <IsPackable>true</IsPackable>
-        
     </PropertyGroup>
 
-    <PropertyGroup>
-        <PackageIcon>siisltd.png</PackageIcon>
-    </PropertyGroup>
-
-    <ItemGroup>
-        <None Include="..\..\..\siisltd.png" Pack="true" PackagePath="\" />
-    </ItemGroup>
-    
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
       <DocumentationFile>bin\Release\Curiosus.EMail.xml</DocumentationFile>
     </PropertyGroup>
