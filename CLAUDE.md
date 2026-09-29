@@ -48,4 +48,6 @@ Curiosus.Configuration (base)
 - **Central package management:** `Directory.Packages.props` manages all NuGet versions — update versions there, not in individual .csproj files
 - **Test framework:** xUnit + FluentAssertions + Moq
 - **CI/CD and releases:** see `.claude/curiosus.md`; each package has its own `CHANGELOG.md` (its top `## [x.y.z]` section is the package version) and is released independently
-- **Documentation:** MkDocs hosted on ReadTheDocs at https://curiosityutils.readthedocs.io/
+- **Documentation:** Docusaurus on GitHub Pages at https://curiosus-dev.github.io/Curiosus.Utils/, built from `docs/`
+  (site settings in `docs.json`). `docs/index.md` is a symlink to `README.md`, package READMEs are symlinked into
+  `docs/packages/<area>/` — add one for a new package. `website/` is synced from dotnet-tools.

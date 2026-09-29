@@ -1,0 +1,1 @@
+../../../src/Email/Curiosus.Email.UnisenderGo/README.md

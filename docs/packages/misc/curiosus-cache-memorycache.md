@@ -1,0 +1,1 @@
+../../../src/Misc/Curiosus.Cache.MemoryCache/README.md

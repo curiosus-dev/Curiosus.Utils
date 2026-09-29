@@ -1,0 +1,1 @@
+../../../src/Email/Curiosus.EMail.Smtp/README.md

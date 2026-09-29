@@ -61,5 +61,5 @@ and register it with `services.AddEMailNotificationPostProcessor<MyPostProcessor
   providers: [SMTP](https://www.nuget.org/packages/Curiosus.EMail.SMTP),
   [Mailgun](https://www.nuget.org/packages/Curiosus.EMail.Mailgun),
   [UnisenderGo](https://www.nuget.org/packages/Curiosus.EMail.UnisenderGo)
-- [Email notifications documentation](https://curiosityutils.readthedocs.io/en/latest/Notiifications/emails/)
+- [Email notifications documentation](https://curiosus-dev.github.io/Curiosus.Utils/notifications/emails)
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

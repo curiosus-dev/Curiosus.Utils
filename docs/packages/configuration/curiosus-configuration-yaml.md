@@ -1,0 +1,1 @@
+../../../src/Configuration/Curiosus.Configuration.YAML/README.md

@@ -57,5 +57,5 @@ and requires at least one channel and one builder to be registered.
 
 - [Curiosus.Notifications.EMail](https://www.nuget.org/packages/Curiosus.Notifications.EMail) — EMail channel
 - [Curiosus.Notifications.SMS](https://www.nuget.org/packages/Curiosus.Notifications.SMS) — SMS channel
-- [Notifications documentation](https://curiosityutils.readthedocs.io/en/latest/Notiifications/)
+- [Notifications documentation](https://curiosus-dev.github.io/Curiosus.Utils/notifications)
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

@@ -1,0 +1,1 @@
+../../../src/Email/Curiosus.EMail.Mailgun/README.md
