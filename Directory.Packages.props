@@ -35,7 +35,7 @@
         <PackageVersion Include="Npgsql" Version="10.0.1" />
 
         <!-- Framework-agnostic packages -->
-        <PackageVersion Include="CsvHelper" Version="30.1.0" />
+        <PackageVersion Include="CsvHelper" Version="33.0.0" />
         <PackageVersion Include="Dapper" Version="2.1.66" />
         <PackageVersion Include="EntryPoint" Version="1.3.0" />
         <PackageVersion Include="Flurl.Http" Version="4.0.2" />
