@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using NLog;
+using NLog.Layouts;
 
 namespace Curiosus.Hosting
 {
@@ -28,15 +30,18 @@ namespace Curiosus.Hosting
             configureAction.Invoke(logConfigurationPath);
         }
 
+        private static IDictionary<string, Layout> Variables =>
+            (LogManager.Configuration ?? throw new InvalidOperationException("NLog configuration is not loaded.")).Variables;
+
         public CuriosusNLogConfigurator WithAppName(string appName)
         {
             if (String.IsNullOrWhiteSpace(appName))
                 throw new ArgumentNullException(nameof(appName));
             
-            if (!LogManager.Configuration.Variables.ContainsKey(AppNameVarName))
+            if (!Variables.ContainsKey(AppNameVarName))
                 throw new Exception(String.Format(MissingVarErrorMessageFormat, AppNameVarName));
             
-            LogManager.Configuration.Variables[AppNameVarName] = appName;
+            Variables[AppNameVarName] = appName;
 
             return this;
         }
@@ -56,10 +61,10 @@ namespace Curiosus.Hosting
             if (logOutputDirectory == null)
                 throw new ArgumentNullException(nameof(logOutputDirectory));
 
-            if (!LogManager.Configuration.Variables.ContainsKey(LogOutputDirectoryVarName))
+            if (!Variables.ContainsKey(LogOutputDirectoryVarName))
                 throw new Exception(String.Format(MissingVarErrorMessageFormat, LogOutputDirectoryVarName));
 
-            LogManager.Configuration.Variables[LogOutputDirectoryVarName] = logOutputDirectory;
+            Variables[LogOutputDirectoryVarName] = logOutputDirectory;
                 
             return this;
         }
@@ -88,36 +93,36 @@ namespace Curiosus.Hosting
             if (loggerMailOptions == null)
                 throw new ArgumentNullException(nameof(loggerMailOptions));
                 
-            if (!LogManager.Configuration.Variables.ContainsKey(MailToVarName))
+            if (!Variables.ContainsKey(MailToVarName))
                 throw new Exception(String.Format(MissingVarErrorMessageFormat, MailToVarName));
                 
-            if (!LogManager.Configuration.Variables.ContainsKey(MailFromVarName))
+            if (!Variables.ContainsKey(MailFromVarName))
                 throw new Exception(String.Format(MissingVarErrorMessageFormat, MailFromVarName));
                 
-            if (!LogManager.Configuration.Variables.ContainsKey(SmtpLoginVarName))
+            if (!Variables.ContainsKey(SmtpLoginVarName))
                 throw new Exception(String.Format(MissingVarErrorMessageFormat, SmtpLoginVarName));
                 
-            if (!LogManager.Configuration.Variables.ContainsKey(SmtpPasswordVarName))
+            if (!Variables.ContainsKey(SmtpPasswordVarName))
                 throw new Exception(String.Format(MissingVarErrorMessageFormat, SmtpPasswordVarName));
                 
-            if (!LogManager.Configuration.Variables.ContainsKey(SmtpServerVarName))
+            if (!Variables.ContainsKey(SmtpServerVarName))
                 throw new Exception(String.Format(MissingVarErrorMessageFormat, SmtpServerVarName));
                 
             // Set all options, except AppName, only if they are set in configuration.
             if (!String.IsNullOrWhiteSpace(loggerMailOptions.MailTo))
-                LogManager.Configuration.Variables[MailToVarName] = loggerMailOptions.MailTo;
+                Variables[MailToVarName] = loggerMailOptions.MailTo;
                 
             if (!String.IsNullOrWhiteSpace(loggerMailOptions.EMailFrom))
-                LogManager.Configuration.Variables[MailFromVarName] = loggerMailOptions.EMailFrom;
+                Variables[MailFromVarName] = loggerMailOptions.EMailFrom;
                 
             if (!String.IsNullOrWhiteSpace(loggerMailOptions.SmtpLogin))
-                LogManager.Configuration.Variables[SmtpLoginVarName] = loggerMailOptions.SmtpLogin;
+                Variables[SmtpLoginVarName] = loggerMailOptions.SmtpLogin;
                 
             if (!String.IsNullOrWhiteSpace(loggerMailOptions.SmtpPassword))
-                LogManager.Configuration.Variables[SmtpPasswordVarName] = loggerMailOptions.SmtpPassword;
+                Variables[SmtpPasswordVarName] = loggerMailOptions.SmtpPassword;
                 
             if (!String.IsNullOrWhiteSpace(loggerMailOptions.SmtpServer))
-                LogManager.Configuration.Variables[SmtpServerVarName] = loggerMailOptions.SmtpServer;
+                Variables[SmtpServerVarName] = loggerMailOptions.SmtpServer;
 
             return this;
         }

@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- **Breaking:** updated `NLog.Web.AspNetCore` to `6.0.0` and `NLog.MailKit` to `6.0.0`, so apps now run on NLog 6.
+  NLog.config files using options removed in NLog 6 fail on startup with `throwExceptions="true"` or
+  `throwConfigExceptions="true"`: see the migration steps in the
+  [Curiosus.Hosting changelog](https://github.com/curiosus-dev/Curiosus.Utils/blob/main/src/Hosting/Curiosus.Hosting/CHANGELOG.md)
+  and the [NLog 6 breaking changes](https://nlog-project.org/2025/04/29/nlog-6-0-major-changes.html).
+  Code calling `NLogBuilder.ConfigureNLog(path)` should use
+  `LogManager.Setup().RegisterNLogWeb().LoadConfigurationFromFile(path)`.
+
 ## [2.0.0] - 2026-09-27
 
 ### Changed

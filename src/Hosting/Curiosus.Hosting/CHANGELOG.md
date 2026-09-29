@@ -1,5 +1,26 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- **Breaking:** updated `NLog.Extensions.Logging` to `6.0.0` and `NLog.MailKit` to `6.0.0`, so apps now run on NLog 6.
+  NLog 6 rejects NLog.config files that use removed options: with `throwExceptions="true"` or `throwConfigExceptions="true"`
+  the app fails on startup (for example `'FileTarget' cannot assign unknown property 'enableArchiveFileCompression'`),
+  otherwise the option is ignored. To migrate, check your NLog.config against the
+  [NLog 6 breaking changes](https://nlog-project.org/2025/04/29/nlog-6-0-major-changes.html):
+  - `File` target: remove `enableArchiveFileCompression` (compression now needs the `NLog.Targets.GZipFile` package and
+    `xsi:type="GZipFile"`), replace `archiveNumbering`/`archiveDateFormat` and the `{#}` placeholder of
+    `archiveFileName` with `archiveSuffixFormat` (`archiveNumbering="Date"` is `archiveSuffixFormat="_{1:yyyyMMdd}_{0:00}"`),
+    remove `concurrentWrites`, `networkWrites`, `forceManaged`, `fileAttributes`.
+  - Targets moved out of the `NLog` package need their own package: `Network`/`Syslog`/`Gelf` (`NLog.Targets.Network`),
+    `Trace` (`NLog.Targets.Trace`), `WebService` (`NLog.Targets.WebService`), `AtomicFile`, `ConcurrentFile`,
+    the System.Net.Mail `Mail` target (`NLog.Targets.Mail`), `${regex-replace}` (`NLog.RegEx`). The MailKit `Mail` target
+    used for the mail logger still comes with `NLog.MailKit`.
+  - `Console` target batches writes and no longer uses `Console.WriteLine`: set `forceWriteLine="true"` if you need it.
+  - Code using NLog APIs directly: `LogManager.LoadConfiguration(path)` is replaced by
+    `LogManager.Setup().LoadConfigurationFromFile(path)`, `LogManager.Configuration` is nullable.
+
 ## [2.0.0] - 2026-09-27
 
 ### Changed

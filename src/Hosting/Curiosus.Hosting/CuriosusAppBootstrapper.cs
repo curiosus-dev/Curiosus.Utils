@@ -131,7 +131,7 @@ namespace Curiosus.Hosting
         /// <param name="path">Path for config file.</param>
         protected virtual void LoadLoggingConfiguration(string path)
         {
-            LogManager.LoadConfiguration(path);
+            LogManager.Setup().LoadConfigurationFromFile(path, optional: false);
         }
 
         /// <summary>
