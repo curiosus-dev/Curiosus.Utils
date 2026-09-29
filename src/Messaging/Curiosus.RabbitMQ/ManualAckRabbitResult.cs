@@ -1,16 +1,18 @@
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Curiosus.RabbitMQ;
 
 /// <summary>
 /// Result of executing RPC via Rabbit that requires manual acknowledge confirmation.
 /// </summary>
-/// <typeparam name="T"></typeparam>
+/// <typeparam name="T">Type of the response.</typeparam>
 public class ManualAckRabbitResult<T>
 {
-    private readonly Action _confirmationAction;
+    private readonly Func<CancellationToken, Task> _confirmationAction;
 
-    private bool _haveAlreadyConfirmed;
+    private Task? _confirmationTask;
 
     /// <summary>
     /// Result of RPC call.
@@ -18,24 +20,42 @@ public class ManualAckRabbitResult<T>
     public T Data { get; }
 
     /// <inheritdoc cref="ManualAckRabbitResult{T}"/>
-    internal ManualAckRabbitResult(T data, Action confirmationAction)
+    internal ManualAckRabbitResult(T data, Func<CancellationToken, Task> confirmationAction)
     {
         Data = data ?? throw new ArgumentNullException(nameof(data));
         _confirmationAction = confirmationAction ?? throw new ArgumentNullException(nameof(confirmationAction));
-        _haveAlreadyConfirmed = false;
     }
 
     /// <summary>
     /// Confirms processing of <see cref="Data"/>.
     /// </summary>
     /// <remarks>
-    /// Sends ack to RabbitMQ to remove result from response queue.
+    /// Sends ack to RabbitMQ to remove result from response queue. Only the first call sends the ack, the next ones
+    /// return the same task. If the ack fails (for example, it was cancelled), the next call tries again.
     /// </remarks>
-    public void ConfirmAcknowledge()
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public Task ConfirmAcknowledgeAsync(CancellationToken cancellationToken = default)
     {
-        if (_haveAlreadyConfirmed) return;
+        var confirmation = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var existing = Interlocked.CompareExchange(ref _confirmationTask, confirmation.Task, null);
+        if (existing != null) return existing;
 
-        _confirmationAction.Invoke();
-        _haveAlreadyConfirmed = true;
+        _ = ConfirmAsync(confirmation, cancellationToken);
+
+        return confirmation.Task;
+    }
+
+    private async Task ConfirmAsync(TaskCompletionSource confirmation, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _confirmationAction.Invoke(cancellationToken);
+            confirmation.SetResult();
+        }
+        catch (Exception e)
+        {
+            Volatile.Write(ref _confirmationTask, null);
+            confirmation.SetException(e);
+        }
     }
 }

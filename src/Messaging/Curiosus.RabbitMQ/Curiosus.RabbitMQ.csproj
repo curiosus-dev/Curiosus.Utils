@@ -34,6 +34,10 @@
       <PackageReference Include="RabbitMQ.Client" />
     </ItemGroup>
 
+    <ItemGroup>
+      <InternalsVisibleTo Include="Curiosus.RabbitMQ.UnitTests" />
+    </ItemGroup>
+
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
         <DocumentationFile>bin\Release\Curiosus.RabbitMQ.xml</DocumentationFile>
     </PropertyGroup>

@@ -8,6 +8,7 @@ using Curiosus.Tools;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
 
 namespace Curiosus.RequestProcessing.RabbitMQ.Sample.ProducerApp.Core;
@@ -40,10 +41,11 @@ public class SampleRequestsProducer : BackgroundService
     private readonly SampleProducerAppConfiguration _configuration;
 
     private IConnection? _connection;
-    private IModel? _channel;
-    private readonly object _lockObject = new();
+    private IChannel? _channel;
+    private readonly SemaphoreSlim _lock = new(1, 1);
 
-    private CancellationTokenSource _cancellationTokenSource = null!;
+    private readonly CancellationTokenSource _cancellationTokenSource = new();
+
     public SampleRequestsProducer(
         SampleProducerAppConfiguration configuration,
         ILogger<SampleRequestsProducer> logger)
@@ -60,14 +62,16 @@ public class SampleRequestsProducer : BackgroundService
 
         UniqueIdGenerator.Initialize(GetHashCode() % 1024);
 
-        // prepare cts for cancelling receiving message from Rabbit
-        _cancellationTokenSource = new CancellationTokenSource();
-
         _logger.LogTrace("Entering lock for connecting to RabbitMQ...");
-        lock (_lockObject)
+        await _lock.WaitAsync(cancellationToken);
+        try
         {
             _logger.LogTrace("Entered lock for connecting to RabbitMQ");
-            Connect();
+            await ConnectAsync(cancellationToken);
+        }
+        finally
+        {
+            _lock.Release();
         }
         _logger.LogTrace("Exited lock for connecting to RabbitMQ");
 
@@ -78,7 +82,7 @@ public class SampleRequestsProducer : BackgroundService
         _logger.LogDebug("Started sender");
     }
 
-    private void Connect()
+    private async Task ConnectAsync(CancellationToken cancellationToken)
     {
         var factory = new ConnectionFactory
         {
@@ -92,10 +96,10 @@ public class SampleRequestsProducer : BackgroundService
             ClientProvidedName = $"{_rabbitMQOptions.ClientName}_wallet_balance_check_result_sender"
         };
 
-        _connection = factory.CreateConnection();
-        _connection.ConnectionShutdown += HandleOnDisconnected;
+        _connection = await factory.CreateConnectionAsync(cancellationToken);
+        _connection.ConnectionShutdownAsync += HandleOnDisconnectedAsync;
 
-        InitChannel();
+        await InitChannelAsync(_connection, cancellationToken);
 
         _logger.LogInformation(
             "Connected to RabbitMQ (host \"{RabbitHostName}\", queue = \"{QueueName}\"",
@@ -108,7 +112,7 @@ public class SampleRequestsProducer : BackgroundService
     /// </summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
-    private void HandleOnDisconnected(object? sender, ShutdownEventArgs e)
+    private Task HandleOnDisconnectedAsync(object? sender, ShutdownEventArgs e)
     {
         _logger.LogWarning(
             "RabbitMQ connection was shutdown. Cause=\"{Cause}\", Initiator={Initiator}, ReplyCode={ReplyCode}, ReplyText={ReplyText}",
@@ -122,20 +126,28 @@ public class SampleRequestsProducer : BackgroundService
         {
             HandleRecoverySafelyAsync(1, _cancellationTokenSource.Token).WithExceptionLogger(_logger);
         }
+
+        return Task.CompletedTask;
     }
 
     /// <summary>
     /// Inits new RabbitMQ channel.
     /// </summary>
-    private void InitChannel()
+    private async Task InitChannelAsync(IConnection connection, CancellationToken cancellationToken)
     {
-        _channel = _connection!.CreateModel();
-        _channel.ModelShutdown += HandleChannelShutdown;
+        _channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
+        _channel.ChannelShutdownAsync += HandleChannelShutdownAsync;
 
-        _channel.QueueDeclare(_configuration.QueueName, true, false, false, null);
+        await _channel.QueueDeclareAsync(
+            _configuration.QueueName,
+            durable: true,
+            exclusive: false,
+            autoDelete: false,
+            arguments: null,
+            cancellationToken: cancellationToken);
     }
 
-    private void HandleChannelShutdown(object? sender, ShutdownEventArgs e)
+    private Task HandleChannelShutdownAsync(object? sender, ShutdownEventArgs e)
     {
         _logger.LogWarning(
             "RabbitMQ reader channel was shutdown. Cause=\"{Cause}\", Initiator={Initiator}, ReplyCode={ReplyCode}, ReplyText={ReplyText}, ClassId={ClassId}, MethodId={MethodId}",
@@ -151,6 +163,8 @@ public class SampleRequestsProducer : BackgroundService
         {
             HandleRecoverySafelyAsync(1, _cancellationTokenSource.Token).WithExceptionLogger(_logger);
         }
+
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -197,7 +211,8 @@ public class SampleRequestsProducer : BackgroundService
         try
         {
             _logger.LogDebug("Entering lock for restoring connection...");
-            Monitor.Enter(_lockObject, ref lockWasTaken);
+            await _lock.WaitAsync(cancellationToken);
+            lockWasTaken = true;
             _logger.LogDebug("Entered lock for restoring connection");
 
             // maybe there is no need to restore client?
@@ -214,8 +229,8 @@ public class SampleRequestsProducer : BackgroundService
                 try
                 {
                     _logger.LogDebug("Disconnecting from RabbitMQ...");
-                    Disconnect();
-                    Connect();
+                    await DisconnectAsync();
+                    await ConnectAsync(cancellationToken);
 
                     isRecovered = true;
                 }
@@ -232,7 +247,7 @@ public class SampleRequestsProducer : BackgroundService
                     // exit lock before recursive method call 
                     if (lockWasTaken)
                     {
-                        Monitor.Exit(_lockObject);
+                        _lock.Release();
                         lockWasTaken = false;
                         _logger.LogDebug("Exited lock for restoring connection");
                     }
@@ -253,7 +268,7 @@ public class SampleRequestsProducer : BackgroundService
         {
             if (lockWasTaken)
             {
-                Monitor.Exit(_lockObject);
+                _lock.Release();
                 _logger.LogDebug("Exited lock for restoring connection");
             }
         }
@@ -282,20 +297,20 @@ public class SampleRequestsProducer : BackgroundService
     /// <summary>
     /// Closes connection to RabbitMQ. Should be invoked only from a critical section.
     /// </summary>
-    private void Disconnect()
+    private async Task DisconnectAsync()
     {
         // free used channels
 
         if (_channel != null)
         {
-            _channel.ModelShutdown -= HandleChannelShutdown;
+            _channel.ChannelShutdownAsync -= HandleChannelShutdownAsync;
 
             if (!_channel.IsClosed)
             {
                 _logger.LogTrace("Waiting for channel closing...");
                 try
                 {
-                    _channel.Close();
+                    await _channel.CloseAsync();
                 }
                 catch (Exception e)
                 {
@@ -308,7 +323,7 @@ public class SampleRequestsProducer : BackgroundService
             }
 
             _logger.LogTrace("Waiting for channel disposing...");
-            _channel.Dispose();
+            await _channel.DisposeAsync();
         }
         else
         {
@@ -320,12 +335,12 @@ public class SampleRequestsProducer : BackgroundService
 
         if (_connection != null)
         {
-            _connection.ConnectionShutdown -= HandleOnDisconnected;
+            _connection.ConnectionShutdownAsync -= HandleOnDisconnectedAsync;
             
             _logger.LogTrace("Waiting for connection closing...");
             try
             {
-                _connection.Close(TimeSpan.FromSeconds(3));
+                await _connection.CloseAsync(TimeSpan.FromSeconds(3));
             }
             catch (Exception e)
             {
@@ -333,7 +348,7 @@ public class SampleRequestsProducer : BackgroundService
             }
 
             _logger.LogTrace("Waiting for connection disposing...");
-            _connection.Dispose();
+            await _connection.DisposeAsync();
             _connection = null;
         }
         else
@@ -356,15 +371,25 @@ public class SampleRequestsProducer : BackgroundService
                 // publish to rabbit
                 var responseMessageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(newRequest));
 
+                var responseProps = new BasicProperties { CorrelationId = newRequest.Id.ToString() };
+
                 _logger.LogTrace("Entering lock to publish a message...");
-                lock (_lockObject)
+                await _lock.WaitAsync(stoppingToken);
+                try
                 {
                     _logger.LogTrace("Entered lock to publish a message");
 
-                    var responseProps = _channel!.CreateBasicProperties();
-                    responseProps.CorrelationId = newRequest.Id.ToString();
-
-                    _channel.BasicPublish(_rabbitMQOptions.ExchangeName, _configuration.QueueName, responseProps, responseMessageBytes);
+                    await _channel!.BasicPublishAsync(
+                        _rabbitMQOptions.ExchangeName,
+                        _configuration.QueueName,
+                        mandatory: false,
+                        responseProps,
+                        responseMessageBytes,
+                        stoppingToken);
+                }
+                finally
+                {
+                    _lock.Release();
                 }
 
                 await Task.Delay(_configuration.DelayBetweenSendMs, stoppingToken);
@@ -389,7 +414,7 @@ public class SampleRequestsProducer : BackgroundService
                     _logger.LogError("Failed to recover connection");
                 }
             }
-            catch (Exception e) when (stoppingToken.IsCancellationRequested)
+            catch (Exception) when (stoppingToken.IsCancellationRequested)
             {
                 // no action
             }
@@ -415,16 +440,21 @@ public class SampleRequestsProducer : BackgroundService
         _logger.LogDebug("Stopping sender...");
 
         _logger.LogTrace("Cancelling receiving...");
-        _cancellationTokenSource.Cancel();
+        await _cancellationTokenSource.CancelAsync();
 
         _logger.LogTrace("Waiting for stopping background service...");
         await base.StopAsync(cancellationToken);
 
         _logger.LogTrace("Entering lock to close channel/connection...");
-        lock (_lockObject)
+        await _lock.WaitAsync(CancellationToken.None);
+        try
         {
             _logger.LogTrace("Entered lock to close channel/connection");
-            Disconnect();
+            await DisconnectAsync();
+        }
+        finally
+        {
+            _lock.Release();
         }
         _logger.LogTrace("Exited lock to close channel/connection");
 

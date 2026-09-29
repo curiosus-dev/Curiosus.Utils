@@ -1,6 +1,6 @@
 using System;
-using System.Collections.Concurrent;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Curiosus.Configuration;
 using Curiosus.RequestProcessing.RabbitMQ.Options;
@@ -16,13 +16,17 @@ namespace Curiosus.RequestProcessing.RabbitMQ;
 /// <summary>
 /// Service for receiving events from RabbitMQ event source.
 /// </summary>
-public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
+/// <remarks>
+/// Received events are confirmed (ack) or rejected (reject without requeue) in a background loop.
+/// <see cref="StopAsync"/> or <see cref="DisposeAsync"/> closes the connection to RabbitMQ.
+/// </remarks>
+public class RabbitMQEventReceiver : BackgroundService, IEventReceiver, IAsyncDisposable
 {
     /// <summary>
     /// Count of retries to restore connection to RabbitMQ manually if auto recovery fails.
     /// </summary>
     /// <remarks>
-    /// Useful when we got an <see cref="AlreadyClosedException"/> or another RabbitMQ exception. 
+    /// Useful when we got an <see cref="AlreadyClosedException"/> or another RabbitMQ exception.
     /// </remarks>
     private const int MaxConnectionRestoreRetries = 10;
 
@@ -40,18 +44,22 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
     private readonly ILogger _logger;
 
     private readonly int _qos;
-    private readonly object _lockObject = new();
+
+    /// <summary>
+    /// Guards the channel and the connection: they are replaced on manual recovery.
+    /// </summary>
+    private readonly SemaphoreSlim _lock = new(1, 1);
 
     /// <summary>
     /// Time for waiting connection full recovering before sending data to the queues.
     /// </summary>
     private readonly TimeSpan _recoverWaitDelay;
 
-    private readonly BlockingCollection<EventProcessingResult> _processingResultsQueue;
+    private readonly Channel<EventProcessingResult> _processingResultsQueue;
 
     private IConnection? _connection;
-    private IModel? _channel;
-    private CancellationTokenSource _cts = null!;
+    private IChannel? _channel;
+    private readonly CancellationTokenSource _cts = new();
 
     /// <inheritdoc />
     public event EventHandler<IRequestProcessingEvent>? OnEventReceived;
@@ -74,21 +82,32 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
         // give time to auto recovery and only after that we will try to restore all manually
         _recoverWaitDelay = TimeSpan.FromMilliseconds(NetworkRecoveryPeriod.TotalMilliseconds * 2);
 
-        _processingResultsQueue = new BlockingCollection<EventProcessingResult>(new ConcurrentQueue<EventProcessingResult>());
+        _processingResultsQueue = Channel.CreateUnbounded<EventProcessingResult>();
     }
 
     /// <inheritdoc />
     public override async Task StartAsync(CancellationToken cancellationToken)
     {
         _logger.LogDebug($"Starting {nameof(RabbitMQEventReceiver)}...");
-        
-        _cts = new CancellationTokenSource();
-        
+
         _logger.LogTrace("Entering lock for connecting to RabbitMQ...");
-        lock (_lockObject)
+        await _lock.WaitAsync(cancellationToken);
+        try
         {
             _logger.LogTrace("Entered lock for connecting to RabbitMQ");
-            Connect();
+            try
+            {
+                await ConnectAsync(cancellationToken);
+            }
+            catch
+            {
+                await DisconnectAsync();
+                throw;
+            }
+        }
+        finally
+        {
+            _lock.Release();
         }
         _logger.LogTrace("Exited lock for connecting to RabbitMQ");
 
@@ -99,7 +118,10 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
         _logger.LogDebug($"Started {nameof(RabbitMQEventReceiver)}");
     }
 
-    private void Connect()
+    /// <summary>
+    /// Connects to RabbitMQ. Should be invoked only from a critical section.
+    /// </summary>
+    private async Task ConnectAsync(CancellationToken cancellationToken)
     {
         var factory = new ConnectionFactory
         {
@@ -109,14 +131,14 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
             TopologyRecoveryEnabled = true,
             UserName = _eventReceiverOptions.UserName,
             Password = _eventReceiverOptions.Password,
-            Port = _eventReceiverOptions.Port, 
+            Port = _eventReceiverOptions.Port,
             ClientProvidedName = $"{_eventReceiverOptions.ClientName}_event_receiver"
         };
 
-        _connection = factory.CreateConnection();
-        _connection.ConnectionShutdown += HandleOnDisconnected;
+        _connection = await factory.CreateConnectionAsync(cancellationToken);
+        _connection.ConnectionShutdownAsync += HandleOnDisconnectedAsync;
 
-        InitChannel();
+        await InitChannelAsync(_connection, cancellationToken);
 
         _logger.LogInformation(
             "Connected to RabbitMQ (host \"{RabbitHostName}\", queue = \"{QueueName}\", QoS = {QoS})",
@@ -125,7 +147,7 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
             _qos);
     }
 
-    private void HandleOnDisconnected(object? sender, ShutdownEventArgs e)
+    private Task HandleOnDisconnectedAsync(object? sender, ShutdownEventArgs e)
     {
         _logger.LogWarning(
             "RabbitMQ connection was shutdown. Cause=\"{Cause}\", Initiator={Initiator}, ReplyCode={ReplyCode}, ReplyText={ReplyText}",
@@ -135,26 +157,35 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
             e.ReplyText);
 
         // if we got AMQP consumer timeout exception let's try to restore connection
-        if (e.ReplyCode == 406 && e.ReplyText.Contains("timeout") || e.ReplyCode == 541)
+        // not awaited: recovery closes the connection, and the connection waits for its shutdown handlers
+        if (IsRecoverableShutdown(e))
         {
             HandleRecoverySafelyAsync(null, 1, _cts.Token).WithExceptionLogger(_logger);
         }
+
+        return Task.CompletedTask;
     }
 
-    private void InitChannel()
+    private async Task InitChannelAsync(IConnection connection, CancellationToken cancellationToken)
     {
-        _channel = _connection!.CreateModel();
-        _channel.BasicQos(0, (ushort)_qos, true);
-        _channel.ModelShutdown += HandleChannelShutdown;
+        _channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
+        await _channel.BasicQosAsync(0, (ushort)_qos, true, cancellationToken);
+        _channel.ChannelShutdownAsync += HandleChannelShutdownAsync;
 
-        _channel.QueueDeclare(_eventReceiverOptions.QueueName, true, false, false, null);
+        await _channel.QueueDeclareAsync(
+            _eventReceiverOptions.QueueName,
+            durable: true,
+            exclusive: false,
+            autoDelete: false,
+            arguments: null,
+            cancellationToken: cancellationToken);
 
-        var consumer = new EventingBasicConsumer(_channel);
-        consumer.Received += ProcessReceivedEvent;
-        _channel.BasicConsume(_eventReceiverOptions.QueueName, false, consumer);
+        var consumer = new AsyncEventingBasicConsumer(_channel);
+        consumer.ReceivedAsync += ProcessReceivedEventAsync;
+        await _channel.BasicConsumeAsync(_eventReceiverOptions.QueueName, autoAck: false, consumer, cancellationToken);
     }
 
-    private void HandleChannelShutdown(object? sender, ShutdownEventArgs e)
+    private Task HandleChannelShutdownAsync(object? sender, ShutdownEventArgs e)
     {
         _logger.LogWarning(
             "RabbitMQ reader channel was shutdown. Cause=\"{Cause}\", Initiator={Initiator}, ReplyCode={ReplyCode}, ReplyText={ReplyText}, ClassId={ClassId}, MethodId={MethodId}",
@@ -166,10 +197,17 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
             e.MethodId);
 
         // if we got AMQP consumer timeout exception let's try to restore connection
-        if (e.ReplyCode == 406 && e.ReplyText.Contains("timeout") || e.ReplyCode == 541)
+        if (IsRecoverableShutdown(e))
         {
             HandleRecoverySafelyAsync(null, 1, _cts.Token).WithExceptionLogger(_logger);
         }
+
+        return Task.CompletedTask;
+    }
+
+    private static bool IsRecoverableShutdown(ShutdownEventArgs e)
+    {
+        return e.ReplyCode == 406 && e.ReplyText.Contains("timeout") || e.ReplyCode == 541;
     }
 
     /// <summary>
@@ -182,7 +220,7 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
     {
         // requeue event to process it later after connection restoring
         if (eventProcessingResult.HasValue)
-            _processingResultsQueue.Add(eventProcessingResult.Value, cancellationToken);
+            _processingResultsQueue.Writer.TryWrite(eventProcessingResult.Value);
 
         // maybe there is no need to restore client?
         if (_channel?.IsOpen ?? false) return true;
@@ -200,7 +238,7 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
             "Trying to restore connection to RabbitMQ ({CurrentRetriesCount}/{MaxRetriesCount})...",
             currentRetriesCount,
             MaxConnectionRestoreRetries);
-        
+
         // wait for auto recovering
         try
         {
@@ -221,7 +259,15 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
         try
         {
             _logger.LogDebug("Entering lock for restoring connection...");
-            Monitor.Enter(_lockObject, ref lockWasTaken);
+            try
+            {
+                await _lock.WaitAsync(cancellationToken);
+                lockWasTaken = true;
+            }
+            catch (OperationCanceledException)
+            {
+                return false;
+            }
             _logger.LogDebug("Entered lock for restoring connection");
 
             // maybe there is no need to restore client?
@@ -238,8 +284,8 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
                 try
                 {
                     _logger.LogDebug("Disconnecting from RabbitMQ...");
-                    Disconnect();
-                    Connect();
+                    await DisconnectAsync();
+                    await ConnectAsync(cancellationToken);
 
                     isRecovered = true;
                 }
@@ -252,10 +298,10 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
                         MaxConnectionRestoreRetries);
 
                     // in case of error try to recover connection until we can
-                    // exit lock before recursive method call 
+                    // exit lock before recursive method call
                     if (lockWasTaken)
                     {
-                        Monitor.Exit(_lockObject);
+                        _lock.Release();
                         lockWasTaken = false;
                         _logger.LogDebug("Exited lock for restoring connection");
                     }
@@ -279,7 +325,7 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
         {
             if (lockWasTaken)
             {
-                Monitor.Exit(_lockObject);
+                _lock.Release();
                 _logger.LogDebug("Exited lock for restoring connection");
             }
         }
@@ -308,20 +354,20 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
     /// <summary>
     /// Closes connection to RabbitMQ. Should be invoked only from a critical section.
     /// </summary>
-    private void Disconnect()
+    private async Task DisconnectAsync()
     {
         // free used channels
 
         if (_channel != null)
         {
-            _channel.ModelShutdown -= HandleChannelShutdown;
+            _channel.ChannelShutdownAsync -= HandleChannelShutdownAsync;
 
             if (!_channel.IsClosed)
             {
                 _logger.LogTrace("Waiting for channel closing...");
                 try
                 {
-                    _channel.Close();
+                    await _channel.CloseAsync();
                 }
                 catch (Exception e)
                 {
@@ -334,7 +380,7 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
             }
 
             _logger.LogTrace("Waiting for channel disposing...");
-            _channel.Dispose();
+            await _channel.DisposeAsync();
         }
         else
         {
@@ -346,12 +392,12 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
 
         if (_connection != null)
         {
-            _connection.ConnectionShutdown -= HandleOnDisconnected;
-            
+            _connection.ConnectionShutdownAsync -= HandleOnDisconnectedAsync;
+
             _logger.LogTrace("Waiting for connection closing...");
             try
             {
-                _connection.Close(ConnectionCloseTimeout);
+                await _connection.CloseAsync(ConnectionCloseTimeout);
             }
             catch (Exception e)
             {
@@ -359,7 +405,7 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
             }
 
             _logger.LogTrace("Waiting for connection disposing...");
-            _connection.Dispose();
+            await _connection.DisposeAsync();
             _connection = null;
         }
         else
@@ -371,20 +417,22 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
     /// <summary>
     /// Processes receives event from RabbitMQ and notifies subscribers.
     /// </summary>
-    private void ProcessReceivedEvent(object? sender, BasicDeliverEventArgs e)
+    private Task ProcessReceivedEventAsync(object? sender, BasicDeliverEventArgs e)
     {
         var receivedEvent = new RabbitMQEvent(e, ConfirmEvent, RejectEvent);
         OnEventReceived?.Invoke(this, receivedEvent);
+
+        return Task.CompletedTask;
     }
 
     private void ConfirmEvent(ulong deliveryTag)
     {
-        _processingResultsQueue.Add(new EventProcessingResult(deliveryTag, EventDecisionType.Confirm));
+        _processingResultsQueue.Writer.TryWrite(new EventProcessingResult(deliveryTag, EventDecisionType.Confirm));
     }
 
     private void RejectEvent(ulong deliveryTag)
     {
-        _processingResultsQueue.Add(new EventProcessingResult(deliveryTag, EventDecisionType.Reject));
+        _processingResultsQueue.Writer.TryWrite(new EventProcessingResult(deliveryTag, EventDecisionType.Reject));
     }
 
     /// <inheritdoc />
@@ -398,9 +446,9 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
 
             try
             {
-                processingResult = _processingResultsQueue.Take(stoppingToken);
+                processingResult = await _processingResultsQueue.Reader.ReadAsync(stoppingToken);
                 string actionName;
-                
+
                 switch (processingResult.Value.Decision)
                 {
                     case EventDecisionType.Confirm:
@@ -416,20 +464,31 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
                 try
                 {
                     _logger.LogTrace("Entering lock to {ActionName} message...", actionName);
-                    lock (_lockObject)
+                    await _lock.WaitAsync(stoppingToken);
+                    try
                     {
                         _logger.LogTrace("Entered lock to {ActionName} message", actionName);
-                        switch (processingResult.Value.Decision)
+                        if (_channel != null)
                         {
-                            case EventDecisionType.Confirm:
-                                _channel?.BasicAck(processingResult.Value.DeliveryTag, false);
-                                break;
-                            case EventDecisionType.Reject:
-                                _channel?.BasicReject(processingResult.Value.DeliveryTag, false);
-                                break;
-                            default:
-                                throw new ArgumentOutOfRangeException(nameof(processingResult.Value.Decision), processingResult.Value.Decision, null);
+                            switch (processingResult.Value.Decision)
+                            {
+                                case EventDecisionType.Confirm:
+                                    await _channel.BasicAckAsync(processingResult.Value.DeliveryTag, false, stoppingToken);
+                                    break;
+                                case EventDecisionType.Reject:
+                                    await _channel.BasicRejectAsync(processingResult.Value.DeliveryTag, false, stoppingToken);
+                                    break;
+                                default:
+                                    throw new ArgumentOutOfRangeException(
+                                        nameof(processingResult.Value.Decision),
+                                        processingResult.Value.Decision,
+                                        null);
+                            }
                         }
+                    }
+                    finally
+                    {
+                        _lock.Release();
                     }
                     _logger.LogTrace("Exited lock to {ActionName} message", actionName);
 
@@ -454,7 +513,7 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
                         processingResult,
                         cancellationToken: _cts.Token);
                 }
-                catch (Exception e)
+                catch (Exception e) when (!stoppingToken.IsCancellationRequested)
                 {
                     _logger.LogError(e,
                         "Failed to {ActionName} event with DeliveryTag={DeliveryTag}",
@@ -487,7 +546,7 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
 
         // stop sending requests
         _logger.LogTrace("Cancelling cts to stop sending requests...");
-        _cts.Cancel();
+        await _cts.CancelAsync();
 
         // maybe, it's safer to cancel all items in a queue? let's think about it later
         //TODO: https://github.com/siisltd/Curiosity.Utils/issues/50
@@ -497,16 +556,37 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver
         await base.StopAsync(cancellationToken);
         _logger.LogTrace("Stopped finalizer");
 
-        // close channel
-        _logger.LogTrace("Entering lock to close channel/connection...");
-        lock (_lockObject)
-        {
-            _logger.LogTrace("Entered lock to close channel/connection");
-            Disconnect();
-        }
-        _logger.LogTrace("Exited lock to close channel/connection");
+        await CloseConnectionAsync();
 
         _logger.LogDebug($"Stopped {nameof(RabbitMQEventReceiver)}");
+    }
+
+    private async Task CloseConnectionAsync()
+    {
+        _logger.LogTrace("Entering lock to close channel/connection...");
+        await _lock.WaitAsync(CancellationToken.None);
+        try
+        {
+            _logger.LogTrace("Entered lock to close channel/connection");
+            await DisconnectAsync();
+        }
+        finally
+        {
+            _lock.Release();
+        }
+        _logger.LogTrace("Exited lock to close channel/connection");
+    }
+
+    /// <summary>
+    /// Closes the connection to RabbitMQ if <see cref="StopAsync"/> was not called and releases resources.
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        await _cts.CancelAsync();
+        await CloseConnectionAsync();
+
+        Dispose();
+        GC.SuppressFinalize(this);
     }
 
     private readonly struct EventProcessingResult

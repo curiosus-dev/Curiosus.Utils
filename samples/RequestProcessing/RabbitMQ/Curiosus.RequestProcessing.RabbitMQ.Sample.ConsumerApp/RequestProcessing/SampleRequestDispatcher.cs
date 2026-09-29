@@ -78,7 +78,7 @@ public class SampleRequestDispatcher : RabbitMQRequestDispatcherBase<
              }
          }
 
-         return Task.FromResult(result as IReadOnlyList<RabbitMQRequestWrapper<SampleRequest>?>);
+         return Task.FromResult<IReadOnlyList<RabbitMQRequestWrapper<SampleRequest>>?>(result);
     }
 
     /// <inheritdoc />

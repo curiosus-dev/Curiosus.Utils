@@ -18,9 +18,9 @@ public class RabbitMQRequestWrapper<T> : IRequest
     public CultureInfo RequestCulture { get; }
 
     /// <summary>
-    /// Correlation id of a request.
+    /// Correlation id of a request, <see langword="null"/> if the message has no correlation id.
     /// </summary>
-    public string CorrelationId => RabbitMQEvent.ReceivedData.BasicProperties.CorrelationId;
+    public string? CorrelationId => RabbitMQEvent.ReceivedData.BasicProperties.CorrelationId;
 
     /// <summary>
     /// Source request from RabbitMQ.

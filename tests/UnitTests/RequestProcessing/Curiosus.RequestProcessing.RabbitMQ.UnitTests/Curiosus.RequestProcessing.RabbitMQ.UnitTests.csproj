@@ -17,7 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\..\src\Messaging\Curiosus.RabbitMQ\Curiosus.RabbitMQ.csproj" />
+      <ProjectReference Include="..\..\..\..\src\RequestProcessing\Curiosus.RequestProcessing.RabbitMQ\Curiosus.RequestProcessing.RabbitMQ.csproj" />
     </ItemGroup>
 
 </Project>

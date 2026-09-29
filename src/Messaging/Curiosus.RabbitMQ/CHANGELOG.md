@@ -1,5 +1,26 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- **Breaking:** upgraded `RabbitMQ.Client` from `6.8.1` to `7.1.0`. Version 7 has an async-only API, so the RPC client
+  API became async too. To migrate:
+  - `RabbitMqRpcClientFactory.CreateClient(...)` → `await RabbitMqRpcClientFactory.CreateClientAsync(...)`: same
+    parameters plus an optional `CancellationToken`. Connection errors are thrown from the awaited call.
+  - `ManualAckRabbitResult<T>.ConfirmAcknowledge()` → `await ManualAckRabbitResult<T>.ConfirmAcknowledgeAsync()`,
+    with an optional `CancellationToken`. Concurrent calls send one ack; if the ack is cancelled, the next call retries.
+  - `RabbitMqRpcClient.GetConsumersCount()` → `await RabbitMqRpcClient.GetConsumersCountAsync()`, with an optional
+    `CancellationToken`.
+  - Code that uses `RabbitMQ.Client` directly must be migrated to version 7 as well, see its
+    [migration guide](https://github.com/rabbitmq/rabbitmq-dotnet-client/blob/main/v7-MIGRATION.md).
+- The RPC client completes pending requests asynchronously, so code after `await SendWith...Async(...)` no longer runs
+  inside the RabbitMQ consumer and doesn't block the delivery of other responses.
+
+### Fixed
+
+- A response without a correlation id is rejected instead of failing inside the consumer.
+
 ## [2.0.0] - 2026-09-27
 
 ### Changed
