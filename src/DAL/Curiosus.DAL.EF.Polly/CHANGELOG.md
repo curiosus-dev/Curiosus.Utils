@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Updated `Polly` to `8.0.0`. `GetHandleDbConcurrencyExceptionsPolicy()` still returns the Polly v7 `PolicyBuilder`,
+  which Polly 8 keeps unchanged, so existing policies built from it keep working.
+
 ## [2.0.0] - 2026-09-27
 
 ### Changed

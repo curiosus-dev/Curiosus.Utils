@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Updated `Polly` to `8.0.0`. The package keeps using the Polly v7 API, which Polly 8 still ships,
+  so nothing changes for consumers.
+
 ## [2.0.0] - 2026-09-27
 
 ### Changed
