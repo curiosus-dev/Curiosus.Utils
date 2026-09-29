@@ -1,4 +1,7 @@
 {
   "title": "Curiosus.Utils",
-  "tagline": "Building blocks for .NET services: hosting, configuration, data access, e-mail and SMS, notifications"
+  "tagline": "Building blocks for .NET services: hosting, configuration, data access, e-mail and SMS, notifications",
+  "algolia": {
+    "siteVerification": "303E1EFBB247DD16"
+  }
 }

@@ -7,7 +7,7 @@ e-mail and SMS, notifications, request processing, file formats, localization an
 [![License](https://img.shields.io/github/license/curiosus-dev/Curiosus.Utils)](https://github.com/curiosus-dev/Curiosus.Utils/blob/main/LICENSE)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/Curiosus.Tools)](https://www.nuget.org/packages/Curiosus.Tools)
 [![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/curiosus-dev/Curiosus.Utils/badges/coverage.json)](https://github.com/curiosus-dev/Curiosus.Utils/actions/workflows/release-packages.yml)
-[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-c23926)](https://curiosus-dev.github.io/Curiosus.Utils/)
+[![Docs](https://github.com/curiosus-dev/Curiosus.Utils/actions/workflows/docs.yml/badge.svg?branch=main)](https://curiosus-dev.github.io/Curiosus.Utils/)
 
 > **Renamed:** formerly `Curiosity.*` by SIIS Ltd. Since 2.0.0 the packages are published as `Curiosus.*`
 > by [curiosus-dev](https://www.nuget.org/profiles/curiosus-dev). To migrate, replace `Curiosity` with `Curiosus` in package references and code.
