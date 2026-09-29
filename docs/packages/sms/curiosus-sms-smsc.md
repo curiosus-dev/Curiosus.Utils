@@ -1,0 +1,1 @@
+../../../src/SMS/Curiosus.SMS.Smsc/README.md

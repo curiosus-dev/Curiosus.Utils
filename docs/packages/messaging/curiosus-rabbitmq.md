@@ -1,0 +1,1 @@
+../../../src/Messaging/Curiosus.RabbitMQ/README.md

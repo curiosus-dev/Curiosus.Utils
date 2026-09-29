@@ -1,0 +1,1 @@
+../../../src/Configuration/Curiosus.Configuration/README.md

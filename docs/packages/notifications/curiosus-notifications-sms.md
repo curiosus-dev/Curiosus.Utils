@@ -1,0 +1,1 @@
+../../../src/Notifications/Curiosus.Notifications.SMS/README.md
