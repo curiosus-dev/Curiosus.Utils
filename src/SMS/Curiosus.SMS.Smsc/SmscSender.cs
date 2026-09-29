@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -7,13 +10,26 @@ using System.Threading.Tasks;
 using Curiosus.Configuration;
 using Curiosus.Tools;
 using Microsoft.Extensions.Logging;
-using RestSharp;
 
 namespace Curiosus.SMS.Smsc
 {
     /// <inheritdoc />
     public class SmscSender : ISmscSender
     {
+        /// <summary>
+        /// Name of the <see cref="HttpClient"/> requested from <see cref="IHttpClientFactory"/>.
+        /// </summary>
+        public const string HttpClientName = "Curiosus.SMS.Smsc";
+
+        private const string SendUrl = "https://smsc.ru/sys/send.php";
+
+        private static readonly HttpClient SharedHttpClient = new(new SocketsHttpHandler
+        {
+            PooledConnectionLifetime = TimeSpan.FromMinutes(2)
+        });
+
+        internal static readonly JsonSerializerOptions ResponseJsonOptions = new(JsonSerializerDefaults.Web);
+
         internal static readonly JsonSerializerOptions ResultJsonOptions = new()
         {
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -22,12 +38,25 @@ namespace Curiosus.SMS.Smsc
 
         private readonly ILogger _logger;
         private readonly SmscOptions _options;
+        private readonly IHttpClientFactory? _httpClientFactory;
 
+        /// <summary>
+        /// Creates a sender that uses a shared <see cref="HttpClient"/>.
+        /// </summary>
         public SmscSender(ILogger<SmscSender> logger, SmscOptions options)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _options = options ?? throw new ArgumentNullException(nameof(options));
             options.AssertValid();
+        }
+
+        /// <summary>
+        /// Creates a sender that gets <see cref="HttpClient"/> named <see cref="HttpClientName"/> from the factory.
+        /// </summary>
+        public SmscSender(ILogger<SmscSender> logger, SmscOptions options, IHttpClientFactory httpClientFactory)
+            : this(logger, options)
+        {
+            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
         /// <inheritdoc />
@@ -48,31 +77,28 @@ namespace Curiosus.SMS.Smsc
             int retriesCount = 0,
             CancellationToken cancellationToken = default)
         {
-            using var client = new RestClient("https://smsc.ru/sys/send.php");
-            var request = new RestRequest
+            var query = new List<KeyValuePair<string, string>>
             {
-                Method = Method.Post
+                new("login", smscLogin),
+                new("psw", smscPassword)
             };
-
-            request.AddQueryParameter("login", smscLogin);
-            request.AddQueryParameter("psw", smscPassword);
 
             if (!String.IsNullOrWhiteSpace(senderName))
             {
-                request.AddQueryParameter("sender", senderName);
+                query.Add(new("sender", senderName));
             }
 
-            request.AddQueryParameter("phones", phoneNumber);
-            request.AddQueryParameter("mes", message);
+            query.Add(new("phones", phoneNumber));
+            query.Add(new("mes", message));
 
-            request.AddQueryParameter("cost", "2"); // отправить и вернуть стоимость
-            request.AddQueryParameter("fmt", "3"); // результат в json
+            query.Add(new("cost", "2")); // отправить и вернуть стоимость
+            query.Add(new("fmt", "3")); // результат в json
 
             _logger.LogInformation($"Отправляем sms на номер {phoneNumber}...");
 
             // execute
-            var response = await client.ExecuteAsync<SmscResponseData>(request, cancellationToken);
-            
+            var response = await ExecuteAsync(SendUrl + "?" + ToQueryString(query), cancellationToken);
+
             string resultJson;
             decimal? messageCost = null;
             if (response.IsSuccessful)
@@ -125,17 +151,9 @@ namespace Curiosus.SMS.Smsc
                 {
                     error_code = -1
                 };
-                if (response.ErrorException != null)
-                {
-                    data.Error =
-                        $"{response.ErrorException.GetType().Name}: {response.ErrorException.Message}";
-                }
-                else
-                {
-                    data.Error = !String.IsNullOrEmpty(response.ErrorMessage)
-                        ? $"{response.ErrorMessage}"
-                        : $"{(int) response.StatusCode}, {response.StatusDescription}";
-                }
+                data.Error = response.ErrorException != null
+                    ? $"{response.ErrorException.GetType().Name}: {response.ErrorException.Message}"
+                    : $"{response.StatusCode}, {response.ReasonPhrase}";
 
                 resultJson = JsonSerializer.Serialize(data, ResultJsonOptions);
 
@@ -158,6 +176,37 @@ namespace Curiosus.SMS.Smsc
             var result = new SmsSentResult(sentSmsCount, messageCost, resultJson);
             return Response.Successful(result);
         }
+
+        private sealed record SmscHttpResponse(
+            bool IsSuccessful,
+            SmscResponseData? Data,
+            int StatusCode,
+            string? ReasonPhrase,
+            Exception? ErrorException);
+
+        private async Task<SmscHttpResponse> ExecuteAsync(string requestUri, CancellationToken cancellationToken)
+        {
+            var httpClient = _httpClientFactory?.CreateClient(HttpClientName) ?? SharedHttpClient;
+            try
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Post, requestUri);
+                using var response = await httpClient.SendAsync(request, cancellationToken);
+                if (!response.IsSuccessStatusCode)
+                    return new SmscHttpResponse(false, null, (int)response.StatusCode, response.ReasonPhrase, null);
+
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                var data = JsonSerializer.Deserialize<SmscResponseData>(content, ResponseJsonOptions);
+                return new SmscHttpResponse(true, data, (int)response.StatusCode, response.ReasonPhrase, null);
+            }
+            catch (Exception e) when (e is HttpRequestException or JsonException
+                                          || (e is OperationCanceledException && !cancellationToken.IsCancellationRequested))
+            {
+                return new SmscHttpResponse(false, null, 0, null, e);
+            }
+        }
+
+        private static string ToQueryString(IEnumerable<KeyValuePair<string, string>> parameters) =>
+            String.Join("&", parameters.Select(p => $"{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}"));
 
         /// <inheritdoc />
         public Task<Response<SmsSentResult>> SendSmsAsync(string phoneNumber, string message, ISmsExtraParams extraParams, CancellationToken cancellationToken = default)

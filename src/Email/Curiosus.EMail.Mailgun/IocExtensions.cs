@@ -22,6 +22,7 @@ namespace Curiosus.EMail.Mailgun
             options.AssertValid();
 
             service.TryAddSingleton(options);
+            service.AddHttpClient(MailgunEmailSender.HttpClientName);
             service.TryAddSingleton<IMailgunEmailSender, MailgunEmailSender>();
             if (useAsDefaultSender)
             {

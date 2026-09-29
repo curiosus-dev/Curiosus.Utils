@@ -1,4 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
@@ -6,16 +10,25 @@ using System.Threading.Tasks;
 using Curiosus.Configuration;
 using Curiosus.Tools;
 using Microsoft.Extensions.Logging;
-using RestSharp;
-using RestSharp.Authenticators;
 
 namespace Curiosus.EMail.Mailgun
 {
     /// <inheritdoc />
     public class MailgunEmailSender : IMailgunEmailSender
     {
+        /// <summary>
+        /// Name of the <see cref="HttpClient"/> requested from <see cref="IHttpClientFactory"/>.
+        /// </summary>
+        public const string HttpClientName = "Curiosus.EMail.Mailgun";
+
+        private static readonly HttpClient SharedHttpClient = new(new SocketsHttpHandler
+        {
+            PooledConnectionLifetime = TimeSpan.FromMinutes(2)
+        });
+
         private readonly ILogger<MailgunEmailSender> _logger;
         private readonly MailgunEmailOptions _mailgunEmailOptions;
+        private readonly IHttpClientFactory? _httpClientFactory;
 
         /// <inheritdoc cref="MailgunEmailSender"/>
         public MailgunEmailSender(
@@ -26,6 +39,18 @@ namespace Curiosus.EMail.Mailgun
 
             _mailgunEmailOptions = mailgunEmailOptions ?? throw new ArgumentNullException(nameof(mailgunEmailOptions));
             _mailgunEmailOptions.AssertValid();
+        }
+
+        /// <summary>
+        /// Creates a sender that gets <see cref="HttpClient"/> named <see cref="HttpClientName"/> from the factory.
+        /// </summary>
+        public MailgunEmailSender(
+            ILogger<MailgunEmailSender> logger,
+            MailgunEmailOptions mailgunEmailOptions,
+            IHttpClientFactory httpClientFactory)
+            : this(logger, mailgunEmailOptions)
+        {
+            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
         private class MailGunResponse
@@ -85,42 +110,59 @@ namespace Curiosus.EMail.Mailgun
                     throw new ArgumentException($"Region {region} is not supported.", nameof(region));
             }
 
-            using var restClient = new RestClient(new RestClientOptions(mailgunHost)
+            var form = new List<KeyValuePair<string, string>>
             {
-                Authenticator = new HttpBasicAuthenticator(mailgunUser, mailGunApiKey)
-            });
-
-            var restRequest = new RestRequest();
-            restRequest.AddParameter("domain", mailgunDomain, ParameterType.UrlSegment);
-            restRequest.Resource = "{domain}/messages";
-            restRequest.AddParameter("from", emailFrom);
-            restRequest.AddParameter("to", toAddress);
+                new("from", emailFrom),
+                new("to", toAddress)
+            };
 
             // add reply to address if it specified
             if (!String.IsNullOrWhiteSpace(replyTo))
-                restRequest.AddParameter("h:Reply-To", replyTo);
+                form.Add(new("h:Reply-To", replyTo));
 
-            restRequest.AddParameter("subject", subject);
-            restRequest.AddParameter(isBodyHtml ? "html" : "text", body);
-            restRequest.Method = Method.Post;
+            form.Add(new("subject", subject));
+            form.Add(new(isBodyHtml ? "html" : "text", body));
+
+            using var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"{mailgunHost}/{Uri.EscapeDataString(mailgunDomain)}/messages");
+            request.Headers.Authorization = new AuthenticationHeaderValue(
+                "Basic",
+                Convert.ToBase64String(Encoding.UTF8.GetBytes($"{mailgunUser}:{mailGunApiKey}")));
+            request.Content = new FormUrlEncodedContent(form);
 
             _logger.LogTrace("Sending email to {Email}...", toAddress);
-            var response = await restClient.ExecuteAsync(restRequest, cancellationToken);
-            if (!response.IsSuccessful)
+            var httpClient = _httpClientFactory?.CreateClient(HttpClientName) ?? SharedHttpClient;
+            string content;
+            string? contentType;
+            try
             {
-                _logger.LogWarning($"Error sending message to {toAddress}. StatusCode = {response.StatusCode.ToString()}. Response: {response.Content}");
+                using var response = await httpClient.SendAsync(request, cancellationToken);
+                content = await response.Content.ReadAsStringAsync(cancellationToken);
+                contentType = response.Content.Headers.ContentType?.MediaType;
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning($"Error sending message to {toAddress}. StatusCode = {response.StatusCode.ToString()}. Response: {content}");
 
-                return ((int)response.StatusCode) == 420
-                ? Response.Failed(new Error((int)EmailError.RateLimit, response.Content))
-                : Response.Failed(new Error((int)EmailError.Auth, response.Content));
+                    return ((int)response.StatusCode) == 420
+                    ? Response.Failed(new Error((int)EmailError.RateLimit, content))
+                    : Response.Failed(new Error((int)EmailError.Auth, content));
+                }
+            }
+            catch (Exception e) when (e is HttpRequestException
+                                          || (e is OperationCanceledException && !cancellationToken.IsCancellationRequested))
+            {
+                _logger.LogWarning(e, "Error sending message to {Email}", toAddress);
+
+                return Response.Failed(new Error((int)EmailError.Communication, e.Message));
             }
 
-            _logger.LogDebug("Message is successfully sent to {Email}. Response: {Response}", toAddress, response.Content);
-            if (response.ContentType != "application/json") return Response.Successful();
+            _logger.LogDebug("Message is successfully sent to {Email}. Response: {Response}", toAddress, content);
+            if (contentType != "application/json") return Response.Successful();
 
             try
             {
-                var mgResponse = JsonSerializer.Deserialize<MailGunResponse>(response.Content!)!;
+                var mgResponse = JsonSerializer.Deserialize<MailGunResponse>(content)!;
                 _logger.LogDebug($"MailGun response: message = \"{mgResponse.Message}\", id = \"{mgResponse.Id}\"");
             }
             catch (Exception e)

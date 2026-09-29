@@ -1,5 +1,22 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- `UnisenderGoEmailSender` constructor accepting `IHttpClientFactory` and the `UnisenderGoEmailSender.HttpClientName` constant.
+  The existing constructor keeps working and uses a shared `HttpClient`.
+
+### Changed
+
+- HTTP calls use `HttpClient` from `IHttpClientFactory` instead of `RestSharp`: `AddUnisenderGoEmailSender` registers the named client
+  `UnisenderGoEmailSender.HttpClientName`, configure it with `services.AddHttpClient(UnisenderGoEmailSender.HttpClientName, ...)`.
+  The package no longer depends on `RestSharp`: reference it directly if your code used it through this package.
+
+### Fixed
+
+- Network failures and timeouts are reported as `EmailError.Communication` instead of `EmailError.Unknown`.
+
 ## [2.0.0] - 2026-09-27
 
 ### Changed

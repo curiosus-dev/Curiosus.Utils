@@ -1,5 +1,21 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- `ReCaptchaService` constructor accepting `IHttpClientFactory` and the `ReCaptchaService.HttpClientName` constant.
+  The existing constructor keeps working and uses a shared `HttpClient`.
+
+### Changed
+
+- HTTP calls use `HttpClient` from `IHttpClientFactory` instead of `Flurl.Http`: `AddReCaptcha` registers the named client
+  `ReCaptchaService.HttpClientName`, configure it with `services.AddHttpClient(ReCaptchaService.HttpClientName, ...)`.
+  The package no longer depends on `Flurl.Http`: reference it directly if your code used it through this package.
+- **Breaking:** `ReCaptchaService.VerifyReCaptchaAsync` throws `HttpRequestException` instead of `FlurlHttpException`
+  when the reCAPTCHA API is unavailable or returns an error status code: catch `HttpRequestException` instead.
+- `MVCBaseController.Redirect` encodes non-ASCII and other illegal URL characters without Flurl, with the same result.
+
 ## [2.0.0] - 2026-09-27
 
 ### Changed

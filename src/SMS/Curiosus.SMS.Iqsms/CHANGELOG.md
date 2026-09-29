@@ -1,5 +1,18 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- `IqsmsSender` constructor accepting `IHttpClientFactory` and the `IqsmsSender.HttpClientName` constant.
+  The existing constructor keeps working and uses a shared `HttpClient`.
+
+### Changed
+
+- HTTP calls use `HttpClient` from `IHttpClientFactory` instead of `RestSharp`: `AddIqsmsSender` registers the named client
+  `IqsmsSender.HttpClientName`, configure it with `services.AddHttpClient(IqsmsSender.HttpClientName, ...)`.
+  The package no longer depends on `RestSharp`: reference it directly if your code used it through this package.
+
 ## [2.0.0] - 2026-09-27
 
 ### Changed

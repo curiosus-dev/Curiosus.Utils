@@ -1,5 +1,20 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- `SmscSender` constructor accepting `IHttpClientFactory` and the `SmscSender.HttpClientName` constant.
+  The existing constructor keeps working and uses a shared `HttpClient`.
+
+### Changed
+
+- HTTP calls use `HttpClient` from `IHttpClientFactory` instead of `RestSharp`: `AddSmscSmsSender` registers the named client
+  `SmscSender.HttpClientName`, configure it with `services.AddHttpClient(SmscSender.HttpClientName, ...)`.
+  The package no longer depends on `RestSharp`: reference it directly if your code used it through this package.
+- HTTP errors are reported as `"<status code>, <reason phrase>"` in the error description and `SmsSentResult.ResponseJson`
+  (previously the RestSharp error message).
+
 ## [2.0.0] - 2026-09-27
 
 ### Changed

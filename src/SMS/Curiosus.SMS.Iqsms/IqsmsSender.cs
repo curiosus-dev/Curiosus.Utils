@@ -1,8 +1,8 @@
 ﻿using System.Net;
+using System.Net.Http;
 using Curiosus.Configuration;
 using Curiosus.Tools;
 using Microsoft.Extensions.Logging;
-using RestSharp;
 using System;
 
 namespace Curiosus.SMS.Iqsms;
@@ -10,14 +10,39 @@ namespace Curiosus.SMS.Iqsms;
 /// <inheritdoc cref="IIqsmsSender"/>
 public class IqsmsSender : IIqsmsSender
 {
+    /// <summary>
+    /// Name of the <see cref="HttpClient"/> requested from <see cref="IHttpClientFactory"/>.
+    /// </summary>
+    public const string HttpClientName = "Curiosus.SMS.Iqsms";
+
+    private const string SendUrl = "https://api.iqsms.ru/messages/v2/send";
+
+    private static readonly HttpClient SharedHttpClient = new(new SocketsHttpHandler
+    {
+        PooledConnectionLifetime = TimeSpan.FromMinutes(2)
+    });
+
     private readonly ILogger<IqsmsSender> _logger;
     private readonly IqsmsOptions         _options;
+    private readonly IHttpClientFactory?  _httpClientFactory;
 
+    /// <summary>
+    /// Creates a sender that uses a shared <see cref="HttpClient"/>.
+    /// </summary>
     public IqsmsSender(ILogger<IqsmsSender> logger, IqsmsOptions options)
     {
         _logger = logger   ?? throw new ArgumentNullException(nameof(logger));
         _options = options ?? throw new ArgumentNullException(nameof(options));
         options.AssertValid();
+    }
+
+    /// <summary>
+    /// Creates a sender that gets <see cref="HttpClient"/> named <see cref="HttpClientName"/> from the factory.
+    /// </summary>
+    public IqsmsSender(ILogger<IqsmsSender> logger, IqsmsOptions options, IHttpClientFactory httpClientFactory)
+        : this(logger, options)
+    {
+        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
     }
 
     /// <inheritdoc />
@@ -63,25 +88,21 @@ public class IqsmsSender : IIqsmsSender
             };
         }
         
-        using var client = new RestClient("https://api.iqsms.ru/messages/v2/send");
-        var request = new RestRequest
+        var query = new List<KeyValuePair<string, string>>
         {
-            Method = Method.Get
+            new("login", login),
+            new("password", password),
+            new("phone", phoneNumber),
+            new("text", message)
         };
 
-        request.AddQueryParameter("login", login);
-        request.AddQueryParameter("password", password);
-        request.AddQueryParameter("phone", phoneNumber);
-        request.AddQueryParameter("text", message);
-        
         if(!String.IsNullOrWhiteSpace(senderName))
-            request.AddQueryParameter("sender", senderName);
-
+            query.Add(new("sender", senderName));
 
         _logger.LogInformation($"Отправляем sms на номер {phoneNumber}...");
 
         // execute
-        var response = await client.ExecuteAsync<string>(request, cancellationToken);
+        var response = await ExecuteAsync(SendUrl + "?" + ToQueryString(query), cancellationToken);
         
         // HTTP code
         switch (response.StatusCode)
@@ -142,4 +163,29 @@ public class IqsmsSender : IIqsmsSender
         var result = new SmsSentResult(null, null, response.Content!);
         return Response.Successful(result);
     }
+
+    private sealed record IqsmsHttpResponse(HttpStatusCode StatusCode, string? Content, string? ErrorMessage);
+
+    private async Task<IqsmsHttpResponse> ExecuteAsync(string requestUri, CancellationToken cancellationToken)
+    {
+        var httpClient = _httpClientFactory?.CreateClient(HttpClientName) ?? SharedHttpClient;
+        try
+        {
+            using var response = await httpClient.GetAsync(requestUri, cancellationToken);
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            var errorMessage = response.IsSuccessStatusCode
+                ? null
+                : $"Request failed with status code {(int)response.StatusCode} ({response.ReasonPhrase})";
+
+            return new IqsmsHttpResponse(response.StatusCode, content, errorMessage);
+        }
+        catch (Exception e) when (e is HttpRequestException
+                                      || (e is OperationCanceledException && !cancellationToken.IsCancellationRequested))
+        {
+            return new IqsmsHttpResponse(0, null, e.Message);
+        }
+    }
+
+    private static string ToQueryString(IEnumerable<KeyValuePair<string, string>> parameters) =>
+        String.Join("&", parameters.Select(p => $"{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}"));
 }

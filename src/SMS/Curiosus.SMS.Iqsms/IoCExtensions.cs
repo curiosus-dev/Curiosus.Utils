@@ -20,6 +20,7 @@ public static class IoCExtensions
         options.AssertValid();
 
         services.TryAddSingleton(options);
+        services.AddHttpClient(IqsmsSender.HttpClientName);
         services.TryAddSingleton<IIqsmsSender, IqsmsSender>();
 
         if (useAsDefaultSender)

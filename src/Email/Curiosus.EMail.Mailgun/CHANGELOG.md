@@ -1,5 +1,24 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- `MailgunEmailSender` constructor accepting `IHttpClientFactory` and the `MailgunEmailSender.HttpClientName` constant.
+  The existing constructor keeps working and uses a shared `HttpClient`.
+
+### Changed
+
+- HTTP calls use `HttpClient` from `IHttpClientFactory` instead of `RestSharp`: `AddMailgunEmailSender` registers the named client
+  `MailgunEmailSender.HttpClientName`, configure it with `services.AddHttpClient(MailgunEmailSender.HttpClientName, ...)`.
+  The package no longer depends on `RestSharp`: reference it directly if your code used it through this package.
+
+### Fixed
+
+- `MailgunEmailSender` could not be created: `MailgunEmailOptions.AssertValid()` threw `NotImplementedException`.
+  The stub is removed, options are validated by the `AssertValid()` extension of `Curiosus.Configuration`.
+- Network failures and timeouts are reported as `EmailError.Communication` instead of `EmailError.Auth`.
+
 ## [2.0.0] - 2026-09-27
 
 ### Changed

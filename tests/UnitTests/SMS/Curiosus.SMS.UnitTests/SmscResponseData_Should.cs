@@ -1,7 +1,7 @@
+#nullable enable
+
 using Curiosus.SMS.Smsc;
 using FluentAssertions;
-using RestSharp;
-using RestSharp.Serializers.Json;
 using Xunit;
 
 namespace Curiosus.SMS.UnitTests
@@ -12,7 +12,7 @@ namespace Curiosus.SMS.UnitTests
     public class SmscResponseData_Should
     {
         [Fact]
-        public void Deserialize_SuccessResponse_WithRestSharpDefaultSerializer()
+        public void Deserialize_SuccessResponse_WithSenderResponseOptions()
         {
             // arrange
             var json = "{\"id\":123,\"cnt\":2,\"cost\":\"3.40\",\"balance\":\"100.50\"}";
@@ -31,7 +31,7 @@ namespace Curiosus.SMS.UnitTests
         }
 
         [Fact]
-        public void Deserialize_ErrorResponse_WithRestSharpDefaultSerializer()
+        public void Deserialize_ErrorResponse_WithSenderResponseOptions()
         {
             // arrange
             var json = "{\"error\":\"invalid number\",\"error_code\":7}";
@@ -62,15 +62,7 @@ namespace Curiosus.SMS.UnitTests
             json.Should().Be("{\"Error\":\"Ошибка\",\"error_code\":-1}");
         }
 
-        private static SmscResponseData? Deserialize(string json)
-        {
-            var response = new RestResponse(new RestRequest())
-            {
-                Content = json,
-                ContentType = ContentType.Json
-            };
-
-            return new SystemTextJsonSerializer().Deserialize<SmscResponseData>(response);
-        }
+        private static SmscResponseData? Deserialize(string json) =>
+            System.Text.Json.JsonSerializer.Deserialize<SmscResponseData>(json, SmscSender.ResponseJsonOptions);
     }
 }
