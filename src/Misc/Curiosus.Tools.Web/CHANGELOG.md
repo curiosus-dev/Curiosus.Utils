@@ -2,13 +2,11 @@
 
 ## [Unreleased]
 
-### Added
-
-- `ReCaptchaService` constructor accepting `IHttpClientFactory` and the `ReCaptchaService.HttpClientName` constant.
-  The existing constructor keeps working and uses a shared `HttpClient`.
-
 ### Changed
 
+- **Breaking:** the `ReCaptchaService(ReCaptchaOptions options)` constructor is replaced by one that also takes
+  `IHttpClientFactory`. `AddReCaptcha` registers everything; when creating `ReCaptchaService` yourself, call
+  `services.AddHttpClient()` and pass `IHttpClientFactory` from the service provider.
 - HTTP calls use `HttpClient` from `IHttpClientFactory` instead of `Flurl.Http`: `AddReCaptcha` registers the named client
   `ReCaptchaService.HttpClientName`, configure it with `services.AddHttpClient(ReCaptchaService.HttpClientName, ...)`.
   The package no longer depends on `Flurl.Http`: reference it directly if your code used it through this package.

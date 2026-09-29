@@ -14,27 +14,15 @@ namespace Curiosus.Tools.Web.ReCaptcha
         /// </summary>
         public const string HttpClientName = "Curiosus.Tools.Web.ReCaptcha";
 
-        private static readonly HttpClient SharedHttpClient = new(new SocketsHttpHandler
-        {
-            PooledConnectionLifetime = TimeSpan.FromMinutes(2)
-        });
-
         private readonly ReCaptchaOptions _options;
-        private readonly IHttpClientFactory? _httpClientFactory;
-
-        /// <summary>
-        /// Creates a service that uses a shared <see cref="HttpClient"/>.
-        /// </summary>
-        public ReCaptchaService(ReCaptchaOptions options)
-        {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
-        }
+        private readonly IHttpClientFactory _httpClientFactory;
 
         /// <summary>
         /// Creates a service that gets <see cref="HttpClient"/> named <see cref="HttpClientName"/> from the factory.
         /// </summary>
-        public ReCaptchaService(ReCaptchaOptions options, IHttpClientFactory httpClientFactory) : this(options)
+        public ReCaptchaService(ReCaptchaOptions options, IHttpClientFactory httpClientFactory)
         {
+            _options = options ?? throw new ArgumentNullException(nameof(options));
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
@@ -55,7 +43,7 @@ namespace Curiosus.Tools.Web.ReCaptcha
                     ["response"] = response
                 });
 
-            var httpClient = _httpClientFactory?.CreateClient(HttpClientName) ?? SharedHttpClient;
+            var httpClient = _httpClientFactory.CreateClient(HttpClientName);
             var reCaptchaResponse = await httpClient.GetFromJsonAsync<ReCaptchaResponse>(requestUri);
 
             return reCaptchaResponse?.success ?? false;

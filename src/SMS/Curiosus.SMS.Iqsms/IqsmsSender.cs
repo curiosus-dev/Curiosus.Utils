@@ -17,32 +17,19 @@ public class IqsmsSender : IIqsmsSender
 
     private const string SendUrl = "https://api.iqsms.ru/messages/v2/send";
 
-    private static readonly HttpClient SharedHttpClient = new(new SocketsHttpHandler
-    {
-        PooledConnectionLifetime = TimeSpan.FromMinutes(2)
-    });
-
     private readonly ILogger<IqsmsSender> _logger;
     private readonly IqsmsOptions         _options;
-    private readonly IHttpClientFactory?  _httpClientFactory;
-
-    /// <summary>
-    /// Creates a sender that uses a shared <see cref="HttpClient"/>.
-    /// </summary>
-    public IqsmsSender(ILogger<IqsmsSender> logger, IqsmsOptions options)
-    {
-        _logger = logger   ?? throw new ArgumentNullException(nameof(logger));
-        _options = options ?? throw new ArgumentNullException(nameof(options));
-        options.AssertValid();
-    }
+    private readonly IHttpClientFactory   _httpClientFactory;
 
     /// <summary>
     /// Creates a sender that gets <see cref="HttpClient"/> named <see cref="HttpClientName"/> from the factory.
     /// </summary>
     public IqsmsSender(ILogger<IqsmsSender> logger, IqsmsOptions options, IHttpClientFactory httpClientFactory)
-        : this(logger, options)
     {
+        _logger = logger   ?? throw new ArgumentNullException(nameof(logger));
+        _options = options ?? throw new ArgumentNullException(nameof(options));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        options.AssertValid();
     }
 
     /// <inheritdoc />
@@ -168,7 +155,7 @@ public class IqsmsSender : IIqsmsSender
 
     private async Task<IqsmsHttpResponse> ExecuteAsync(string requestUri, CancellationToken cancellationToken)
     {
-        var httpClient = _httpClientFactory?.CreateClient(HttpClientName) ?? SharedHttpClient;
+        var httpClient = _httpClientFactory.CreateClient(HttpClientName);
         try
         {
             using var response = await httpClient.GetAsync(requestUri, cancellationToken);

@@ -23,11 +23,6 @@ namespace Curiosus.SMS.Smsc
 
         private const string SendUrl = "https://smsc.ru/sys/send.php";
 
-        private static readonly HttpClient SharedHttpClient = new(new SocketsHttpHandler
-        {
-            PooledConnectionLifetime = TimeSpan.FromMinutes(2)
-        });
-
         internal static readonly JsonSerializerOptions ResponseJsonOptions = new(JsonSerializerDefaults.Web);
 
         internal static readonly JsonSerializerOptions ResultJsonOptions = new()
@@ -38,25 +33,17 @@ namespace Curiosus.SMS.Smsc
 
         private readonly ILogger _logger;
         private readonly SmscOptions _options;
-        private readonly IHttpClientFactory? _httpClientFactory;
-
-        /// <summary>
-        /// Creates a sender that uses a shared <see cref="HttpClient"/>.
-        /// </summary>
-        public SmscSender(ILogger<SmscSender> logger, SmscOptions options)
-        {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _options = options ?? throw new ArgumentNullException(nameof(options));
-            options.AssertValid();
-        }
+        private readonly IHttpClientFactory _httpClientFactory;
 
         /// <summary>
         /// Creates a sender that gets <see cref="HttpClient"/> named <see cref="HttpClientName"/> from the factory.
         /// </summary>
         public SmscSender(ILogger<SmscSender> logger, SmscOptions options, IHttpClientFactory httpClientFactory)
-            : this(logger, options)
         {
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _options = options ?? throw new ArgumentNullException(nameof(options));
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            options.AssertValid();
         }
 
         /// <inheritdoc />
@@ -186,7 +173,7 @@ namespace Curiosus.SMS.Smsc
 
         private async Task<SmscHttpResponse> ExecuteAsync(string requestUri, CancellationToken cancellationToken)
         {
-            var httpClient = _httpClientFactory?.CreateClient(HttpClientName) ?? SharedHttpClient;
+            var httpClient = _httpClientFactory.CreateClient(HttpClientName);
             try
             {
                 using var request = new HttpRequestMessage(HttpMethod.Post, requestUri);

@@ -23,11 +23,6 @@ namespace Curiosus.Email.UnisenderGo
         /// </summary>
         public const string HttpClientName = "Curiosus.Email.UnisenderGo";
 
-        private static readonly HttpClient SharedHttpClient = new(new SocketsHttpHandler
-        {
-            PooledConnectionLifetime = TimeSpan.FromMinutes(2)
-        });
-
         internal static readonly JsonSerializerOptions SerializerOptions = new()
         {
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -36,17 +31,7 @@ namespace Curiosus.Email.UnisenderGo
 
         private readonly ILogger _logger;
         private readonly UnisenderGoEmailOptions _options;
-        private readonly IHttpClientFactory? _httpClientFactory;
-
-        /// <inheritdoc cref="UnisenderGoEmailSender"/>
-        public UnisenderGoEmailSender(
-            ILogger<UnisenderGoEmailSender> logger,
-            UnisenderGoEmailOptions options)
-        {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _options = options ?? throw new ArgumentNullException(nameof(options));
-            options.AssertValid();
-        }
+        private readonly IHttpClientFactory _httpClientFactory;
 
         /// <summary>
         /// Creates a sender that gets <see cref="HttpClient"/> named <see cref="HttpClientName"/> from the factory.
@@ -55,9 +40,11 @@ namespace Curiosus.Email.UnisenderGo
             ILogger<UnisenderGoEmailSender> logger,
             UnisenderGoEmailOptions options,
             IHttpClientFactory httpClientFactory)
-            : this(logger, options)
         {
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _options = options ?? throw new ArgumentNullException(nameof(options));
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            options.AssertValid();
         }
 
         /// <inheritdoc />
@@ -183,7 +170,7 @@ namespace Curiosus.Email.UnisenderGo
 
             // send
             _logger.LogTrace("Sending email to \"{Email}\"...", toAddress);
-            var httpClient = _httpClientFactory?.CreateClient(HttpClientName) ?? SharedHttpClient;
+            var httpClient = _httpClientFactory.CreateClient(HttpClientName);
             int statusCode;
             string content;
             try

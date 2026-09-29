@@ -2,13 +2,11 @@
 
 ## [Unreleased]
 
-### Added
-
-- `SmscSender` constructor accepting `IHttpClientFactory` and the `SmscSender.HttpClientName` constant.
-  The existing constructor keeps working and uses a shared `HttpClient`.
-
 ### Changed
 
+- **Breaking:** the `SmscSender(ILogger<SmscSender> logger, SmscOptions options)` constructor is replaced by one that also takes
+  `IHttpClientFactory`. `AddSmscSmsSender` registers everything; when creating `SmscSender` yourself, call
+  `services.AddHttpClient()` and pass `IHttpClientFactory` from the service provider.
 - HTTP calls use `HttpClient` from `IHttpClientFactory` instead of `RestSharp`: `AddSmscSmsSender` registers the named client
   `SmscSender.HttpClientName`, configure it with `services.AddHttpClient(SmscSender.HttpClientName, ...)`.
   The package no longer depends on `RestSharp`: reference it directly if your code used it through this package.

@@ -21,25 +21,9 @@ namespace Curiosus.EMail.Mailgun
         /// </summary>
         public const string HttpClientName = "Curiosus.EMail.Mailgun";
 
-        private static readonly HttpClient SharedHttpClient = new(new SocketsHttpHandler
-        {
-            PooledConnectionLifetime = TimeSpan.FromMinutes(2)
-        });
-
         private readonly ILogger<MailgunEmailSender> _logger;
         private readonly MailgunEmailOptions _mailgunEmailOptions;
-        private readonly IHttpClientFactory? _httpClientFactory;
-
-        /// <inheritdoc cref="MailgunEmailSender"/>
-        public MailgunEmailSender(
-            ILogger<MailgunEmailSender> logger,
-            MailgunEmailOptions mailgunEmailOptions)
-        {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
-            _mailgunEmailOptions = mailgunEmailOptions ?? throw new ArgumentNullException(nameof(mailgunEmailOptions));
-            _mailgunEmailOptions.AssertValid();
-        }
+        private readonly IHttpClientFactory _httpClientFactory;
 
         /// <summary>
         /// Creates a sender that gets <see cref="HttpClient"/> named <see cref="HttpClientName"/> from the factory.
@@ -48,9 +32,12 @@ namespace Curiosus.EMail.Mailgun
             ILogger<MailgunEmailSender> logger,
             MailgunEmailOptions mailgunEmailOptions,
             IHttpClientFactory httpClientFactory)
-            : this(logger, mailgunEmailOptions)
         {
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+
+            _mailgunEmailOptions = mailgunEmailOptions ?? throw new ArgumentNullException(nameof(mailgunEmailOptions));
+            _mailgunEmailOptions.AssertValid();
         }
 
         private class MailGunResponse
@@ -132,7 +119,7 @@ namespace Curiosus.EMail.Mailgun
             request.Content = new FormUrlEncodedContent(form);
 
             _logger.LogTrace("Sending email to {Email}...", toAddress);
-            var httpClient = _httpClientFactory?.CreateClient(HttpClientName) ?? SharedHttpClient;
+            var httpClient = _httpClientFactory.CreateClient(HttpClientName);
             string content;
             string? contentType;
             try

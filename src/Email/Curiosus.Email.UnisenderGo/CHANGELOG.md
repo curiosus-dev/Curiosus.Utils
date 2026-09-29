@@ -2,13 +2,11 @@
 
 ## [Unreleased]
 
-### Added
-
-- `UnisenderGoEmailSender` constructor accepting `IHttpClientFactory` and the `UnisenderGoEmailSender.HttpClientName` constant.
-  The existing constructor keeps working and uses a shared `HttpClient`.
-
 ### Changed
 
+- **Breaking:** the `UnisenderGoEmailSender(ILogger<UnisenderGoEmailSender> logger, UnisenderGoEmailOptions options)` constructor is replaced by one that also takes
+  `IHttpClientFactory`. `AddUnisenderGoEmailSender` registers everything; when creating `UnisenderGoEmailSender` yourself, call
+  `services.AddHttpClient()` and pass `IHttpClientFactory` from the service provider.
 - HTTP calls use `HttpClient` from `IHttpClientFactory` instead of `RestSharp`: `AddUnisenderGoEmailSender` registers the named client
   `UnisenderGoEmailSender.HttpClientName`, configure it with `services.AddHttpClient(UnisenderGoEmailSender.HttpClientName, ...)`.
   The package no longer depends on `RestSharp`: reference it directly if your code used it through this package.

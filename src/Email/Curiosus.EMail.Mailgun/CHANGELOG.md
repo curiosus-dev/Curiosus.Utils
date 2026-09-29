@@ -2,13 +2,11 @@
 
 ## [Unreleased]
 
-### Added
-
-- `MailgunEmailSender` constructor accepting `IHttpClientFactory` and the `MailgunEmailSender.HttpClientName` constant.
-  The existing constructor keeps working and uses a shared `HttpClient`.
-
 ### Changed
 
+- **Breaking:** the `MailgunEmailSender(ILogger<MailgunEmailSender> logger, MailgunEmailOptions options)` constructor is replaced by one that also takes
+  `IHttpClientFactory`. `AddMailgunEmailSender` registers everything; when creating `MailgunEmailSender` yourself, call
+  `services.AddHttpClient()` and pass `IHttpClientFactory` from the service provider.
 - HTTP calls use `HttpClient` from `IHttpClientFactory` instead of `RestSharp`: `AddMailgunEmailSender` registers the named client
   `MailgunEmailSender.HttpClientName`, configure it with `services.AddHttpClient(MailgunEmailSender.HttpClientName, ...)`.
   The package no longer depends on `RestSharp`: reference it directly if your code used it through this package.
