@@ -11,6 +11,7 @@ namespace Curiosus.Tools.Web.ReCaptcha
             if (reCaptchaOptions == null) throw new ArgumentNullException(nameof(reCaptchaOptions));
 
             services.AddSingleton(reCaptchaOptions);
+            services.AddHttpClient(ReCaptchaService.HttpClientName);
             services.AddSingleton<ReCaptchaService>();
         }
     }

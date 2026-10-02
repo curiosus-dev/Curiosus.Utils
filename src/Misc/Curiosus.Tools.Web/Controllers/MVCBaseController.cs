@@ -167,7 +167,7 @@ namespace Curiosus.Tools.Web.Controllers
         public override RedirectResult Redirect(string url)
         {
             // перекодируем русские символы, если есть, чтоб избежать "Invalid non-ASCII" исключения
-            var encoded = Flurl.Url.EncodeIllegalCharacters(url);
+            var encoded = UrlCharacterEncoder.EncodeIllegalCharacters(url);
             return base.Redirect(encoded);
         }
     }

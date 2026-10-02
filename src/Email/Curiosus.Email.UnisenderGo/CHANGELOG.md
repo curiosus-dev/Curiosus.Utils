@@ -1,5 +1,23 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- **Breaking:** the `UnisenderGoEmailSender(ILogger<UnisenderGoEmailSender> logger, UnisenderGoEmailOptions options)` constructor is replaced by one that also takes
+  `IHttpClientFactory`. `AddUnisenderGoEmailSender` registers everything; when creating `UnisenderGoEmailSender` yourself, call
+  `services.AddHttpClient()` and pass `IHttpClientFactory` from the service provider.
+- HTTP calls use `HttpClient` from `IHttpClientFactory` instead of `RestSharp`: `AddUnisenderGoEmailSender` registers the named client
+  `UnisenderGoEmailSender.HttpClientName`, configure it with `services.AddHttpClient(UnisenderGoEmailSender.HttpClientName, ...)`.
+  The package no longer depends on `RestSharp`: reference it directly if your code used it through this package.
+- **Breaking:** when `cancellationToken` is cancelled, `SendAsync` throws `OperationCanceledException` instead of returning
+  a failed response. Network failures and `HttpClient` timeouts are still returned as a failed response.
+
+### Fixed
+
+- Network failures and timeouts are reported as `EmailError.Communication` instead of `EmailError.Unknown`.
+- Responses in a charset .NET has no built-in encoding for (such as `windows-1251`) are decoded instead of failing.
+
 ## [2.0.0] - 2026-09-27
 
 ### Changed

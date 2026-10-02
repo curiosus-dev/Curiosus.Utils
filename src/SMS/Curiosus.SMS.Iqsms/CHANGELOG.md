@@ -1,5 +1,22 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- **Breaking:** the `IqsmsSender(ILogger<IqsmsSender> logger, IqsmsOptions options)` constructor is replaced by one that also takes
+  `IHttpClientFactory`. `AddIqsmsSender` registers everything; when creating `IqsmsSender` yourself, call
+  `services.AddHttpClient()` and pass `IHttpClientFactory` from the service provider.
+- HTTP calls use `HttpClient` from `IHttpClientFactory` instead of `RestSharp`: `AddIqsmsSender` registers the named client
+  `IqsmsSender.HttpClientName`, configure it with `services.AddHttpClient(IqsmsSender.HttpClientName, ...)`.
+  The package no longer depends on `RestSharp`: reference it directly if your code used it through this package.
+- **Breaking:** when `cancellationToken` is cancelled, `SendSmsAsync` throws `OperationCanceledException` instead of returning
+  a failed response. Network failures and `HttpClient` timeouts are still returned as a failed response.
+
+### Fixed
+
+- Responses in a charset .NET has no built-in encoding for (such as `windows-1251`) are decoded instead of failing.
+
 ## [2.0.0] - 2026-09-27
 
 ### Changed

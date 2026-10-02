@@ -20,6 +20,11 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\..\..\src\Misc\Curiosus.Tools\Curiosus.Tools.csproj" />
+      <ProjectReference Include="..\..\..\..\src\Misc\Curiosus.Tools.Web\Curiosus.Tools.Web.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Include="..\..\Shared\FakeHttp.cs" Link="Shared\FakeHttp.cs" />
     </ItemGroup>
 
 </Project>

@@ -17,6 +17,11 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\..\..\src\SMS\Curiosus.SMS.Smsc\Curiosus.SMS.Smsc.csproj" />
+      <ProjectReference Include="..\..\..\..\src\SMS\Curiosus.SMS.Iqsms\Curiosus.SMS.Iqsms.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Include="..\..\Shared\FakeHttp.cs" Link="Shared\FakeHttp.cs" />
     </ItemGroup>
 
 </Project>

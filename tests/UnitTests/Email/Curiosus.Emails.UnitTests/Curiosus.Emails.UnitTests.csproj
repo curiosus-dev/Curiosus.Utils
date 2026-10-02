@@ -18,6 +18,11 @@
     <ItemGroup>
       <ProjectReference Include="..\..\..\..\src\Email\Curiosus.EMail\Curiosus.EMail.csproj" />
       <ProjectReference Include="..\..\..\..\src\Email\Curiosus.Email.UnisenderGo\Curiosus.Email.UnisenderGo.csproj" />
+      <ProjectReference Include="..\..\..\..\src\Email\Curiosus.EMail.Mailgun\Curiosus.EMail.Mailgun.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Include="..\..\Shared\FakeHttp.cs" Link="Shared\FakeHttp.cs" />
     </ItemGroup>
 
 </Project>

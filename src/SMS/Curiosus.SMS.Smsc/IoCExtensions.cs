@@ -21,6 +21,7 @@ namespace Curiosus.SMS.Smsc
             options.AssertValid();
 
             services.TryAddSingleton(options);
+            services.AddHttpClient(SmscSender.HttpClientName);
             services.TryAddSingleton<ISmscSender, SmscSender>();
 
             if (useAsDefaultSender)

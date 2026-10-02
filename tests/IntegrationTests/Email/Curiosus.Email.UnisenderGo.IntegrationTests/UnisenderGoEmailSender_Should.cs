@@ -1,8 +1,10 @@
 using System;
 using System.Linq;
+using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -29,7 +31,11 @@ namespace Curiosus.Email.UnisenderGo.IntegrationTests
         public async Task SendEmail_WithoutErrors()
         {
             // arrange
-            var sender = new UnisenderGoEmailSender(_mockLogger, _fixture.UnisenderGoEmailOptions);
+            using var services = new ServiceCollection().AddHttpClient().BuildServiceProvider();
+            var sender = new UnisenderGoEmailSender(
+                _mockLogger,
+                _fixture.UnisenderGoEmailOptions,
+                services.GetRequiredService<IHttpClientFactory>());
 
             // act
             var result = await sender.SendAsync(

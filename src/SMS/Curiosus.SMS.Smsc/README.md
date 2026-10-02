@@ -50,6 +50,13 @@ Notes:
   the raw SMSC response is available in `SmsSentResult.ResponseJson`.
 - If SMSC rejects a message because of the sender name (error 6), the sender retries once without the sender name.
 
+HTTP requests go through the `HttpClient` named `SmscSender.HttpClientName` from `IHttpClientFactory`,
+which `AddSmscSmsSender` registers. Configure it for timeouts, a proxy or resilience handlers:
+
+```csharp
+services.AddHttpClient(SmscSender.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(30));
+```
+
 ## See also
 
 - [Curiosus.SMS](https://www.nuget.org/packages/Curiosus.SMS) — `ISmsSender` abstraction
