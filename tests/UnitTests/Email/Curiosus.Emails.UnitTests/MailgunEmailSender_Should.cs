@@ -113,8 +113,13 @@ namespace Curiosus.Emails.UnitTests
 
         [Theory]
         [InlineData(420, EmailError.RateLimit)]
+        [InlineData(429, EmailError.RateLimit)]
         [InlineData(401, EmailError.Auth)]
-        [InlineData(400, EmailError.Auth)]
+        [InlineData(403, EmailError.Auth)]
+        [InlineData(400, EmailError.IncorrectRequestData)]
+        [InlineData(500, EmailError.Communication)]
+        [InlineData(503, EmailError.Communication)]
+        [InlineData(404, EmailError.Unknown)]
         public async Task SendAsync_HttpError_MapsStatusCode(int statusCode, EmailError expectedError)
         {
             // arrange
@@ -144,6 +149,20 @@ namespace Curiosus.Emails.UnitTests
             var error = response.Errors.Should().ContainSingle().Subject;
             error.Code.Should().Be((int)EmailError.Communication);
             error.Description.Should().Be("connection refused");
+        }
+
+        [Fact]
+        public async Task SendAsync_CancelledByCaller_Throws()
+        {
+            // arrange
+            using var cts = new System.Threading.CancellationTokenSource();
+            cts.Cancel();
+
+            // act
+            var act = () => CreateSender().SendAsync("john@example.com", "Subject", "Hello", false, cts.Token);
+
+            // assert
+            await act.Should().ThrowAsync<System.OperationCanceledException>();
         }
     }
 }

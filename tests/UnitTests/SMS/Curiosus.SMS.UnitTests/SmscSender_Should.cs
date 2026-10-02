@@ -1,7 +1,10 @@
 #nullable enable
 
 using System.Net;
+using System;
 using System.Net.Http;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using Curiosus.SMS.Smsc;
@@ -29,7 +32,7 @@ namespace Curiosus.SMS.UnitTests
                 _httpClientFactory);
 
         [Fact]
-        public async Task SendSmsAsync_PostsQueryParametersToSmsc()
+        public async Task SendSmsAsync_PostsFormToSmsc()
         {
             // arrange
             _handler.Respond(HttpStatusCode.OK, "{\"id\":1,\"cnt\":1,\"cost\":\"1.5\"}");
@@ -40,8 +43,9 @@ namespace Curiosus.SMS.UnitTests
             // assert
             var request = _handler.Requests.Should().ContainSingle().Subject;
             request.Method.Should().Be(HttpMethod.Post);
-            request.Uri.GetLeftPart(System.UriPartial.Path).Should().Be("https://smsc.ru/sys/send.php");
-            var query = HttpUtility.ParseQueryString(request.Uri.Query);
+            request.Uri.Should().Be(new System.Uri("https://smsc.ru/sys/send.php"));
+            request.ContentType.Should().Be("application/x-www-form-urlencoded");
+            var query = HttpUtility.ParseQueryString(request.Body!);
             query["login"].Should().Be("login");
             query["psw"].Should().Be("secret");
             query["sender"].Should().Be("SIIS");
@@ -49,6 +53,7 @@ namespace Curiosus.SMS.UnitTests
             query["mes"].Should().Be("Привет & пока");
             query["cost"].Should().Be("2");
             query["fmt"].Should().Be("3");
+            query["charset"].Should().Be("utf-8");
             _httpClientFactory.CreatedClientNames.Should().OnlyContain(n => n == SmscSender.HttpClientName);
         }
 
@@ -62,7 +67,7 @@ namespace Curiosus.SMS.UnitTests
             await CreateSender(senderName: null).SendSmsAsync("79001234567", "text");
 
             // assert
-            var query = HttpUtility.ParseQueryString(_handler.Requests.Should().ContainSingle().Subject.Uri.Query);
+            var query = HttpUtility.ParseQueryString(_handler.Requests.Should().ContainSingle().Subject.Body!);
             query["sender"].Should().BeNull();
         }
 
@@ -96,8 +101,8 @@ namespace Curiosus.SMS.UnitTests
             // assert
             response.IsSuccess.Should().BeTrue();
             _handler.Requests.Should().HaveCount(2);
-            HttpUtility.ParseQueryString(_handler.Requests[0].Uri.Query)["sender"].Should().Be("SIIS");
-            HttpUtility.ParseQueryString(_handler.Requests[1].Uri.Query)["sender"].Should().BeNull();
+            HttpUtility.ParseQueryString(_handler.Requests[0].Body!)["sender"].Should().Be("SIIS");
+            HttpUtility.ParseQueryString(_handler.Requests[1].Body!)["sender"].Should().BeNull();
         }
 
         [Theory]
@@ -151,6 +156,49 @@ namespace Curiosus.SMS.UnitTests
             var error = response.Errors.Should().ContainSingle().Subject;
             error.Code.Should().Be((int)SmsError.Unknown);
             error.Description.Should().Be("HttpRequestException: connection refused");
+        }
+
+        [Fact]
+        public async Task SendSmsAsync_Windows1251Response_DecodesError()
+        {
+            // arrange
+            var content = CodePagesEncodingProvider.Instance.GetEncoding(1251)!
+                .GetBytes("{\"error\":\"недостаточно средств\",\"error_code\":3}");
+            _handler.Respond(HttpStatusCode.OK, content, "application/json; charset=windows-1251");
+
+            // act
+            var response = await CreateSender().SendSmsAsync("79001234567", "text");
+
+            // assert
+            response.Errors.Should().ContainSingle().Which.Code.Should().Be((int)SmsError.NoMoney);
+            response.Body.ResponseJson.Should().Contain("недостаточно средств");
+        }
+
+        [Fact]
+        public async Task SendSmsAsync_HttpClientTimeout_ReturnsUnknownError()
+        {
+            // arrange
+            _handler.Throw(new TaskCanceledException("timeout"));
+
+            // act
+            var response = await CreateSender().SendSmsAsync("79001234567", "text");
+
+            // assert
+            response.Errors.Should().ContainSingle().Which.Code.Should().Be((int)SmsError.Unknown);
+        }
+
+        [Fact]
+        public async Task SendSmsAsync_CancelledByCaller_Throws()
+        {
+            // arrange
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            // act
+            var act = () => CreateSender().SendSmsAsync("79001234567", "text", cts.Token);
+
+            // assert
+            await act.Should().ThrowAsync<OperationCanceledException>();
         }
 
         [Fact]

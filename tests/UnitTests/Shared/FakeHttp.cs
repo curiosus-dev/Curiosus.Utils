@@ -41,6 +41,17 @@ namespace Curiosus.UnitTests.Shared
             return this;
         }
 
+        public FakeHttpMessageHandler Respond(HttpStatusCode statusCode, byte[] content, string contentType)
+        {
+            _responses.Enqueue(_ =>
+            {
+                var httpContent = new ByteArrayContent(content);
+                httpContent.Headers.TryAddWithoutValidation("Content-Type", contentType);
+                return new HttpResponseMessage(statusCode) { Content = httpContent };
+            });
+            return this;
+        }
+
         public FakeHttpMessageHandler Throw(Exception exception)
         {
             _responses.Enqueue(_ => throw exception);
@@ -51,6 +62,8 @@ namespace Curiosus.UnitTests.Shared
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             foreach (var header in request.Headers)
                 headers[header.Key] = String.Join(",", header.Value);

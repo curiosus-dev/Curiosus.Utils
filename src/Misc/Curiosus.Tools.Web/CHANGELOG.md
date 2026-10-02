@@ -10,8 +10,13 @@
 - HTTP calls use `HttpClient` from `IHttpClientFactory` instead of `Flurl.Http`: `AddReCaptcha` registers the named client
   `ReCaptchaService.HttpClientName`, configure it with `services.AddHttpClient(ReCaptchaService.HttpClientName, ...)`.
   The package no longer depends on `Flurl.Http`: reference it directly if your code used it through this package.
-- **Breaking:** `ReCaptchaService.VerifyReCaptchaAsync` throws `HttpRequestException` instead of `FlurlHttpException`
-  when the reCAPTCHA API is unavailable or returns an error status code: catch `HttpRequestException` instead.
+- **Breaking:** `ReCaptchaService.VerifyReCaptchaAsync` throws `System.Net.Http` and `System.Text.Json` exceptions
+  instead of `FlurlHttpException`: `HttpRequestException` when the reCAPTCHA API is unavailable or returns an error
+  status code, `TaskCanceledException` on timeout, `JsonException` when the response is not a verification result.
+  Catch these three instead of `FlurlHttpException`.
+- **Breaking:** `ReCaptchaService.VerifyReCaptchaAsync` takes an optional `CancellationToken` (recompile callers).
+- `ReCaptchaService.VerifyReCaptchaAsync` posts `secret` and `response` as a form, as the reCAPTCHA documentation
+  describes, instead of sending them in the URL query.
 - `MVCBaseController.Redirect` encodes non-ASCII and other illegal URL characters without Flurl, with the same result.
 
 ## [2.0.0] - 2026-09-27

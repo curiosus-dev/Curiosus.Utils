@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.WebUtilities;
 
 namespace Curiosus.Tools.Web.ReCaptcha
 {
@@ -30,21 +31,27 @@ namespace Curiosus.Tools.Web.ReCaptcha
         /// Verifies the reCAPTCHA response token.
         /// </summary>
         /// <exception cref="HttpRequestException">The reCAPTCHA API is unavailable or returned an error status code.</exception>
-        public async Task<bool> VerifyReCaptchaAsync(string response)
+        /// <exception cref="TaskCanceledException">
+        /// The reCAPTCHA API did not answer within <see cref="HttpClient.Timeout"/>.
+        /// </exception>
+        /// <exception cref="JsonException">The reCAPTCHA API returned a body that is not a verification result.</exception>
+        /// <exception cref="OperationCanceledException"><paramref name="cancellationToken"/> was cancelled.</exception>
+        public async Task<bool> VerifyReCaptchaAsync(string response, CancellationToken cancellationToken = default)
         {
             if (String.IsNullOrWhiteSpace(response))
                 return false;
 
-            var requestUri = QueryHelpers.AddQueryString(
-                _options.ReCaptchaApiUrl,
-                new Dictionary<string, string?>
-                {
-                    ["secret"] = _options.ReCaptchaServerKey,
-                    ["response"] = response
-                });
+            using var content = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["secret"] = _options.ReCaptchaServerKey,
+                ["response"] = response
+            });
 
             var httpClient = _httpClientFactory.CreateClient(HttpClientName);
-            var reCaptchaResponse = await httpClient.GetFromJsonAsync<ReCaptchaResponse>(requestUri);
+            using var httpResponse = await httpClient.PostAsync(_options.ReCaptchaApiUrl, content, cancellationToken);
+            httpResponse.EnsureSuccessStatusCode();
+
+            var reCaptchaResponse = await httpResponse.Content.ReadFromJsonAsync<ReCaptchaResponse>(cancellationToken);
 
             return reCaptchaResponse?.success ?? false;
         }

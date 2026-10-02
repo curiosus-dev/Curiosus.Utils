@@ -125,19 +125,21 @@ namespace Curiosus.EMail.Mailgun
             try
             {
                 using var response = await httpClient.SendAsync(request, cancellationToken);
-                content = await response.Content.ReadAsStringAsync(cancellationToken);
+                content = await response.Content.ReadAsStringOrUtf8Async(cancellationToken);
                 contentType = response.Content.Headers.ContentType?.MediaType;
                 if (!response.IsSuccessStatusCode)
                 {
-                    _logger.LogWarning($"Error sending message to {toAddress}. StatusCode = {response.StatusCode.ToString()}. Response: {content}");
+                    var statusCode = (int)response.StatusCode;
+                    _logger.LogWarning(
+                        "Error sending message to {Email}. StatusCode = {StatusCode}. Response: {Response}",
+                        toAddress,
+                        statusCode,
+                        content);
 
-                    return ((int)response.StatusCode) == 420
-                    ? Response.Failed(new Error((int)EmailError.RateLimit, content))
-                    : Response.Failed(new Error((int)EmailError.Auth, content));
+                    return Response.Failed(new Error((int)ToEmailError(statusCode), content));
                 }
             }
-            catch (Exception e) when (e is HttpRequestException
-                                          || (e is OperationCanceledException && !cancellationToken.IsCancellationRequested))
+            catch (Exception e) when (HttpFailure.IsCommunicationFailure(e, cancellationToken))
             {
                 _logger.LogWarning(e, "Error sending message to {Email}", toAddress);
 
@@ -150,7 +152,10 @@ namespace Curiosus.EMail.Mailgun
             try
             {
                 var mgResponse = JsonSerializer.Deserialize<MailGunResponse>(content)!;
-                _logger.LogDebug($"MailGun response: message = \"{mgResponse.Message}\", id = \"{mgResponse.Id}\"");
+                _logger.LogDebug(
+                    "MailGun response: message = \"{Message}\", id = \"{Id}\"",
+                    mgResponse.Message,
+                    mgResponse.Id);
             }
             catch (Exception e)
             {
@@ -161,6 +166,15 @@ namespace Curiosus.EMail.Mailgun
 
             return Response.Successful();
         }
+
+        private static EmailError ToEmailError(int statusCode) => statusCode switch
+        {
+            400 => EmailError.IncorrectRequestData,
+            401 or 403 => EmailError.Auth,
+            420 or 429 => EmailError.RateLimit,
+            >= 500 => EmailError.Communication,
+            _ => EmailError.Unknown
+        };
 
         /// <inheritdoc />
         public Task<Response> SendAsync(

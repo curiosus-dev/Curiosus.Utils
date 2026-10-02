@@ -144,5 +144,19 @@ namespace Curiosus.SMS.UnitTests
             error.Description.Should().Be("connection refused");
             response.Body.ResponseJson.Should().Be("empty content");
         }
+
+        [Fact]
+        public async Task SendSmsAsync_CancelledByCaller_Throws()
+        {
+            // arrange
+            using var cts = new System.Threading.CancellationTokenSource();
+            cts.Cancel();
+
+            // act
+            var act = () => CreateSender().SendSmsAsync("79001234567", "text", cts.Token);
+
+            // assert
+            await act.Should().ThrowAsync<System.OperationCanceledException>();
+        }
     }
 }

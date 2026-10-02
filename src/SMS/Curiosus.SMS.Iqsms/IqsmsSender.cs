@@ -159,15 +159,14 @@ public class IqsmsSender : IIqsmsSender
         try
         {
             using var response = await httpClient.GetAsync(requestUri, cancellationToken);
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            var content = await response.Content.ReadAsStringOrUtf8Async(cancellationToken);
             var errorMessage = response.IsSuccessStatusCode
                 ? null
                 : $"Request failed with status code {(int)response.StatusCode} ({response.ReasonPhrase})";
 
             return new IqsmsHttpResponse(response.StatusCode, content, errorMessage);
         }
-        catch (Exception e) when (e is HttpRequestException
-                                      || (e is OperationCanceledException && !cancellationToken.IsCancellationRequested))
+        catch (Exception e) when (HttpFailure.IsCommunicationFailure(e, cancellationToken))
         {
             return new IqsmsHttpResponse(0, null, e.Message);
         }

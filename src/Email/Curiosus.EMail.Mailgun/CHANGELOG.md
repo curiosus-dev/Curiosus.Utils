@@ -10,12 +10,18 @@
 - HTTP calls use `HttpClient` from `IHttpClientFactory` instead of `RestSharp`: `AddMailgunEmailSender` registers the named client
   `MailgunEmailSender.HttpClientName`, configure it with `services.AddHttpClient(MailgunEmailSender.HttpClientName, ...)`.
   The package no longer depends on `RestSharp`: reference it directly if your code used it through this package.
+- **Breaking:** when `cancellationToken` is cancelled, `SendAsync` throws `OperationCanceledException` instead of returning
+  a failed response. Network failures and `HttpClient` timeouts are still returned as a failed response.
+- HTTP error status codes map to `EmailError` by meaning instead of `EmailError.Auth` for everything except 420:
+  400 → `IncorrectRequestData`, 401 and 403 → `Auth`, 420 and 429 → `RateLimit`, 5xx → `Communication`,
+  other codes → `Unknown`.
 
 ### Fixed
 
 - `MailgunEmailSender` could not be created: `MailgunEmailOptions.AssertValid()` threw `NotImplementedException`.
   The stub is removed, options are validated by the `AssertValid()` extension of `Curiosus.Configuration`.
 - Network failures and timeouts are reported as `EmailError.Communication` instead of `EmailError.Auth`.
+- Responses in a charset .NET has no built-in encoding for (such as `windows-1251`) are decoded instead of failing.
 
 ## [2.0.0] - 2026-09-27
 

@@ -32,7 +32,7 @@ namespace Curiosus.Tools.UnitTests.Web
                 _httpClientFactory);
 
         [Fact]
-        public async Task VerifyReCaptchaAsync_SendsSecretAndResponseInQuery()
+        public async Task VerifyReCaptchaAsync_PostsSecretAndResponseAsForm()
         {
             // arrange
             _handler.Respond(HttpStatusCode.OK, "{\"success\":true,\"hostname\":\"example.com\"}");
@@ -42,9 +42,9 @@ namespace Curiosus.Tools.UnitTests.Web
 
             // assert
             var request = _handler.Requests.Should().ContainSingle().Subject;
-            request.Method.Should().Be(HttpMethod.Get);
-            request.Uri.GetLeftPart(System.UriPartial.Path).Should().Be("https://www.google.com/recaptcha/api/siteverify");
-            var query = HttpUtility.ParseQueryString(request.Uri.Query);
+            request.Method.Should().Be(HttpMethod.Post);
+            request.Uri.Should().Be(new System.Uri("https://www.google.com/recaptcha/api/siteverify"));
+            var query = HttpUtility.ParseQueryString(request.Body!);
             query["secret"].Should().Be("server & key");
             query["response"].Should().Be("token+/=");
             _httpClientFactory.CreatedClientNames.Should().OnlyContain(n => n == ReCaptchaService.HttpClientName);
@@ -89,6 +89,20 @@ namespace Curiosus.Tools.UnitTests.Web
 
             // assert
             await act.Should().ThrowAsync<HttpRequestException>();
+        }
+
+        [Fact]
+        public async Task VerifyReCaptchaAsync_CancelledByCaller_Throws()
+        {
+            // arrange
+            using var cts = new System.Threading.CancellationTokenSource();
+            cts.Cancel();
+
+            // act
+            var act = () => CreateService().VerifyReCaptchaAsync("token", cts.Token);
+
+            // assert
+            await act.Should().ThrowAsync<System.OperationCanceledException>();
         }
     }
 }

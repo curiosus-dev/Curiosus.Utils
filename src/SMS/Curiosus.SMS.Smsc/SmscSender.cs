@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -64,7 +63,7 @@ namespace Curiosus.SMS.Smsc
             int retriesCount = 0,
             CancellationToken cancellationToken = default)
         {
-            var query = new List<KeyValuePair<string, string>>
+            var form = new List<KeyValuePair<string, string>>
             {
                 new("login", smscLogin),
                 new("psw", smscPassword)
@@ -72,19 +71,21 @@ namespace Curiosus.SMS.Smsc
 
             if (!String.IsNullOrWhiteSpace(senderName))
             {
-                query.Add(new("sender", senderName));
+                form.Add(new("sender", senderName));
             }
 
-            query.Add(new("phones", phoneNumber));
-            query.Add(new("mes", message));
+            form.Add(new("phones", phoneNumber));
+            form.Add(new("mes", message));
 
-            query.Add(new("cost", "2")); // отправить и вернуть стоимость
-            query.Add(new("fmt", "3")); // результат в json
+            form.Add(new("cost", "2")); // отправить и вернуть стоимость
+            form.Add(new("fmt", "3")); // результат в json
+            // without it SMSC reads the message and writes the response in windows-1251
+            form.Add(new("charset", "utf-8"));
 
-            _logger.LogInformation($"Отправляем sms на номер {phoneNumber}...");
+            _logger.LogInformation("Отправляем sms на номер {PhoneNumber}...", phoneNumber);
 
             // execute
-            var response = await ExecuteAsync(SendUrl + "?" + ToQueryString(query), cancellationToken);
+            var response = await ExecuteAsync(form, cancellationToken);
 
             string resultJson;
             decimal? messageCost = null;
@@ -171,29 +172,27 @@ namespace Curiosus.SMS.Smsc
             string? ReasonPhrase,
             Exception? ErrorException);
 
-        private async Task<SmscHttpResponse> ExecuteAsync(string requestUri, CancellationToken cancellationToken)
+        private async Task<SmscHttpResponse> ExecuteAsync(
+            IEnumerable<KeyValuePair<string, string>> form,
+            CancellationToken cancellationToken)
         {
             var httpClient = _httpClientFactory.CreateClient(HttpClientName);
             try
             {
-                using var request = new HttpRequestMessage(HttpMethod.Post, requestUri);
-                using var response = await httpClient.SendAsync(request, cancellationToken);
+                using var content = new FormUrlEncodedContent(form);
+                using var response = await httpClient.PostAsync(SendUrl, content, cancellationToken);
                 if (!response.IsSuccessStatusCode)
                     return new SmscHttpResponse(false, null, (int)response.StatusCode, response.ReasonPhrase, null);
 
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-                var data = JsonSerializer.Deserialize<SmscResponseData>(content, ResponseJsonOptions);
+                var json = await response.Content.ReadAsStringOrUtf8Async(cancellationToken);
+                var data = JsonSerializer.Deserialize<SmscResponseData>(json, ResponseJsonOptions);
                 return new SmscHttpResponse(true, data, (int)response.StatusCode, response.ReasonPhrase, null);
             }
-            catch (Exception e) when (e is HttpRequestException or JsonException
-                                          || (e is OperationCanceledException && !cancellationToken.IsCancellationRequested))
+            catch (Exception e) when (e is JsonException || HttpFailure.IsCommunicationFailure(e, cancellationToken))
             {
                 return new SmscHttpResponse(false, null, 0, null, e);
             }
         }
-
-        private static string ToQueryString(IEnumerable<KeyValuePair<string, string>> parameters) =>
-            String.Join("&", parameters.Select(p => $"{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}"));
 
         /// <inheritdoc />
         public Task<Response<SmsSentResult>> SendSmsAsync(string phoneNumber, string message, ISmsExtraParams extraParams, CancellationToken cancellationToken = default)

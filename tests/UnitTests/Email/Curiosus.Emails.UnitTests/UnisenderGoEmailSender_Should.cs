@@ -150,5 +150,19 @@ namespace Curiosus.Emails.UnitTests
             error.Code.Should().Be((int)EmailError.Communication);
             error.Description.Should().Be("connection refused");
         }
+
+        [Fact]
+        public async Task SendAsync_CancelledByCaller_Throws()
+        {
+            // arrange
+            using var cts = new System.Threading.CancellationTokenSource();
+            cts.Cancel();
+
+            // act
+            var act = () => CreateSender().SendAsync("john@example.com", "Subject", "Hello", false, cts.Token);
+
+            // assert
+            await act.Should().ThrowAsync<System.OperationCanceledException>();
+        }
     }
 }

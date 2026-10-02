@@ -10,8 +10,16 @@
 - HTTP calls use `HttpClient` from `IHttpClientFactory` instead of `RestSharp`: `AddSmscSmsSender` registers the named client
   `SmscSender.HttpClientName`, configure it with `services.AddHttpClient(SmscSender.HttpClientName, ...)`.
   The package no longer depends on `RestSharp`: reference it directly if your code used it through this package.
+- **Breaking:** when `cancellationToken` is cancelled, `SendSmsAsync` throws `OperationCanceledException` instead of returning
+  a failed response. Network failures and `HttpClient` timeouts are still returned as a failed response.
+- Parameters, including login and password, are sent in the form body of the POST request instead of the URL query.
 - HTTP errors are reported as `"<status code>, <reason phrase>"` in the error description and `SmsSentResult.ResponseJson`
   (previously the RestSharp error message).
+
+### Fixed
+
+- Messages are sent with `charset=utf-8`: SMSC read them as `windows-1251`, so non-Latin text could arrive garbled
+  unless the account was set to UTF-8.
 
 ## [2.0.0] - 2026-09-27
 

@@ -177,10 +177,9 @@ namespace Curiosus.Email.UnisenderGo
             {
                 using var response = await httpClient.SendAsync(request, cancellationToken);
                 statusCode = (int)response.StatusCode;
-                content = await response.Content.ReadAsStringAsync(cancellationToken);
+                content = await response.Content.ReadAsStringOrUtf8Async(cancellationToken);
             }
-            catch (Exception e) when (e is HttpRequestException
-                                          || (e is OperationCanceledException && !cancellationToken.IsCancellationRequested))
+            catch (Exception e) when (HttpFailure.IsCommunicationFailure(e, cancellationToken))
             {
                 _logger.LogWarning(e, "Error sending message to \"{ToAddress}\"", toAddress);
 
@@ -198,7 +197,8 @@ namespace Curiosus.Email.UnisenderGo
                 UnisenderGoSendEmailResponse? unisenderGoFailedResponse = null;
                 try
                 {
-                    unisenderGoFailedResponse = JsonSerializer.Deserialize<UnisenderGoSendEmailResponse>(content, SerializerOptions);
+                    unisenderGoFailedResponse =
+                        JsonSerializer.Deserialize<UnisenderGoSendEmailResponse>(content, SerializerOptions);
                 }
                 catch (Exception e)
                 {
@@ -278,7 +278,8 @@ namespace Curiosus.Email.UnisenderGo
 
             try
             {
-                var unisenderGoSuccessResponse = JsonSerializer.Deserialize<UnisenderGoSendEmailResponse>(content, SerializerOptions)!;
+                var unisenderGoSuccessResponse =
+                    JsonSerializer.Deserialize<UnisenderGoSendEmailResponse>(content, SerializerOptions)!;
                 _logger.LogDebug(
                     "UnisenderGo response: status = \"{UnisenderGoSuccessResponseStatus}\", jobId = \"{UnisenderGoSuccessResponseJobId}\"",
                     unisenderGoSuccessResponse.Status,
