@@ -32,7 +32,7 @@ RequestProcessor:
     Port: 5672             # default 5672
     UserName: guest        # required
     Password: guest        # required
-    ClientName: my-app     # required
+    ClientName: my-app     # connection name prefix, machine name by default
     QueueName: requests    # required, declared as durable on start
     QosMultiplier: 1       # prefetch = WorkersCount * QosMultiplier, 1..20
 ```

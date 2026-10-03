@@ -20,8 +20,11 @@ public class SampleRequestProcessingBootstrapper : RabbitMQRequestProcessorBoots
     private readonly SampleRequestProcessingMetricsCollector _metricsCollector;
 
     /// <inheritdoc cref="RabbitMQRequestProcessorBootstrapperBase{TRequest,TWorkerParams,TWorker,TDispatcher,TProcessingRequestInfo,TOptions}"/>
-    public SampleRequestProcessingBootstrapper(SampleRequestProcessorNodeOptions nodeOptions, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, SampleRequestProcessorNodeOptions options, SampleRequestProcessingMetricsCollector metricsCollector) : base(nodeOptions, loggerFactory,
-        serviceProvider, options)
+    public SampleRequestProcessingBootstrapper(
+        SampleRequestProcessorNodeOptions nodeOptions,
+        ILoggerFactory loggerFactory,
+        IServiceProvider serviceProvider,
+        SampleRequestProcessingMetricsCollector metricsCollector) : base(nodeOptions, loggerFactory, serviceProvider)
     {
         _metricsCollector = metricsCollector;
     }

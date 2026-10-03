@@ -30,14 +30,9 @@ public class RabbitMQEventReceiverOptions : ILoggableOptions, IValidatableOption
     public int Port { get; set; } = 5672;
 
     /// <summary>
-    /// Name of exchange.
+    /// Name of the client, part of the connection name shown in RabbitMQ.
     /// </summary>
-    public string ExchangeName { get; set; } = "";
-
-    /// <summary>
-    /// Name of RabbitMQ client host name.
-    /// </summary>
-    public string ClientName { get; set; } = null!;
+    public string ClientName { get; set; } = Environment.MachineName;
 
     /// <summary>
     /// Name of queue to receive events.
@@ -60,10 +55,8 @@ public class RabbitMQEventReceiverOptions : ILoggableOptions, IValidatableOption
         errors.AddErrorIf(String.IsNullOrEmpty(ClientName), nameof(ClientName), "can't be empty");
         errors.AddErrorIf(Port < 1, nameof(Port), "can't be less than 1");
         errors.AddErrorIf(String.IsNullOrEmpty(QueueName), nameof(QueueName), "can't be empty");
-        errors.AddErrorIf(ExchangeName == null!, nameof(ExchangeName), "can't be null");
         errors.AddErrorIf(QosMultiplier < 1, nameof(QosMultiplier), "can't be less than 1");
         errors.AddErrorIf(QosMultiplier >= 20, nameof(QosMultiplier), "can't be greater than 20");
-
 
         return errors;
     }
