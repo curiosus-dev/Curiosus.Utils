@@ -32,7 +32,7 @@ public class RabbitMQEventReceiverOptions : ILoggableOptions, IValidatableOption
     /// <summary>
     /// Name of the client, part of the connection name shown in RabbitMQ.
     /// </summary>
-    public string ClientName { get; set; } = $"BWKR_{Environment.MachineName}";
+    public string ClientName { get; set; } = Environment.MachineName;
 
     /// <summary>
     /// Name of queue to receive events.

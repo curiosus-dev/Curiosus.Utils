@@ -13,8 +13,8 @@
     [migration guide](https://github.com/rabbitmq/rabbitmq-dotnet-client/blob/main/v7-MIGRATION.md).
 - **Breaking:** the `RabbitMQRequestProcessorBootstrapperBase` constructor takes the node options once: remove the
   last `options` argument, the receiver options are read from `nodeOptions.RabbitMQEventReceiver`.
-- `RabbitMQEventReceiverOptions.ClientName` is `BWKR_<machine name>` by default, as in `Curiosus.RabbitMQ`, instead
-  of failing the options validation when it is not set.
+- `RabbitMQEventReceiverOptions.ClientName` is the machine name by default instead of failing the options validation
+  when it is not set.
 
 ### Removed
 

@@ -1,3 +1,4 @@
+using System;
 using Curiosus.RequestProcessing.RabbitMQ.Options;
 using FluentAssertions;
 using Xunit;
@@ -22,6 +23,6 @@ public class RabbitMQEventReceiverOptions_Should
 
         // assert
         errors.Should().BeEmpty();
-        options.ClientName.Should().StartWith("BWKR_");
+        options.ClientName.Should().Be(Environment.MachineName);
     }
 }
