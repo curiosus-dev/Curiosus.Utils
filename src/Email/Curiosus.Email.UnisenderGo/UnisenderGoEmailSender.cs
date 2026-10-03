@@ -1,4 +1,6 @@
 using System;
+using System.Net.Http;
+using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -8,8 +10,6 @@ using Curiosus.Configuration;
 using Curiosus.EMail;
 using Curiosus.Tools;
 using Microsoft.Extensions.Logging;
-using RestSharp;
-using RestSharp.Serializers.Json;
 
 namespace Curiosus.Email.UnisenderGo
 {
@@ -18,6 +18,11 @@ namespace Curiosus.Email.UnisenderGo
     /// </summary>
     public class UnisenderGoEmailSender : IUnisenderGoEmailSender
     {
+        /// <summary>
+        /// Name of the <see cref="HttpClient"/> requested from <see cref="IHttpClientFactory"/>.
+        /// </summary>
+        public const string HttpClientName = "Curiosus.Email.UnisenderGo";
+
         internal static readonly JsonSerializerOptions SerializerOptions = new()
         {
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -26,14 +31,19 @@ namespace Curiosus.Email.UnisenderGo
 
         private readonly ILogger _logger;
         private readonly UnisenderGoEmailOptions _options;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        /// <inheritdoc cref="UnisenderGoEmailSender"/>
+        /// <summary>
+        /// Creates a sender that gets <see cref="HttpClient"/> named <see cref="HttpClientName"/> from the factory.
+        /// </summary>
         public UnisenderGoEmailSender(
             ILogger<UnisenderGoEmailSender> logger,
-            UnisenderGoEmailOptions options)
+            UnisenderGoEmailOptions options,
+            IHttpClientFactory httpClientFactory)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _options = options ?? throw new ArgumentNullException(nameof(options));
+            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
             options.AssertValid();
         }
 
@@ -100,10 +110,6 @@ namespace Curiosus.Email.UnisenderGo
                     throw new ArgumentException($"Region {region} is not supported.", nameof(region));
             }
 
-            using var restClient = new RestClient(
-                new RestClientOptions(unisenderGoHost),
-                configureSerialization: s => s.UseSystemTextJson(SerializerOptions));
-
             // build message body
             var messageBody = new UnisenderGoSendEmailMessageBody();
             if (isBodyHtml)
@@ -155,27 +161,44 @@ namespace Curiosus.Email.UnisenderGo
             };
 
             // build request
-            var restRequest = new RestRequest();
-            restRequest.AddHeader("X-API-KEY", apiKey);
-            restRequest.AddJsonBody(sendEmailRequest);
-            restRequest.Resource = "email/send.json";
-            restRequest.Method = Method.Post;
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"{unisenderGoHost}/email/send.json");
+            request.Headers.Add("X-API-KEY", apiKey);
+            request.Content = new StringContent(
+                JsonSerializer.Serialize(sendEmailRequest, SerializerOptions),
+                Encoding.UTF8,
+                "application/json");
 
             // send
             _logger.LogTrace("Sending email to \"{Email}\"...", toAddress);
-            var response = await restClient.ExecuteAsync(restRequest, cancellationToken);
-            if (!response.IsSuccessful)
+            var httpClient = _httpClientFactory.CreateClient(HttpClientName);
+            int statusCode;
+            string content;
+            try
+            {
+                using var response = await httpClient.SendAsync(request, cancellationToken);
+                statusCode = (int)response.StatusCode;
+                content = await response.Content.ReadAsStringOrUtf8Async(cancellationToken);
+            }
+            catch (Exception e) when (HttpFailure.IsCommunicationFailure(e, cancellationToken))
+            {
+                _logger.LogWarning(e, "Error sending message to \"{ToAddress}\"", toAddress);
+
+                return Response.Failed(new Error((int)EmailError.Communication, e.Message));
+            }
+
+            if (statusCode is < 200 or > 299)
             {
                 _logger.LogWarning(
                     "Error sending message to \"{ToAddress}\". StatusCode = {ResponseStatusCode}. Response: {ResponseContent}",
                     toAddress,
-                    response.StatusCode,
-                    response.Content);
+                    statusCode,
+                    content);
 
                 UnisenderGoSendEmailResponse? unisenderGoFailedResponse = null;
                 try
                 {
-                    unisenderGoFailedResponse = JsonSerializer.Deserialize<UnisenderGoSendEmailResponse>(response.Content!, SerializerOptions);
+                    unisenderGoFailedResponse =
+                        JsonSerializer.Deserialize<UnisenderGoSendEmailResponse>(content, SerializerOptions);
                 }
                 catch (Exception e)
                 {
@@ -184,7 +207,7 @@ namespace Curiosus.Email.UnisenderGo
 
                 // Unisender API is very clear, they use HTTP status code to provide more details about error
                 // analyse it
-                switch ((int)response.StatusCode)
+                switch (statusCode)
                 {
                     case 401:
                         return Response.Failed(new Error((int)EmailError.Auth, 
@@ -243,7 +266,7 @@ namespace Curiosus.Email.UnisenderGo
                                 ? $"UnisenderErrorCode={unisenderGoFailedResponse.Code}: {unisenderGoFailedResponse.Message}"
                                 : "UnisenderGo is unavailable. Please, try again later"));
                     default:
-                        var extraInfo = $"StatusCode={(int)response.StatusCode}; Message=\"{unisenderGoFailedResponse?.Message ?? "<none>"}\"";
+                        var extraInfo = $"StatusCode={statusCode}; Message=\"{unisenderGoFailedResponse?.Message ?? "<none>"}\"";
                         return Response.Failed(new Error((int)EmailError.Unknown, $"Unknown error. Extra info: {extraInfo}"));
                 }
             }
@@ -251,11 +274,12 @@ namespace Curiosus.Email.UnisenderGo
             _logger.LogDebug(
                 "Message is successfully sent to \"{Email}\". Response: {Response}",
                 toAddress,
-                response.Content);
+                content);
 
             try
             {
-                var unisenderGoSuccessResponse = JsonSerializer.Deserialize<UnisenderGoSendEmailResponse>(response.Content!, SerializerOptions)!;
+                var unisenderGoSuccessResponse =
+                    JsonSerializer.Deserialize<UnisenderGoSendEmailResponse>(content, SerializerOptions)!;
                 _logger.LogDebug(
                     "UnisenderGo response: status = \"{UnisenderGoSuccessResponseStatus}\", jobId = \"{UnisenderGoSuccessResponseJobId}\"",
                     unisenderGoSuccessResponse.Status,

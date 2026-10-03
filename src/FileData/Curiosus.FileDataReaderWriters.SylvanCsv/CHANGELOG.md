@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- `CsvFileWriter` now runs on `CsvHelper` `33.0.0` (through `Curiosus.FileDataReaderWriters`).
+
 ## [2.0.0] - 2026-09-27
 
 ### Changed

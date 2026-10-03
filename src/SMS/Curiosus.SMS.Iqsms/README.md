@@ -54,6 +54,13 @@ Notes:
 A runnable console sample is in
 [samples/Curiosus.SMS.Iqsms.Sample](https://github.com/curiosus-dev/Curiosus.Utils/tree/main/samples/Curiosus.SMS.Iqsms.Sample).
 
+HTTP requests go through the `HttpClient` named `IqsmsSender.HttpClientName` from `IHttpClientFactory`,
+which `AddIqsmsSender` registers. Configure it for timeouts, a proxy or resilience handlers:
+
+```csharp
+services.AddHttpClient(IqsmsSender.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(30));
+```
+
 ## See also
 
 - [Curiosus.SMS](https://www.nuget.org/packages/Curiosus.SMS) — `ISmsSender` abstraction

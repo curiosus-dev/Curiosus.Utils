@@ -48,6 +48,13 @@ await sender.SendAsync("user@example.com", "Report", "See attachment", false,
 HTTP 420 from Mailgun is returned as `EmailError.RateLimit`; other unsuccessful responses as `EmailError.Auth`.
 Pass `useAsDefaultSender: false` to register only `IMailgunEmailSender`.
 
+HTTP requests go through the `HttpClient` named `MailgunEmailSender.HttpClientName` from `IHttpClientFactory`,
+which `AddMailgunEmailSender` registers. Configure it for timeouts, a proxy or resilience handlers:
+
+```csharp
+services.AddHttpClient(MailgunEmailSender.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(30));
+```
+
 ## See also
 
 - [Curiosus.EMail](https://www.nuget.org/packages/Curiosus.EMail) — `IEMailSender` abstraction

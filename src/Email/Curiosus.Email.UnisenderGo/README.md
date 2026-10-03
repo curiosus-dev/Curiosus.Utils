@@ -49,6 +49,13 @@ HTTP errors are mapped to `EmailError`: 401 → `Auth`, 403 → `Auth` or `RateL
 400 → `IncorrectRequestData`, 429 → `RateLimit`, 404 and 5xx → `Communication`.
 Note: the namespace is `Curiosus.Email.UnisenderGo` (while the package id is `Curiosus.EMail.UnisenderGo`).
 
+HTTP requests go through the `HttpClient` named `UnisenderGoEmailSender.HttpClientName` from `IHttpClientFactory`,
+which `AddUnisenderGoEmailSender` registers. Configure it for timeouts, a proxy or resilience handlers:
+
+```csharp
+services.AddHttpClient(UnisenderGoEmailSender.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(30));
+```
+
 ## See also
 
 - [Curiosus.EMail](https://www.nuget.org/packages/Curiosus.EMail) — `IEMailSender` abstraction

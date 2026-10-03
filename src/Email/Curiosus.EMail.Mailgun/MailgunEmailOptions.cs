@@ -80,10 +80,5 @@ namespace Curiosus.EMail.Mailgun
 
             return errors;
         }
-
-        public void AssertValid()
-        {
-            throw new NotImplementedException();
-        }
     }
 }

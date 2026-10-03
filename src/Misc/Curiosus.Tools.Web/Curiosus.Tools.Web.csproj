@@ -32,11 +32,14 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <InternalsVisibleTo Include="Curiosus.Tools.UnitTests" />
+    </ItemGroup>
+
+    <ItemGroup>
       <ProjectReference Include="..\Curiosus.Tools\Curiosus.Tools.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Flurl.Http" />
       <PackageReference Include="HtmlSanitizer" />
       <PackageReference Include="Newtonsoft.Json" />
       <PackageReference Include="System.ComponentModel.Annotations" />

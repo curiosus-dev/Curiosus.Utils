@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- `HttpContentExtensions.ReadAsStringOrUtf8Async`: reads `HttpContent` as a string, decoding code page charsets such as
+  `windows-1251` and falling back to UTF-8 instead of throwing on an unknown charset.
+- `HttpFailure.IsCommunicationFailure`: tells network failures and `HttpClient` timeouts apart from cancellation
+  requested by the caller, for `catch ... when` filters.
+
 ## [2.0.0] - 2026-09-27
 
 ### Changed

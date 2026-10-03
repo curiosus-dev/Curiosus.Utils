@@ -25,6 +25,7 @@ namespace Curiosus.Email.UnisenderGo
             options.AssertValid();
             
             services.TryAddSingleton(options);
+            services.AddHttpClient(UnisenderGoEmailSender.HttpClientName);
             services.TryAddSingleton<IUnisenderGoEmailSender, UnisenderGoEmailSender>();
 
             if (useAsDefaultSender)
