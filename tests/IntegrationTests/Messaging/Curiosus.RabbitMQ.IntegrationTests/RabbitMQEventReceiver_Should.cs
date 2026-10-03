@@ -78,9 +78,6 @@ public class RabbitMQEventReceiver_Should
 
         events["confirm"].ConfirmProcessing();
         events["reject"].RejectProcessing();
-
-        // ack and reject are sent by a background loop, let it finish before closing the channel
-        await Task.Delay(TimeSpan.FromSeconds(1), cts.Token);
         await receiver.StopAsync(cts.Token);
 
         // assert
@@ -129,8 +126,6 @@ public class RabbitMQEventReceiver_Should
         await PublishAsync(queueName, ["after recovery"], cts.Token);
         var received = await receivedEvents.Reader.ReadAsync(cts.Token);
         received.ConfirmProcessing();
-
-        await Task.Delay(TimeSpan.FromSeconds(1), cts.Token);
         await receiver.StopAsync(cts.Token);
 
         // assert

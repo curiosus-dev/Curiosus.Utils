@@ -82,7 +82,7 @@ public class RabbitMqRpcClient : IAsyncDisposable
     private readonly string _clientName;
     private readonly string _exchangeName;
 
-    private readonly ConcurrentDictionary<string, TaskCompletionSource<(string Response, ulong DeliveryTag)>> _responseWaitQueue;
+    private readonly ConcurrentDictionary<string, TaskCompletionSource<ReceivedResponse>> _responseWaitQueue;
     private readonly Channel<RpcQueueItem> _requestQueue;
 
     private readonly CancellationTokenSource _cts = new();
@@ -114,7 +114,7 @@ public class RabbitMqRpcClient : IAsyncDisposable
         _responseQueueName = responseQueueName ?? throw new ArgumentNullException(nameof(responseQueueName));
 
         // prepare response and request queues
-        _responseWaitQueue = new ConcurrentDictionary<string, TaskCompletionSource<(string Response, ulong DeliveryTag)>>();
+        _responseWaitQueue = new ConcurrentDictionary<string, TaskCompletionSource<ReceivedResponse>>();
         _requestQueue = Channel.CreateUnbounded<RpcQueueItem>();
 
         // get more time for waiting because of auto recovery
@@ -201,7 +201,8 @@ public class RabbitMqRpcClient : IAsyncDisposable
         await readerChannel.BasicConsumeAsync(_responseQueueName, autoAck: false, consumer, cancellationToken);
 
         _logger.LogDebug(
-            "Connected to RabbitMQ. Started new channels (host \"{RabbitMqHostName}\", queue = \"{RequestQueueName}\", response queue = \"{ResponseQueueName}\")",
+            "Connected to RabbitMQ. Started new channels "
+            + "(host \"{RabbitMqHostName}\", queue = \"{RequestQueueName}\", response queue = \"{ResponseQueueName}\")",
             _rabbitMqConnection.Endpoint.HostName,
             _requestQueueName,
             _responseQueueName);
@@ -297,7 +298,7 @@ public class RabbitMqRpcClient : IAsyncDisposable
                 if (_readerChannel == null || _readerChannel.IsClosed)
                 {
                     _logger.LogWarning(
-                        "It's seems that there were some connection errors. Reconnecting channel and re-queueing request with CorrelationId={CorrelationId}",
+                        "Reader channel is closed. Reconnecting and re-queueing request with CorrelationId={CorrelationId}",
                         correlationId);
 
                     var isRecovered = await HandleRecoverySafelyAsync(cancellationToken: cancellationToken);
@@ -306,6 +307,12 @@ public class RabbitMqRpcClient : IAsyncDisposable
                         _logger.LogError("Failed to recover reader channel");
                     }
 
+                    // the request was not published: the caller resends it or gets the error
+                    FailOutgoingRequest(
+                        correlationId,
+                        isRecovered
+                            ? new RabbitMqRpcReQueueException()
+                            : new InvalidOperationException("Failed to recover the connection to RabbitMQ"));
                     continue;
                 }
 
@@ -357,12 +364,16 @@ public class RabbitMqRpcClient : IAsyncDisposable
                 var isRecovered = await HandleRecoverySafelyAsync(cancellationToken: cancellationToken);
                 if (isRecovered)
                 {
-                    _logger.LogDebug("Connection was successfully recovered. Message with CorrelationId={CorrelationId} was failed", correlationId);
+                    _logger.LogDebug(
+                        "Connection was recovered. Message with CorrelationId={CorrelationId} will be re-queued",
+                        correlationId);
+                    FailOutgoingRequest(correlationId, new RabbitMqRpcReQueueException());
                 }
                 else
                 {
-                    _logger.LogError("Failed to recover connection. Message with CorrelationId={CorrelationId} will be failed", correlationId);
-                    // remove pending response
+                    _logger.LogError(
+                        "Failed to recover connection. Message with CorrelationId={CorrelationId} will be failed",
+                        correlationId);
                     FailOutgoingRequest(correlationId, e);
                 }
             }
@@ -417,7 +428,8 @@ public class RabbitMqRpcClient : IAsyncDisposable
         }
         else
         {
-            _logger.LogError("Can find request with CorrelationId={CorrelationId} to set error", correlationId);
+            // cancelled by the caller or already re-queued by a manual recovery
+            _logger.LogDebug("Request with CorrelationId={CorrelationId} is not pending anymore", correlationId);
         }
     }
 
@@ -741,10 +753,10 @@ public class RabbitMqRpcClient : IAsyncDisposable
         var message = JsonSerializer.Serialize(request, _jsonSerializerOptions);
         correlationId ??= $"{_clientName}_r{UniqueIdGenerator.Generate().ToPublicId()}";
 
-        var responseMessage = await SendAsync(message, correlationId, cancellationToken);
+        var receivedResponse = await SendAsync(message, correlationId, cancellationToken);
         try
         {
-            var response = JsonSerializer.Deserialize<TResponse>(responseMessage.Response, _jsonSerializerOptions);
+            var response = JsonSerializer.Deserialize<TResponse>(receivedResponse.Message, _jsonSerializerOptions);
             if (response == null)
             {
                 throw new InvalidOperationException($"Incorrect response message with correlationId = {correlationId}");
@@ -755,32 +767,87 @@ public class RabbitMqRpcClient : IAsyncDisposable
         finally
         {
             // the response was received: ack it even if the caller has already cancelled the request
-            _logger.LogTrace("Entering lock to ack message automatically...");
-            await _lock.WaitAsync(CancellationToken.None);
-            try
-            {
-                _logger.LogTrace("Entered lock to ack message automatically");
-                if (!(_readerChannel?.IsClosed ?? false))
-                {
-                    if (_readerChannel != null)
-                        await _readerChannel.BasicAckAsync(responseMessage.DeliveryTag, false, CancellationToken.None);
-                }
-                else
-                {
-                    _logger.LogWarning(
-                        "Reader channel is closed. Can't ack message with DeliveryTag={DeliveryTag}",
-                        responseMessage.DeliveryTag);
-                }
-            }
-            finally
-            {
-                _lock.Release();
-            }
-            _logger.LogTrace("Exited lock to ack message automatically");
+            await SettleResponseSafelyAsync(receivedResponse, ack: true, correlationId);
         }
     }
 
-    private async Task<(string Response, ulong DeliveryTag)> SendAsync(
+    /// <summary>
+    /// Acks or rejects the response on the channel it was received on.
+    /// </summary>
+    /// <returns>
+    /// <see langword="false"/> if that channel is closed or was replaced: RabbitMQ has returned the response to the queue,
+    /// and its delivery tag is not valid anymore.
+    /// </returns>
+    private async Task<bool> SettleResponseAsync(ReceivedResponse response, bool ack, CancellationToken cancellationToken)
+    {
+        _logger.LogTrace("Entering lock to settle response with DeliveryTag={DeliveryTag}...", response.DeliveryTag);
+        await _lock.WaitAsync(cancellationToken);
+        try
+        {
+            // a delivery tag of a closed channel is unknown to a new one: the broker would close it with 406
+            if (!ReferenceEquals(response.Channel, _readerChannel) || response.Channel.IsClosed) return false;
+
+            if (ack)
+            {
+                await response.Channel.BasicAckAsync(response.DeliveryTag, false, cancellationToken);
+            }
+            else
+            {
+                await response.Channel.BasicRejectAsync(response.DeliveryTag, false, cancellationToken);
+            }
+
+            return true;
+        }
+        finally
+        {
+            _lock.Release();
+            _logger.LogTrace("Exited lock to settle response with DeliveryTag={DeliveryTag}", response.DeliveryTag);
+        }
+    }
+
+    /// <summary>
+    /// Acks or rejects the response, logging errors instead of throwing them: the caller has a result or an error to return.
+    /// </summary>
+    private async Task SettleResponseSafelyAsync(ReceivedResponse response, bool ack, string correlationId)
+    {
+        var actionName = ack ? "ack" : "reject";
+        try
+        {
+            if (await SettleResponseAsync(response, ack, CancellationToken.None))
+            {
+                _logger.LogDebug(
+                    "Completed {ActionName} of response with DeliveryTag={DeliveryTag} (CorrelationId={CorrelationId})",
+                    actionName,
+                    response.DeliveryTag,
+                    correlationId);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Can't {ActionName} response with DeliveryTag={DeliveryTag} (CorrelationId={CorrelationId}): "
+                    + "its channel is closed, RabbitMQ returns the response to the queue",
+                    actionName,
+                    response.DeliveryTag,
+                    correlationId);
+            }
+        }
+        catch (Exception e)
+        {
+            _logger.LogWarning(
+                e,
+                "Failed to {ActionName} response with DeliveryTag={DeliveryTag} (CorrelationId={CorrelationId})",
+                actionName,
+                response.DeliveryTag,
+                correlationId);
+
+            if (e is RabbitMQClientException)
+            {
+                HandleRecoverySafelyAsync(cancellationToken: _cts.Token).WithExceptionLogger(_logger);
+            }
+        }
+    }
+
+    private async Task<ReceivedResponse> SendAsync(
         string message,
         string correlationId,
         CancellationToken cancellationToken = default)
@@ -808,7 +875,7 @@ public class RabbitMqRpcClient : IAsyncDisposable
         }
     }
 
-    private async Task<(string Response, ulong DeliveryTag)> SendAsync(
+    private async Task<ReceivedResponse> SendAsync(
         string message,
         string correlationId,
         int currentSendAttemptCount,
@@ -818,7 +885,7 @@ public class RabbitMqRpcClient : IAsyncDisposable
         {
             // continuations run asynchronously: otherwise the caller's code would run inside the consumer handler
             // and block the delivery of other responses (and closing the channel on recovery)
-            var tcs = new TaskCompletionSource<(string Response, ulong DeliveryTag)>(
+            var tcs = new TaskCompletionSource<ReceivedResponse>(
                 TaskCreationOptions.RunContinuationsAsynchronously);
             _responseWaitQueue[correlationId] = tcs;
 
@@ -872,109 +939,62 @@ public class RabbitMqRpcClient : IAsyncDisposable
             "Sending request with manual receiving acknowledgment (CorrelationId={CorrelationId})",
             correlationId);
 
-        (string Response, ulong DeliveryTag) responseMessage = default;
-        TResponse response;
+        var receivedResponse = await SendAsync(message, correlationId, cancellationToken);
+        TResponse? response;
         try
         {
-            responseMessage = await SendAsync(message, correlationId, cancellationToken);
-            response = JsonSerializer.Deserialize<TResponse>(responseMessage.Response, _jsonSerializerOptions)!;
+            response = JsonSerializer.Deserialize<TResponse>(receivedResponse.Message, _jsonSerializerOptions);
         }
-        catch (Exception e)
+        catch
         {
-            _logger.LogTrace(e, "Entering lock for reject message because of exception...");
-            await _lock.WaitAsync(CancellationToken.None);
-            try
-            {
-                _logger.LogTrace(e, "Entered lock for reject message because of exception");
-                if (_readerChannel != null)
-                    await _readerChannel.BasicRejectAsync(responseMessage.DeliveryTag, false, CancellationToken.None);
-            }
-            finally
-            {
-                _lock.Release();
-            }
-            _logger.LogTrace(e, "Exited lock for reject message with because of exception");
-
-            _logger.LogDebug(
-                "Manually rejected receiving response with DeliveryTag={DeliveryTag} (CorrelationId={CorrelationId}) because of exception",
-                responseMessage.DeliveryTag,
-                correlationId);
+            await SettleResponseSafelyAsync(receivedResponse, ack: false, correlationId);
             throw;
         }
 
         if (response == null)
         {
-            _logger.LogTrace("Entering lock for ack message with incorrect type...");
-            await _lock.WaitAsync(CancellationToken.None);
-            try
-            {
-                _logger.LogTrace("Entered lock for ack message with incorrect type");
-                if (_readerChannel != null)
-                    await _readerChannel.BasicAckAsync(responseMessage.DeliveryTag, false, CancellationToken.None);
-            }
-            finally
-            {
-                _lock.Release();
-            }
-            _logger.LogTrace("Exited lock for ack message with incorrect type");
-
-            _logger.LogDebug(
-                "Manually acknowledged receiving response with DeliveryTag={DeliveryTag} (CorrelationId={CorrelationId}) because of incorrect type",
-                responseMessage.DeliveryTag,
-                correlationId);
+            await SettleResponseSafelyAsync(receivedResponse, ack: true, correlationId);
             throw new InvalidOperationException($"Incorrect response message with correlationId = {correlationId}");
         }
 
-        var wrapper = new ManualAckRabbitResult<TResponse>(
+        return new ManualAckRabbitResult<TResponse>(
             response,
-            ct => AcknowledgeManuallyAsync(responseMessage.DeliveryTag, correlationId, ct));
-
-        return wrapper;
+            () => AcknowledgeManuallyAsync(receivedResponse, correlationId));
     }
 
-    private async Task AcknowledgeManuallyAsync(ulong deliveryTag, string correlationId, CancellationToken cancellationToken)
+    private async Task AcknowledgeManuallyAsync(ReceivedResponse response, string correlationId)
     {
+        bool isAcknowledged;
         try
         {
-            _logger.LogTrace("Entering lock for ack message manually...");
-            await _lock.WaitAsync(cancellationToken);
-            try
-            {
-                _logger.LogTrace("Entered lock for ack message manually");
-                if (_readerChannel != null)
-                    await _readerChannel.BasicAckAsync(deliveryTag, false, cancellationToken);
-            }
-            finally
-            {
-                _lock.Release();
-            }
-            _logger.LogTrace("Exited lock for ack message manually");
-
-            _logger.LogDebug(
-                "Manually acknowledged receiving response with DeliveryTag={DeliveryTag} (CorrelationId={CorrelationId})",
-                deliveryTag,
-                correlationId);
+            isAcknowledged = await SettleResponseAsync(response, ack: true, CancellationToken.None);
         }
         catch (RabbitMQClientException e)
         {
-            // if we got this exception, probably we have some some connection issues. We will try to wait auto recovering. If it fails, we will recreate the channel
-
-            _logger.LogWarning(e,
-                "Got {ExceptionName} exception while manually acknowledging response with DeliveryTag={DeliveryTag} (CorrelationId={CorrelationId}). Waiting for recovering for {RecoverWaitDelay}",
+            _logger.LogWarning(
+                e,
+                "Got {ExceptionName} exception while manually acknowledging response with DeliveryTag={DeliveryTag} "
+                + "(CorrelationId={CorrelationId}). Waiting for recovering for {RecoverWaitDelay}",
                 e.GetType().Name,
-                deliveryTag,
+                response.DeliveryTag,
                 correlationId,
                 _recoverWaitDelay);
 
             HandleRecoverySafelyAsync(cancellationToken: _cts.Token).WithExceptionLogger(_logger);
+            throw;
         }
-        catch (Exception e) when (e is not OperationCanceledException)
+
+        if (!isAcknowledged)
         {
-            _logger.LogError(e,
-                "Failed to acknowledge the response with DeliveryTag={DeliveryTag} (CorrelationId={CorrelationId})",
-                deliveryTag,
-                correlationId);
+            throw new InvalidOperationException(
+                $"Can't acknowledge response with correlationId = {correlationId}: the channel it was received on is closed, "
+                + "RabbitMQ returns the response to the queue");
         }
+
+        _logger.LogDebug(
+            "Manually acknowledged receiving response with DeliveryTag={DeliveryTag} (CorrelationId={CorrelationId})",
+            response.DeliveryTag,
+            correlationId);
     }
 
     /// <remarks>
@@ -986,7 +1006,7 @@ public class RabbitMqRpcClient : IAsyncDisposable
         var correlationId = e.BasicProperties.CorrelationId;
         var message = Encoding.UTF8.GetString(e.Body.Span);
 
-        TaskCompletionSource<(string Response, ulong DeliveryTag)>? tcs = null;
+        TaskCompletionSource<ReceivedResponse>? tcs = null;
         if (correlationId != null)
         {
             _responseWaitQueue.TryRemove(correlationId, out tcs);
@@ -995,12 +1015,13 @@ public class RabbitMqRpcClient : IAsyncDisposable
         if (tcs != null)
         {
             _logger.LogDebug("Received response for message with CorrelationId={CorrelationId}", correlationId);
-            tcs.TrySetResult((message, e.DeliveryTag));
+            tcs.TrySetResult(new ReceivedResponse(message, channel, e.DeliveryTag));
         }
         else
         {
             _logger.LogWarning(
-                "Can't find request for response with CorrelationId={CorrelationId} (DeliveryTag={DeliveryTag}). Message will be rejected",
+                "Can't find request for response with CorrelationId={CorrelationId} (DeliveryTag={DeliveryTag}). "
+                + "Message will be rejected",
                 correlationId,
                 e.DeliveryTag);
 
@@ -1019,7 +1040,8 @@ public class RabbitMqRpcClient : IAsyncDisposable
                 else
                 {
                     _logger.LogWarning(
-                        "Failed to reject acknowledgment for message with CorrelationId={CorrelationId} (DeliveryTag={DeliveryTag}) because channel is closed",
+                        "Failed to reject message with CorrelationId={CorrelationId} (DeliveryTag={DeliveryTag}) "
+                        + "because channel is closed",
                         correlationId,
                         e.DeliveryTag);
                 }
@@ -1028,7 +1050,8 @@ public class RabbitMqRpcClient : IAsyncDisposable
             {
                 _logger.LogError(
                     exception,
-                    "Failed to reject acknowledgment for message with CorrelationId={CorrelationId} (DeliveryTag={DeliveryTag}) because of problems with connection. Tries to reconnect...",
+                    "Failed to reject message with CorrelationId={CorrelationId} (DeliveryTag={DeliveryTag}) "
+                    + "because of problems with connection. Tries to reconnect...",
                     correlationId,
                     e.DeliveryTag);
 
@@ -1091,4 +1114,6 @@ public class RabbitMqRpcClient : IAsyncDisposable
             CancellationToken = cancellationToken;
         }
     }
+
+    private readonly record struct ReceivedResponse(string Message, IChannel Channel, ulong DeliveryTag);
 }

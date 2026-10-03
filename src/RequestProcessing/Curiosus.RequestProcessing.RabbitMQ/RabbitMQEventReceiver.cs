@@ -18,7 +18,8 @@ namespace Curiosus.RequestProcessing.RabbitMQ;
 /// </summary>
 /// <remarks>
 /// Received events are confirmed (ack) or rejected (reject without requeue) in a background loop.
-/// <see cref="StopAsync"/> or <see cref="DisposeAsync"/> closes the connection to RabbitMQ.
+/// <see cref="StopAsync"/> sends the decisions made before it and closes the connection to RabbitMQ;
+/// <see cref="DisposeAsync"/> stops the receiver if it was not stopped and releases its resources.
 /// </remarks>
 public class RabbitMQEventReceiver : BackgroundService, IEventReceiver, IAsyncDisposable
 {
@@ -34,6 +35,11 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver, IAsyncDi
     /// Timeout of closing <see cref="_connection"/>.
     /// </summary>
     private static readonly TimeSpan ConnectionCloseTimeout = TimeSpan.FromSeconds(3);
+
+    /// <summary>
+    /// Time <see cref="DisposeAsync"/> gives <see cref="StopAsync"/> to send the decisions made before it.
+    /// </summary>
+    private static readonly TimeSpan StopOnDisposeTimeout = TimeSpan.FromSeconds(10);
 
     /// <summary>
     /// Default period for RabbitMQ network recovery.
@@ -60,6 +66,13 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver, IAsyncDi
     private IConnection? _connection;
     private IChannel? _channel;
     private readonly CancellationTokenSource _cts = new();
+
+    /// <summary>
+    /// Set by <see cref="StopAsync"/>: decisions are only sent, connection is not recovered anymore.
+    /// </summary>
+    private volatile bool _isStopping;
+
+    private int _isStopped;
 
     /// <inheritdoc />
     public event EventHandler<IRequestProcessingEvent>? OnEventReceived;
@@ -168,11 +181,12 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver, IAsyncDi
 
     private async Task InitChannelAsync(IConnection connection, CancellationToken cancellationToken)
     {
-        _channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
-        await _channel.BasicQosAsync(0, (ushort)_qos, true, cancellationToken);
-        _channel.ChannelShutdownAsync += HandleChannelShutdownAsync;
+        var channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
+        _channel = channel;
+        await channel.BasicQosAsync(0, (ushort)_qos, true, cancellationToken);
+        channel.ChannelShutdownAsync += HandleChannelShutdownAsync;
 
-        await _channel.QueueDeclareAsync(
+        await channel.QueueDeclareAsync(
             _eventReceiverOptions.QueueName,
             durable: true,
             exclusive: false,
@@ -180,15 +194,16 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver, IAsyncDi
             arguments: null,
             cancellationToken: cancellationToken);
 
-        var consumer = new AsyncEventingBasicConsumer(_channel);
-        consumer.ReceivedAsync += ProcessReceivedEventAsync;
-        await _channel.BasicConsumeAsync(_eventReceiverOptions.QueueName, autoAck: false, consumer, cancellationToken);
+        var consumer = new AsyncEventingBasicConsumer(channel);
+        consumer.ReceivedAsync += (_, e) => ProcessReceivedEventAsync(channel, e);
+        await channel.BasicConsumeAsync(_eventReceiverOptions.QueueName, autoAck: false, consumer, cancellationToken);
     }
 
     private Task HandleChannelShutdownAsync(object? sender, ShutdownEventArgs e)
     {
         _logger.LogWarning(
-            "RabbitMQ reader channel was shutdown. Cause=\"{Cause}\", Initiator={Initiator}, ReplyCode={ReplyCode}, ReplyText={ReplyText}, ClassId={ClassId}, MethodId={MethodId}",
+            "RabbitMQ reader channel was shutdown. Cause=\"{Cause}\", Initiator={Initiator}, ReplyCode={ReplyCode}, "
+            + "ReplyText={ReplyText}, ClassId={ClassId}, MethodId={MethodId}",
             e.Cause,
             e.Initiator,
             e.ReplyCode,
@@ -219,8 +234,12 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver, IAsyncDi
         CancellationToken cancellationToken = default)
     {
         // requeue event to process it later after connection restoring
-        if (eventProcessingResult.HasValue)
-            _processingResultsQueue.Writer.TryWrite(eventProcessingResult.Value);
+        if (eventProcessingResult.HasValue && !_processingResultsQueue.Writer.TryWrite(eventProcessingResult.Value))
+        {
+            _logger.LogWarning(
+                "Receiver is stopped. Decision for event with DeliveryTag={DeliveryTag} will be dropped",
+                eventProcessingResult.Value.DeliveryTag);
+        }
 
         // maybe there is no need to restore client?
         if (_channel?.IsOpen ?? false) return true;
@@ -417,22 +436,25 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver, IAsyncDi
     /// <summary>
     /// Processes receives event from RabbitMQ and notifies subscribers.
     /// </summary>
-    private Task ProcessReceivedEventAsync(object? sender, BasicDeliverEventArgs e)
+    private Task ProcessReceivedEventAsync(IChannel channel, BasicDeliverEventArgs e)
     {
-        var receivedEvent = new RabbitMQEvent(e, ConfirmEvent, RejectEvent);
+        var receivedEvent = new RabbitMQEvent(
+            e,
+            deliveryTag => EnqueueDecision(new EventProcessingResult(channel, deliveryTag, EventDecisionType.Confirm)),
+            deliveryTag => EnqueueDecision(new EventProcessingResult(channel, deliveryTag, EventDecisionType.Reject)));
         OnEventReceived?.Invoke(this, receivedEvent);
 
         return Task.CompletedTask;
     }
 
-    private void ConfirmEvent(ulong deliveryTag)
+    private void EnqueueDecision(EventProcessingResult processingResult)
     {
-        _processingResultsQueue.Writer.TryWrite(new EventProcessingResult(deliveryTag, EventDecisionType.Confirm));
-    }
-
-    private void RejectEvent(ulong deliveryTag)
-    {
-        _processingResultsQueue.Writer.TryWrite(new EventProcessingResult(deliveryTag, EventDecisionType.Reject));
+        if (!_processingResultsQueue.Writer.TryWrite(processingResult))
+        {
+            _logger.LogWarning(
+                "Receiver is stopped. Event with DeliveryTag={DeliveryTag} will be redelivered by RabbitMQ",
+                processingResult.DeliveryTag);
+        }
     }
 
     /// <inheritdoc />
@@ -440,118 +462,125 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver, IAsyncDi
     {
         await Task.Yield();
 
-        while (!stoppingToken.IsCancellationRequested)
+        try
         {
-            EventProcessingResult? processingResult = null;
+            // completes when StopAsync completes the queue and the decisions made before it are sent
+            await foreach (var processingResult in _processingResultsQueue.Reader.ReadAllAsync(stoppingToken))
+            {
+                await SendDecisionAsync(processingResult, stoppingToken);
+            }
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            _logger.LogWarning(
+                "Stopping finalizer. {Count} decisions will be dropped, RabbitMQ redelivers their events",
+                _processingResultsQueue.Reader.Count);
+        }
+    }
 
+    private async Task SendDecisionAsync(EventProcessingResult processingResult, CancellationToken stoppingToken)
+    {
+        var actionName = processingResult.Decision == EventDecisionType.Confirm ? "confirm" : "reject";
+        try
+        {
+            bool isSent;
+            _logger.LogTrace("Entering lock to {ActionName} message...", actionName);
+            await _lock.WaitAsync(stoppingToken);
             try
             {
-                processingResult = await _processingResultsQueue.Reader.ReadAsync(stoppingToken);
-                string actionName;
+                _logger.LogTrace("Entered lock to {ActionName} message", actionName);
 
-                switch (processingResult.Value.Decision)
+                // a delivery tag of a closed channel is unknown to a new one: the broker would close it with 406
+                isSent = ReferenceEquals(processingResult.Channel, _channel);
+                if (isSent)
                 {
-                    case EventDecisionType.Confirm:
-                        actionName = "confirm";
-                        break;
-                    case EventDecisionType.Reject:
-                        actionName = "reject";
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(processingResult.Value.Decision), processingResult.Value.Decision, null);
-                }
-
-                try
-                {
-                    _logger.LogTrace("Entering lock to {ActionName} message...", actionName);
-                    await _lock.WaitAsync(stoppingToken);
-                    try
+                    if (processingResult.Decision == EventDecisionType.Confirm)
                     {
-                        _logger.LogTrace("Entered lock to {ActionName} message", actionName);
-                        if (_channel != null)
-                        {
-                            switch (processingResult.Value.Decision)
-                            {
-                                case EventDecisionType.Confirm:
-                                    await _channel.BasicAckAsync(processingResult.Value.DeliveryTag, false, stoppingToken);
-                                    break;
-                                case EventDecisionType.Reject:
-                                    await _channel.BasicRejectAsync(processingResult.Value.DeliveryTag, false, stoppingToken);
-                                    break;
-                                default:
-                                    throw new ArgumentOutOfRangeException(
-                                        nameof(processingResult.Value.Decision),
-                                        processingResult.Value.Decision,
-                                        null);
-                            }
-                        }
+                        await processingResult.Channel.BasicAckAsync(processingResult.DeliveryTag, false, stoppingToken);
                     }
-                    finally
+                    else
                     {
-                        _lock.Release();
+                        await processingResult.Channel.BasicRejectAsync(processingResult.DeliveryTag, false, stoppingToken);
                     }
-                    _logger.LogTrace("Exited lock to {ActionName} message", actionName);
-
-                    _logger.LogDebug(
-                        "Completed {ActionName} for received event with DeliveryTag={DeliveryTag}. Finalization of this event completed",
-                        actionName,
-                        processingResult.Value.DeliveryTag);
                 }
-                catch (RabbitMQClientException e)
-                {
-                    // if we got this exception, probably we have some some connection issues.
-                    // We will try to wait auto recovering. If it fails, we will recreate the channel
-
-                    _logger.LogWarning(e,
-                        "Got {ExceptionName} exception while {ActionName} event with DeliveryTag={DeliveryTag}. Waiting for recovering for {RecoverWaitDelay}",
-                        e.GetType().Name,
-                        actionName,
-                        processingResult.Value.DeliveryTag,
-                        _recoverWaitDelay);
-
-                    await HandleRecoverySafelyAsync(
-                        processingResult,
-                        cancellationToken: _cts.Token);
-                }
-                catch (Exception e) when (!stoppingToken.IsCancellationRequested)
-                {
-                    _logger.LogError(e,
-                        "Failed to {ActionName} event with DeliveryTag={DeliveryTag}",
-                        actionName,
-                        processingResult.Value);
-                }
-
             }
-            catch (Exception e) when (stoppingToken.IsCancellationRequested)
+            finally
+            {
+                _lock.Release();
+            }
+            _logger.LogTrace("Exited lock to {ActionName} message", actionName);
+
+            if (isSent)
+            {
+                _logger.LogDebug(
+                    "Completed {ActionName} for received event with DeliveryTag={DeliveryTag}",
+                    actionName,
+                    processingResult.DeliveryTag);
+            }
+            else
             {
                 _logger.LogWarning(
-                    e,
-                    "Stopping finalizer. Response with DeliveryTag={DeliveryTag} will be dropped",
-                    processingResult?.DeliveryTag.ToString() ?? "<unknown>");
+                    "Can't {ActionName} event with DeliveryTag={DeliveryTag}: its channel was replaced, "
+                    + "RabbitMQ redelivers the event",
+                    actionName,
+                    processingResult.DeliveryTag);
             }
-            catch (Exception e)
-            {
-                _logger.LogError(
-                    e,
-                    "Error while finalizing event with DeliveryTag={DeliveryTag}",
-                    processingResult?.DeliveryTag.ToString() ?? "<unknown>");
-            }
+        }
+        catch (RabbitMQClientException e) when (!_isStopping)
+        {
+            // probably, there are connection issues: wait for auto recovery, recreate the channel if it fails
+            _logger.LogWarning(
+                e,
+                "Got {ExceptionName} exception while {ActionName} event with DeliveryTag={DeliveryTag}. "
+                + "Waiting for recovering for {RecoverWaitDelay}",
+                e.GetType().Name,
+                actionName,
+                processingResult.DeliveryTag,
+                _recoverWaitDelay);
+
+            await HandleRecoverySafelyAsync(processingResult, cancellationToken: _cts.Token);
+        }
+        catch (Exception e) when (!stoppingToken.IsCancellationRequested)
+        {
+            _logger.LogError(
+                e,
+                "Failed to {ActionName} event with DeliveryTag={DeliveryTag}, RabbitMQ redelivers the event",
+                actionName,
+                processingResult.DeliveryTag);
         }
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// Sends the decisions made before the call, until <paramref name="cancellationToken"/> is cancelled.
+    /// Events confirmed or rejected after the call are redelivered by RabbitMQ.
+    /// </remarks>
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
+        if (Interlocked.Exchange(ref _isStopped, 1) == 1) return;
+
         _logger.LogDebug($"Stopping {nameof(RabbitMQEventReceiver)}...");
 
-        // stop sending requests
-        _logger.LogTrace("Cancelling cts to stop sending requests...");
+        _isStopping = true;
+        _processingResultsQueue.Writer.TryComplete();
+        if (ExecuteTask != null)
+        {
+            _logger.LogTrace("Waiting for sending decisions...");
+            try
+            {
+                await ExecuteTask.WaitAsync(cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogWarning(
+                    "Stopped waiting for sending decisions. {Count} decisions will be dropped",
+                    _processingResultsQueue.Reader.Count);
+            }
+        }
+
+        // stop recovering
         await _cts.CancelAsync();
 
-        // maybe, it's safer to cancel all items in a queue? let's think about it later
-        //TODO: https://github.com/siisltd/Curiosity.Utils/issues/50
-
-        // stop background thread
         _logger.LogTrace("Stopping finalizer...");
         await base.StopAsync(cancellationToken);
         _logger.LogTrace("Stopped finalizer");
@@ -578,27 +607,37 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver, IAsyncDi
     }
 
     /// <summary>
-    /// Closes the connection to RabbitMQ if <see cref="StopAsync"/> was not called and releases resources.
+    /// Stops the receiver if <see cref="StopAsync"/> was not called and releases resources.
     /// </summary>
     public async ValueTask DisposeAsync()
     {
-        await _cts.CancelAsync();
-        await CloseConnectionAsync();
+        using (var stopTimeout = new CancellationTokenSource(StopOnDisposeTimeout))
+        {
+            await StopAsync(stopTimeout.Token);
+        }
 
         Dispose();
+        _cts.Dispose();
         GC.SuppressFinalize(this);
     }
 
     private readonly struct EventProcessingResult
     {
+        /// <summary>
+        /// Channel the event was received on: its delivery tags are valid only on it.
+        /// </summary>
+        public IChannel Channel { get; }
+
         public ulong DeliveryTag { get; }
 
         public EventDecisionType Decision { get; }
 
         public EventProcessingResult(
+            IChannel channel,
             ulong deliveryTag,
             EventDecisionType decision)
         {
+            Channel = channel;
             DeliveryTag = deliveryTag;
             Decision = decision;
         }

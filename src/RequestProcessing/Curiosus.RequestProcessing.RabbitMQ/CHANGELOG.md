@@ -4,7 +4,7 @@
 
 ### Changed
 
-- **Breaking:** upgraded `RabbitMQ.Client` from `6.8.1` to `7.1.0` (through `Curiosus.RabbitMQ`). To migrate:
+- **Breaking:** upgraded `RabbitMQ.Client` from `6.8.1` to `7.0.0` (through `Curiosus.RabbitMQ`). To migrate:
   - `RabbitMQEvent.ReceivedData` is the `BasicDeliverEventArgs` of RabbitMQ.Client 7: `BasicProperties` is
     `IReadOnlyBasicProperties` now. `DeliveryTag` and `BasicProperties.CorrelationId` are read as before; recompile.
     Don't read `ReceivedData.Body` after the event was received, use `RabbitMQEvent.Payload`.
@@ -14,8 +14,15 @@
 
 ### Added
 
-- `RabbitMQEventReceiver` implements `IAsyncDisposable`: `DisposeAsync` closes the connection when `StopAsync`
-  was not called.
+- `RabbitMQEventReceiver` implements `IAsyncDisposable`: `DisposeAsync` stops the receiver when `StopAsync`
+  was not called and releases its resources.
+
+### Fixed
+
+- `RabbitMQEventReceiver.StopAsync` sends the confirmations and rejections made before it instead of dropping them,
+  so their events are not redelivered.
+- A confirmation or rejection made before a manual reconnect is not sent on the new channel: its delivery tag is
+  unknown there, so the broker would close the new channel again and again.
 
 ## [2.0.0] - 2026-09-27
 

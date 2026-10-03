@@ -122,8 +122,10 @@ public class RabbitMqRpcClient_Should
         (await _fixture.GetReadyMessagesCountAsync($"{responseQueuePrefix}_unconfirmed", cts.Token)).Should().Be(1);
     }
 
-    [Fact]
-    public async Task RejectResponse_WithUnknownCorrelationId()
+    [Theory]
+    [InlineData("unknown")]
+    [InlineData(null)]
+    public async Task RejectResponse_WithUnknownCorrelationId(string? correlationId)
     {
         // arrange
         using var cts = new CancellationTokenSource(TestTimeout);
@@ -136,7 +138,7 @@ public class RabbitMqRpcClient_Should
         await using (var connection = await _fixture.CreateConnectionAsync(cts.Token))
         await using (var channel = await connection.CreateChannelAsync(cancellationToken: cts.Token))
         {
-            var props = new BasicProperties { CorrelationId = "unknown" };
+            var props = new BasicProperties { CorrelationId = correlationId };
             await channel.BasicPublishAsync("", responseQueueName, false, props, Encoding.UTF8.GetBytes("{}"), cts.Token);
         }
 
@@ -148,6 +150,28 @@ public class RabbitMqRpcClient_Should
 
         // assert: an unacked response would be requeued after closing the channel, a rejected one is dropped
         (await _fixture.GetReadyMessagesCountAsync(responseQueueName, cts.Token)).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ThrowOnConfirmAcknowledge_AfterClientIsDisposed()
+    {
+        // arrange
+        using var cts = new CancellationTokenSource(TestTimeout);
+        var requestQueueName = RabbitMqFixture.UniqueName("rpc_disposed");
+        await using var service = await StartEchoServiceAsync(requestQueueName, cts.Token);
+        var client = await CreateFactory().CreateClientAsync(
+            requestQueueName, disposeResponseQueue: false, cancellationToken: cts.Token);
+        var result = await client.SendWithManualAcknowledgeAsync<EchoResponse, EchoRequest>(
+            new EchoRequest("disposed"), "correlation_disposed", cts.Token);
+        await client.DisposeAsync();
+
+        // act
+        var act = () => result.ConfirmAcknowledgeAsync(cts.Token);
+
+        // assert: the closed channel returned the response to the queue
+        await act.Should().ThrowAsync<InvalidOperationException>();
+        var responseQueueName = $"{requestQueueName}_responses_rpc_tests";
+        (await _fixture.GetReadyMessagesCountAsync(responseQueueName, cts.Token)).Should().Be(1);
     }
 
     [Fact]

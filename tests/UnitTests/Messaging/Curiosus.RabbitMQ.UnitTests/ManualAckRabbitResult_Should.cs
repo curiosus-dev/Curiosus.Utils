@@ -13,7 +13,7 @@ public class ManualAckRabbitResult_Should
     {
         // arrange
         var calls = 0;
-        var result = new ManualAckRabbitResult<string>("data", _ =>
+        var result = new ManualAckRabbitResult<string>("data", () =>
         {
             Interlocked.Increment(ref calls);
             return Task.CompletedTask;
@@ -29,38 +29,19 @@ public class ManualAckRabbitResult_Should
     }
 
     [Fact]
-    public async Task ConfirmAcknowledgeAsync_PassCancellationToken()
-    {
-        // arrange
-        using var cts = new CancellationTokenSource();
-        CancellationToken passedToken = default;
-        var result = new ManualAckRabbitResult<string>("data", token =>
-        {
-            passedToken = token;
-            return Task.CompletedTask;
-        });
-
-        // act
-        await result.ConfirmAcknowledgeAsync(cts.Token);
-
-        // assert
-        passedToken.Should().Be(cts.Token);
-    }
-
-    [Fact]
     public async Task ConfirmAcknowledgeAsync_AllowRetry_WhenConfirmationFailed()
     {
         // arrange
         var calls = 0;
-        var result = new ManualAckRabbitResult<string>("data", _ =>
+        var result = new ManualAckRabbitResult<string>("data", () =>
         {
-            if (Interlocked.Increment(ref calls) == 1) throw new OperationCanceledException();
+            if (Interlocked.Increment(ref calls) == 1) throw new InvalidOperationException();
             return Task.CompletedTask;
         });
 
         // act
         var firstAttempt = () => result.ConfirmAcknowledgeAsync();
-        await firstAttempt.Should().ThrowAsync<OperationCanceledException>();
+        await firstAttempt.Should().ThrowAsync<InvalidOperationException>();
         await result.ConfirmAcknowledgeAsync();
         await result.ConfirmAcknowledgeAsync();
 
@@ -74,7 +55,7 @@ public class ManualAckRabbitResult_Should
         // arrange
         var calls = 0;
         var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var result = new ManualAckRabbitResult<string>("data", async _ =>
+        var result = new ManualAckRabbitResult<string>("data", async () =>
         {
             Interlocked.Increment(ref calls);
             await gate.Task;
@@ -87,6 +68,34 @@ public class ManualAckRabbitResult_Should
         await Task.WhenAll(first, second);
 
         // assert
+        calls.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ConfirmAcknowledgeAsync_CancelOnlyCancelledCall()
+    {
+        // arrange
+        var calls = 0;
+        var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var result = new ManualAckRabbitResult<string>("data", async () =>
+        {
+            Interlocked.Increment(ref calls);
+            await gate.Task;
+        });
+        using var cts = new CancellationTokenSource();
+
+        // act
+        var cancelled = result.ConfirmAcknowledgeAsync(cts.Token);
+        var notCancelled = result.ConfirmAcknowledgeAsync();
+        await cts.CancelAsync();
+        var cancelledAct = () => cancelled;
+        await cancelledAct.Should().ThrowAsync<OperationCanceledException>();
+        gate.SetResult();
+        await notCancelled;
+        await result.ConfirmAcknowledgeAsync();
+
+        // assert
+        cancelled.IsCanceled.Should().BeTrue();
         calls.Should().Be(1);
     }
 }
