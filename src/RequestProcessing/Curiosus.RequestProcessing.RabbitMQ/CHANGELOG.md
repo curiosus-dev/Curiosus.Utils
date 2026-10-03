@@ -10,16 +10,16 @@
     Don't read `ReceivedData.Body` after the event was received, use `RabbitMQEvent.Payload`.
   - `RabbitMQRequestWrapper<T>.CorrelationId` is `string?`: it is `null` when the message has no correlation id.
   - Code that uses `RabbitMQ.Client` directly must be migrated to version 7 as well, see its
-    [migration guide](https://github.com/rabbitmq/rabbitmq-dotnet-client/blob/main/v7-MIGRATION.md).
+    [migration guide](https://github.com/rabbitmq/rabbitmq-dotnet-client/blob/main/v7-MIGRATION.md) ([#77](https://github.com/curiosus-dev/Curiosus.Utils/issues/77)).
 - **Breaking:** the `RabbitMQRequestProcessorBootstrapperBase` constructor takes the node options once: remove the
-  last `options` argument, the receiver options are read from `nodeOptions.RabbitMQEventReceiver`.
+  last `options` argument, the receiver options are read from `nodeOptions.RabbitMQEventReceiver` ([#18](https://github.com/curiosus-dev/Curiosus.Utils/issues/18)).
 - `RabbitMQEventReceiverOptions.ClientName` is the machine name by default instead of failing the options validation
-  when it is not set.
+  when it is not set ([#18](https://github.com/curiosus-dev/Curiosus.Utils/issues/18)).
 
 ### Removed
 
 - **Breaking:** `RabbitMQEventReceiverOptions.ExchangeName`: it was never used, the receiver consumes the queue
-  directly. Remove it from code; a value left in configuration is ignored.
+  directly. Remove it from code; a value left in configuration is ignored ([#18](https://github.com/curiosus-dev/Curiosus.Utils/issues/18)).
 
 ### Added
 
@@ -29,10 +29,10 @@
 ### Fixed
 
 - `RabbitMQEventReceiver.StopAsync` sends the confirmations and rejections made before it instead of dropping them,
-  so their events are not redelivered.
+  so their events are not redelivered ([#77](https://github.com/curiosus-dev/Curiosus.Utils/issues/77)).
 - A confirmation or rejection made before a manual reconnect is not sent on the new channel: its delivery tag is
-  unknown there, so the broker would close the new channel again and again.
-- The RabbitMQ request processing sample starts: its consumer configuration has `ClientName`.
+  unknown there, so the broker would close the new channel again and again ([#77](https://github.com/curiosus-dev/Curiosus.Utils/issues/77)).
+- The RabbitMQ request processing sample starts: its consumer configuration has `ClientName` ([#18](https://github.com/curiosus-dev/Curiosus.Utils/issues/18)).
 
 ## [2.0.0] - 2026-09-27
 

@@ -6,16 +6,16 @@
 
 - **Breaking:** the `UnisenderGoEmailSender(ILogger<UnisenderGoEmailSender> logger, UnisenderGoEmailOptions options)` constructor is replaced by one that also takes
   `IHttpClientFactory`. `AddUnisenderGoEmailSender` registers everything; when creating `UnisenderGoEmailSender` yourself, call
-  `services.AddHttpClient()` and pass `IHttpClientFactory` from the service provider.
+  `services.AddHttpClient()` and pass `IHttpClientFactory` from the service provider ([#82](https://github.com/curiosus-dev/Curiosus.Utils/issues/82)).
 - HTTP calls use `HttpClient` from `IHttpClientFactory` instead of `RestSharp`: `AddUnisenderGoEmailSender` registers the named client
   `UnisenderGoEmailSender.HttpClientName`, configure it with `services.AddHttpClient(UnisenderGoEmailSender.HttpClientName, ...)`.
-  The package no longer depends on `RestSharp`: reference it directly if your code used it through this package.
+  The package no longer depends on `RestSharp`: reference it directly if your code used it through this package ([#82](https://github.com/curiosus-dev/Curiosus.Utils/issues/82)).
 - **Breaking:** when `cancellationToken` is cancelled, `SendAsync` throws `OperationCanceledException` instead of returning
-  a failed response. Network failures and `HttpClient` timeouts are still returned as a failed response.
+  a failed response. Network failures and `HttpClient` timeouts are still returned as a failed response ([#82](https://github.com/curiosus-dev/Curiosus.Utils/issues/82)).
 
 ### Fixed
 
-- Network failures and timeouts are reported as `EmailError.Communication` instead of `EmailError.Unknown`.
+- Network failures and timeouts are reported as `EmailError.Communication` instead of `EmailError.Unknown` ([#82](https://github.com/curiosus-dev/Curiosus.Utils/issues/82)).
 - Responses in a charset .NET has no built-in encoding for (such as `windows-1251`) are decoded instead of failing.
 
 ## [2.0.0] - 2026-09-27

@@ -6,21 +6,21 @@
 
 - **Breaking:** the `MailgunEmailSender(ILogger<MailgunEmailSender> logger, MailgunEmailOptions options)` constructor is replaced by one that also takes
   `IHttpClientFactory`. `AddMailgunEmailSender` registers everything; when creating `MailgunEmailSender` yourself, call
-  `services.AddHttpClient()` and pass `IHttpClientFactory` from the service provider.
+  `services.AddHttpClient()` and pass `IHttpClientFactory` from the service provider ([#82](https://github.com/curiosus-dev/Curiosus.Utils/issues/82)).
 - HTTP calls use `HttpClient` from `IHttpClientFactory` instead of `RestSharp`: `AddMailgunEmailSender` registers the named client
   `MailgunEmailSender.HttpClientName`, configure it with `services.AddHttpClient(MailgunEmailSender.HttpClientName, ...)`.
-  The package no longer depends on `RestSharp`: reference it directly if your code used it through this package.
+  The package no longer depends on `RestSharp`: reference it directly if your code used it through this package ([#82](https://github.com/curiosus-dev/Curiosus.Utils/issues/82)).
 - **Breaking:** when `cancellationToken` is cancelled, `SendAsync` throws `OperationCanceledException` instead of returning
-  a failed response. Network failures and `HttpClient` timeouts are still returned as a failed response.
+  a failed response. Network failures and `HttpClient` timeouts are still returned as a failed response ([#82](https://github.com/curiosus-dev/Curiosus.Utils/issues/82)).
 - HTTP error status codes map to `EmailError` by meaning instead of `EmailError.Auth` for everything except 420:
   400 → `IncorrectRequestData`, 401 and 403 → `Auth`, 420 and 429 → `RateLimit`, 5xx → `Communication`,
-  other codes → `Unknown`.
+  other codes → `Unknown` ([#83](https://github.com/curiosus-dev/Curiosus.Utils/issues/83)).
 
 ### Fixed
 
 - `MailgunEmailSender` could not be created: `MailgunEmailOptions.AssertValid()` threw `NotImplementedException`.
-  The stub is removed, options are validated by the `AssertValid()` extension of `Curiosus.Configuration`.
-- Network failures and timeouts are reported as `EmailError.Communication` instead of `EmailError.Auth`.
+  The stub is removed, options are validated by the `AssertValid()` extension of `Curiosus.Configuration` ([#12](https://github.com/curiosus-dev/Curiosus.Utils/issues/12), [#83](https://github.com/curiosus-dev/Curiosus.Utils/issues/83)).
+- Network failures and timeouts are reported as `EmailError.Communication` instead of `EmailError.Auth` ([#83](https://github.com/curiosus-dev/Curiosus.Utils/issues/83)).
 - Responses in a charset .NET has no built-in encoding for (such as `windows-1251`) are decoded instead of failing.
 
 ## [2.0.0] - 2026-09-27
