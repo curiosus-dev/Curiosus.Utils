@@ -10,7 +10,9 @@
   [Curiosus.Hosting changelog](https://github.com/curiosus-dev/Curiosus.Utils/blob/main/src/Hosting/Curiosus.Hosting/CHANGELOG.md)
   and the [NLog 6 breaking changes](https://nlog-project.org/2025/04/29/nlog-6-0-major-changes.html).
   Code calling `NLogBuilder.ConfigureNLog(path)` should use
-  `LogManager.Setup().RegisterNLogWeb().LoadConfigurationFromFile(path)`.
+  `LogManager.Setup().RegisterNLogWeb().LoadConfigurationFromFile(path, optional: false)`: without `optional: false`
+  a missing file is silently skipped and the app runs without logging, while `ConfigureNLog` threw.
+- Updated `NetEscapades.Configuration.Yaml` to `3.0.0` (`YamlDotNet` `13.0.1`) through `Curiosus.Hosting`.
 
 ## [2.0.0] - 2026-09-27
 
