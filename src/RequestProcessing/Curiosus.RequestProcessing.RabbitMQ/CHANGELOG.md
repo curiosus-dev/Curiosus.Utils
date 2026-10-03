@@ -11,6 +11,15 @@
   - `RabbitMQRequestWrapper<T>.CorrelationId` is `string?`: it is `null` when the message has no correlation id.
   - Code that uses `RabbitMQ.Client` directly must be migrated to version 7 as well, see its
     [migration guide](https://github.com/rabbitmq/rabbitmq-dotnet-client/blob/main/v7-MIGRATION.md).
+- **Breaking:** the `RabbitMQRequestProcessorBootstrapperBase` constructor takes the node options once: remove the
+  last `options` argument, the receiver options are read from `nodeOptions.RabbitMQEventReceiver`.
+- `RabbitMQEventReceiverOptions.ClientName` is `BWKR_<machine name>` by default, as in `Curiosus.RabbitMQ`, instead
+  of failing the options validation when it is not set.
+
+### Removed
+
+- **Breaking:** `RabbitMQEventReceiverOptions.ExchangeName`: it was never used, the receiver consumes the queue
+  directly. Remove it from code; a value left in configuration is ignored.
 
 ### Added
 
@@ -23,6 +32,7 @@
   so their events are not redelivered.
 - A confirmation or rejection made before a manual reconnect is not sent on the new channel: its delivery tag is
   unknown there, so the broker would close the new channel again and again.
+- The RabbitMQ request processing sample starts: its consumer configuration has `ClientName`.
 
 ## [2.0.0] - 2026-09-27
 

@@ -27,8 +27,6 @@ public abstract class RabbitMQRequestProcessorBootstrapperBase<
     where TProcessingRequestInfo : class, IProcessingRequestInfo
     where TOptions : RequestProcessorNodeOptions, IRabbitMQRequestProcessorNodeOptions
 {
-    private readonly TOptions _options;
-
     /// <summary>
     /// Received events from RabbitMQ.
     /// </summary>
@@ -38,17 +36,15 @@ public abstract class RabbitMQRequestProcessorBootstrapperBase<
     protected RabbitMQRequestProcessorBootstrapperBase(
         TOptions nodeOptions,
         ILoggerFactory loggerFactory,
-        IServiceProvider serviceProvider,
-        TOptions options) : base(nodeOptions, loggerFactory, serviceProvider)
+        IServiceProvider serviceProvider) : base(nodeOptions, loggerFactory, serviceProvider)
     {
-        _options = options;
         RabbitMQReceivedEvents = new ConcurrentQueue<RabbitMQEvent>();
     }
 
     /// <inheritdoc />
     protected override IReadOnlyList<IEventSource> GetEventSources()
     {
-        return new[] { new RabbitMQEventSource(_options.RabbitMQEventReceiver) };
+        return new[] { new RabbitMQEventSource(NodeOptions.RabbitMQEventReceiver) };
     }
 
     /// <inheritdoc />

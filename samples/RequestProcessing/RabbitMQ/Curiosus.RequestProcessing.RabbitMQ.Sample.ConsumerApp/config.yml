@@ -17,4 +17,5 @@ RequestProcessor:
     UserName: test
     Password: test
     QueueName: test
+    ClientName: sample_consumer
     Port: 5674
