@@ -1,5 +1,33 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- **Breaking:** updated `NLog.Extensions.Logging` to `6.0.0` and `NLog.MailKit` to `6.0.0`, so apps now run on NLog 6.
+  NLog 6 rejects NLog.config files that use removed options: with `throwExceptions="true"` or `throwConfigExceptions="true"`
+  the app fails on startup (for example `'FileTarget' cannot assign unknown property 'enableArchiveFileCompression'`),
+  otherwise the option is ignored. To migrate, check your NLog.config against the
+  [NLog 6 breaking changes](https://nlog-project.org/2025/04/29/nlog-6-0-major-changes.html):
+  - `File` target: remove `enableArchiveFileCompression` (compression now needs the `NLog.Targets.GZipFile` package and
+    `xsi:type="GZipFile"`, which compresses the active log file as well), replace `archiveNumbering`/`archiveDateFormat`
+    and the `{#}` placeholder of `archiveFileName` with `archiveSuffixFormat`, remove `concurrentWrites`, `networkWrites`,
+    `forceManaged`, `fileAttributes`. Archive names change: with `archiveFileName="archive/main.log"` and
+    `archiveSuffixFormat="_{1:yyyyMMdd}_{0:00}"` the archive of 2026-10-03 is `archive/main_20261003_00.log`, not
+    `archive/main20261003.zip`. `maxArchiveFiles` only cleans up archives matching the new names, so delete the archives
+    written by NLog 5 yourself and update scripts that parse archive names.
+  - Targets moved out of the `NLog` package need their own package: `Network`/`Syslog`/`Gelf` (`NLog.Targets.Network`),
+    `Trace` (`NLog.Targets.Trace`), `WebService` (`NLog.Targets.WebService`), `AtomicFile`, `ConcurrentFile`,
+    the System.Net.Mail `Mail` target (`NLog.Targets.Mail`), `${regex-replace}` (`NLog.RegEx`). The MailKit `Mail` target
+    used for the mail logger still comes with `NLog.MailKit`.
+  - `Console` target batches writes and no longer uses `Console.WriteLine`: set `forceWriteLine="true"` if you need it.
+  - Code using NLog APIs directly: `LogManager.LoadConfiguration(path)` is replaced by
+    `LogManager.Setup().LoadConfigurationFromFile(path, optional: false)`, `LogManager.Configuration` is nullable.
+    Pass `optional: false`: by default a missing file is silently skipped and the app runs without logging, while
+    `LoadConfiguration` threw `FileNotFoundException`.
+- The sample `NLog.config` no longer compresses archived log files: NLog 6 `File` target has no archive compression.
+- Updated `NetEscapades.Configuration.Yaml` to `3.0.0` (`YamlDotNet` `13.0.1`) through `Curiosus.Configuration.YAML`.
+
 ## [2.0.0] - 2026-09-27
 
 ### Changed

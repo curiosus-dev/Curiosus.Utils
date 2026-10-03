@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Updated `NetEscapades.Configuration.Yaml` to `3.0.0` (`YamlDotNet` `13.0.1`).
+
 ## [2.0.0] - 2026-09-27
 
 ### Changed
