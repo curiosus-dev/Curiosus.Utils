@@ -1,5 +1,7 @@
 using System;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using Curiosus.Configuration;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
@@ -45,19 +47,24 @@ public class RabbitMqRpcClientFactory
     }
 
     /// <summary>
-    /// Creates new RPC client connected to specified queue.
+    /// Creates new RPC client, connects it to RabbitMQ and declares request and response queues.
     /// </summary>
+    /// <remarks>
+    /// Dispose the client with <see cref="RabbitMqRpcClient.DisposeAsync"/> to close its connection.
+    /// </remarks>
     /// <param name="requestQueueName">Queue name.</param>
     /// <param name="clientNameSuffix">Extra for client name.</param>
     /// <param name="disposeResponseQueue">Should response queue be deleted after client disposing?</param>
     /// <param name="jsonSerializerOptions">
     /// JSON options for requests and responses. <see cref="RabbitMqRpcClient.DefaultJsonSerializerOptions"/> is used if not specified.
     /// </param>
-    public RabbitMqRpcClient CreateClient(
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public async Task<RabbitMqRpcClient> CreateClientAsync(
         string requestQueueName,
         string? clientNameSuffix = null,
         bool disposeResponseQueue = true,
-        JsonSerializerOptions? jsonSerializerOptions = null)
+        JsonSerializerOptions? jsonSerializerOptions = null,
+        CancellationToken cancellationToken = default)
     {
         if (String.IsNullOrWhiteSpace(requestQueueName)) throw new ArgumentNullException(nameof(requestQueueName));
 
@@ -80,11 +87,11 @@ public class RabbitMqRpcClientFactory
             responseQueueName,
             logger,
             NetworkRecoveryInterval,
-            _connectionFactory.CreateConnection,
+            ct => _connectionFactory.CreateConnectionAsync(ct),
             disposeResponseQueue,
             jsonSerializerOptions);
 
-        client.Init();
+        await client.InitAsync(cancellationToken);
 
         _logger.LogDebug(
             "Created new RPC client and made it connected to RabbitMQ (host \"{RabbitMqHostName}\", queue = \"{RequestQueueName}\", response queue = \"{ResponseQueueName}\")",

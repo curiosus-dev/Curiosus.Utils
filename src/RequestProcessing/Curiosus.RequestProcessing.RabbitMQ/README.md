@@ -80,8 +80,13 @@ services.AddRabbitMQRequestProcessor<
     nodeOptions);
 ```
 
+`RabbitMQEvent.Payload` is a copy of the message body. `RabbitMQEvent.ReceivedData` is the `BasicDeliverEventArgs`
+of [RabbitMQ.Client](https://www.nuget.org/packages/RabbitMQ.Client) 7: read `BasicProperties` (for example,
+`CorrelationId`) and `DeliveryTag` from it, but not `Body`, which is valid only while the message is being delivered.
+
 The receiver uses RabbitMQ automatic recovery and additionally reconnects manually (up to 10 attempts) after
-channel failures such as consumer timeouts. Rejected messages are not requeued.
+channel failures such as consumer timeouts. Rejected messages are not requeued. `StopAsync` sends the confirmations
+and rejections made before it and closes the connection; `DisposeAsync` stops the receiver if it was not stopped.
 
 A complete consumer and producer is in
 [samples/RequestProcessing/RabbitMQ](https://github.com/curiosus-dev/Curiosus.Utils/tree/main/samples/RequestProcessing/RabbitMQ).

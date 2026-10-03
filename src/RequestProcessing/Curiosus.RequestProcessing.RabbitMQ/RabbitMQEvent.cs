@@ -20,7 +20,9 @@ public class RabbitMQEvent : IRequestProcessingEvent
     /// Data received from RabbitMQ.
     /// </summary>
     /// <remarks>
-    /// Dont' use body property, Use <see cref="Payload"/> instead.
+    /// Don't use <see cref="BasicDeliverEventArgs.Body"/>: RabbitMQ.Client reuses its memory after the delivery handler
+    /// returns, use <see cref="Payload"/> instead. <see cref="BasicDeliverEventArgs.BasicProperties"/> and
+    /// <see cref="BasicDeliverEventArgs.DeliveryTag"/> stay valid.
     /// </remarks>
     public BasicDeliverEventArgs ReceivedData { get; }
 
@@ -41,7 +43,7 @@ public class RabbitMQEvent : IRequestProcessingEvent
 
         // we need to copy because RabbitMQ used under the hood ReadOnlyMemory
         // and after returning from handler method body can be changed
-        // https://www.rabbitmq.com/dotnet-api-guide.html#consuming-memory-safety
+        // https://www.rabbitmq.com/client-libraries/dotnet-api-guide#consuming-memory-safety
         Payload = receivedArgs.Body.ToArray();
 
         _canMakeDecision = true;

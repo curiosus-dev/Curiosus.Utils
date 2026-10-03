@@ -30,6 +30,10 @@
       <ProjectReference Include="..\Curiosus.RequestProcessing\Curiosus.RequestProcessing.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <InternalsVisibleTo Include="Curiosus.RequestProcessing.RabbitMQ.UnitTests" />
+    </ItemGroup>
+
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
         <DocumentationFile>bin\Release\Curiosus.RequestProcessing.RabbitMQ.xml</DocumentationFile>
     </PropertyGroup>

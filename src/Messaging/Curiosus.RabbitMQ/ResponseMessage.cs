@@ -22,6 +22,9 @@ public readonly struct ResponseMessage
     /// </summary>
     public string CorrelationId { get; private init; }
 
+    /// <summary>
+    /// Response to publish, <see langword="null"/> if the request should be rejected.
+    /// </summary>
     public ResponseMessageData? ResponseData { get; private init; }
 
     /// <summary>
