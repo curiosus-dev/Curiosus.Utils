@@ -1,18 +1,18 @@
 # Changelog
 
-## [Unreleased]
+## [3.0.0] - 2026-10-03
 
 ### Changed
 
 - **Breaking:** the `SmscSender(ILogger<SmscSender> logger, SmscOptions options)` constructor is replaced by one that also takes
   `IHttpClientFactory`. `AddSmscSmsSender` registers everything; when creating `SmscSender` yourself, call
-  `services.AddHttpClient()` and pass `IHttpClientFactory` from the service provider.
+  `services.AddHttpClient()` and pass `IHttpClientFactory` from the service provider ([#82](https://github.com/curiosus-dev/Curiosus.Utils/issues/82)).
 - HTTP calls use `HttpClient` from `IHttpClientFactory` instead of `RestSharp`: `AddSmscSmsSender` registers the named client
   `SmscSender.HttpClientName`, configure it with `services.AddHttpClient(SmscSender.HttpClientName, ...)`.
-  The package no longer depends on `RestSharp`: reference it directly if your code used it through this package.
+  The package no longer depends on `RestSharp`: reference it directly if your code used it through this package ([#82](https://github.com/curiosus-dev/Curiosus.Utils/issues/82)).
 - **Breaking:** when `cancellationToken` is cancelled, `SendSmsAsync` throws `OperationCanceledException` instead of returning
-  a failed response. Network failures and `HttpClient` timeouts are still returned as a failed response.
-- Parameters, including login and password, are sent in the form body of the POST request instead of the URL query.
+  a failed response. Network failures and `HttpClient` timeouts are still returned as a failed response ([#82](https://github.com/curiosus-dev/Curiosus.Utils/issues/82)).
+- Parameters, including login and password, are sent in the form body of the POST request instead of the URL query ([#84](https://github.com/curiosus-dev/Curiosus.Utils/issues/84)).
 - HTTP errors are reported as `"<status code>, <reason phrase>"` in the error description and `SmsSentResult.ResponseJson`
   (previously the RestSharp error message).
 

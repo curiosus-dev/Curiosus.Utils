@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [3.0.0] - 2026-10-03
 
 ### Changed
 
@@ -15,17 +15,17 @@
   - `RabbitMqRpcClient.GetConsumersCount()` → `await RabbitMqRpcClient.GetConsumersCountAsync()`, with an optional
     `CancellationToken`.
   - Code that uses `RabbitMQ.Client` directly must be migrated to version 7 as well, see its
-    [migration guide](https://github.com/rabbitmq/rabbitmq-dotnet-client/blob/main/v7-MIGRATION.md).
+    [migration guide](https://github.com/rabbitmq/rabbitmq-dotnet-client/blob/main/v7-MIGRATION.md) ([#75](https://github.com/curiosus-dev/Curiosus.Utils/issues/75), [#76](https://github.com/curiosus-dev/Curiosus.Utils/issues/76)).
 - The RPC client completes pending requests asynchronously, so code after `await SendWith...Async(...)` no longer runs
-  inside the RabbitMQ consumer and doesn't block the delivery of other responses.
+  inside the RabbitMQ consumer and doesn't block the delivery of other responses ([#76](https://github.com/curiosus-dev/Curiosus.Utils/issues/76)).
 
 ### Fixed
 
 - A response without a correlation id is rejected instead of failing inside the consumer.
 - A request that could not be sent because of a connection failure is resent after the recovery or fails, instead of
-  waiting for a response forever.
+  waiting for a response forever ([#76](https://github.com/curiosus-dev/Curiosus.Utils/issues/76)).
 - A response received before a manual reconnect is not acked or rejected on the new channel: its delivery tag is
-  unknown there, so the broker would close the new channel.
+  unknown there, so the broker would close the new channel ([#76](https://github.com/curiosus-dev/Curiosus.Utils/issues/76)).
 - A failed automatic ack is logged instead of replacing the response of `SendWithAutoAcknowledgeAsync`, and a failed
   reject doesn't hide the error of `SendWithManualAcknowledgeAsync`.
 

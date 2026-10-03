@@ -1,23 +1,23 @@
 # Changelog
 
-## [Unreleased]
+## [3.0.0] - 2026-10-03
 
 ### Changed
 
 - **Breaking:** the `ReCaptchaService(ReCaptchaOptions options)` constructor is replaced by one that also takes
   `IHttpClientFactory`. `AddReCaptcha` registers everything; when creating `ReCaptchaService` yourself, call
-  `services.AddHttpClient()` and pass `IHttpClientFactory` from the service provider.
+  `services.AddHttpClient()` and pass `IHttpClientFactory` from the service provider ([#67](https://github.com/curiosus-dev/Curiosus.Utils/issues/67)).
 - HTTP calls use `HttpClient` from `IHttpClientFactory` instead of `Flurl.Http`: `AddReCaptcha` registers the named client
   `ReCaptchaService.HttpClientName`, configure it with `services.AddHttpClient(ReCaptchaService.HttpClientName, ...)`.
-  The package no longer depends on `Flurl.Http`: reference it directly if your code used it through this package.
+  The package no longer depends on `Flurl.Http`: reference it directly if your code used it through this package ([#67](https://github.com/curiosus-dev/Curiosus.Utils/issues/67)).
 - **Breaking:** `ReCaptchaService.VerifyReCaptchaAsync` throws `System.Net.Http` and `System.Text.Json` exceptions
   instead of `FlurlHttpException`: `HttpRequestException` when the reCAPTCHA API is unavailable or returns an error
   status code, `TaskCanceledException` on timeout, `JsonException` when the response is not a verification result.
-  Catch these three instead of `FlurlHttpException`.
-- **Breaking:** `ReCaptchaService.VerifyReCaptchaAsync` takes an optional `CancellationToken` (recompile callers).
+  Catch these three instead of `FlurlHttpException` ([#67](https://github.com/curiosus-dev/Curiosus.Utils/issues/67)).
+- **Breaking:** `ReCaptchaService.VerifyReCaptchaAsync` takes an optional `CancellationToken` (recompile callers) ([#67](https://github.com/curiosus-dev/Curiosus.Utils/issues/67)).
 - `ReCaptchaService.VerifyReCaptchaAsync` posts `secret` and `response` as a form, as the reCAPTCHA documentation
-  describes, instead of sending them in the URL query.
-- `MVCBaseController.Redirect` encodes non-ASCII and other illegal URL characters without Flurl, with the same result.
+  describes, instead of sending them in the URL query ([#67](https://github.com/curiosus-dev/Curiosus.Utils/issues/67)).
+- `MVCBaseController.Redirect` encodes non-ASCII and other illegal URL characters without Flurl, with the same result ([#67](https://github.com/curiosus-dev/Curiosus.Utils/issues/67)).
 
 ## [2.0.0] - 2026-09-27
 

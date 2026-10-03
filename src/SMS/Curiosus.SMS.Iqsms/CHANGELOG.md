@@ -1,17 +1,17 @@
 # Changelog
 
-## [Unreleased]
+## [3.0.0] - 2026-10-03
 
 ### Changed
 
 - **Breaking:** the `IqsmsSender(ILogger<IqsmsSender> logger, IqsmsOptions options)` constructor is replaced by one that also takes
   `IHttpClientFactory`. `AddIqsmsSender` registers everything; when creating `IqsmsSender` yourself, call
-  `services.AddHttpClient()` and pass `IHttpClientFactory` from the service provider.
+  `services.AddHttpClient()` and pass `IHttpClientFactory` from the service provider ([#82](https://github.com/curiosus-dev/Curiosus.Utils/issues/82)).
 - HTTP calls use `HttpClient` from `IHttpClientFactory` instead of `RestSharp`: `AddIqsmsSender` registers the named client
   `IqsmsSender.HttpClientName`, configure it with `services.AddHttpClient(IqsmsSender.HttpClientName, ...)`.
-  The package no longer depends on `RestSharp`: reference it directly if your code used it through this package.
+  The package no longer depends on `RestSharp`: reference it directly if your code used it through this package ([#82](https://github.com/curiosus-dev/Curiosus.Utils/issues/82)).
 - **Breaking:** when `cancellationToken` is cancelled, `SendSmsAsync` throws `OperationCanceledException` instead of returning
-  a failed response. Network failures and `HttpClient` timeouts are still returned as a failed response.
+  a failed response. Network failures and `HttpClient` timeouts are still returned as a failed response ([#82](https://github.com/curiosus-dev/Curiosus.Utils/issues/82)).
 
 ### Fixed
 
