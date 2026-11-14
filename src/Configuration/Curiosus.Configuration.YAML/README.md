@@ -61,5 +61,6 @@ Note: the provider lives in the `Curiosus.Configuration` namespace.
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.Configuration](https://www.nuget.org/packages/Curiosus.Configuration) — options validation, logging and the base provider
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

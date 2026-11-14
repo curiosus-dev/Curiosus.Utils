@@ -44,6 +44,7 @@ var text = localizer.GetQuantityString("FilesCount", count, count);
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.Localization.MVC](https://www.nuget.org/packages/Curiosus.Localization.MVC) — the same for Razor views
 - [Curiosus.Tools](https://www.nuget.org/packages/Curiosus.Tools) — xxHash implementation used for resource keys
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

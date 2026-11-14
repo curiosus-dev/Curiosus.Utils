@@ -46,6 +46,7 @@ multiWriter.Dispose();
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.FileDataReaderWriters](https://www.nuget.org/packages/Curiosus.FileDataReaderWriters) — `IFileWriter` and formatting contracts
 - [Curiosus.FileDataReaderWriters.SylvanCsv](https://www.nuget.org/packages/Curiosus.FileDataReaderWriters.SylvanCsv) — CSV reader and writer
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

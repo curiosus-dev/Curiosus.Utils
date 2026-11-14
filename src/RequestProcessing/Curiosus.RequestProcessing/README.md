@@ -82,6 +82,7 @@ It registers the worker (transient), the bootstrapper as a hosted service and th
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.RequestProcessing.Postgres](https://www.nuget.org/packages/Curiosus.RequestProcessing.Postgres) — Postgres `LISTEN/NOTIFY` as event source
 - [Curiosus.RequestProcessing.RabbitMQ](https://www.nuget.org/packages/Curiosus.RequestProcessing.RabbitMQ) — RabbitMQ queue as event source
 - [RabbitMQ consumer/producer sample](https://github.com/curiosus-dev/Curiosus.Utils/tree/main/samples/RequestProcessing/RabbitMQ)

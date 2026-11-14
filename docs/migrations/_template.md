@@ -15,6 +15,8 @@ Copy it to docs/migrations/<package-id-lowercase>/<major.minor>.md and fill it i
 - Link the page from the **Breaking** entry of the CHANGELOG with its absolute URL
   https://curiosus-dev.github.io/Curiosus.Utils/migrations/<package-id-lowercase>/<major.minor>
   and update its row in the package table of docs/migrations/index.md.
+- Add the page to "See also" of the package README:
+  - [<PackageId> <major.minor> migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/<package-id-lowercase>/<major.minor>)
 -->
 
 Requires `net10.0`. Coming from `Curiosity.*` 1.x? Start with the [overview](../index.md).

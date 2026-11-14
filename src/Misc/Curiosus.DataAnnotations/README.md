@@ -49,5 +49,6 @@ int? maxTitleLength = request.GetPropertyMaxLength(nameof(OrderRequest.Title)); 
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.Configuration](https://www.nuget.org/packages/Curiosus.Configuration) — validation of configuration options
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

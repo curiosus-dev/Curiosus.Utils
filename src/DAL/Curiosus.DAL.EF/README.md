@@ -57,6 +57,7 @@ for your context.
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.DAL](https://www.nuget.org/packages/Curiosus.DAL) — data access abstractions
 - [Curiosus.DAL.EF.Polly](https://www.nuget.org/packages/Curiosus.DAL.EF.Polly) — retry policy for EF concurrency errors
 - [Curiosus.DAL.Dapper](https://www.nuget.org/packages/Curiosus.DAL.Dapper) — raw SQL over the same contexts

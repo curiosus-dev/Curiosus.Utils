@@ -19,7 +19,6 @@ using Curiosus.Tools.AppInitializer;
 using Curiosus.Tools.TempFiles;
 
 // startup: DI registrations
-services.AddLocalDateTimeService();                       // IDateTimeService over the local clock
 services.AddTempFileServices(new TempFileOptions());      // ITempFileStreamFactory in ./.tmp
 services.AddAppInitializer<WarmUpCacheInitializer>();     // IAppInitializer, run on start by Curiosus.Hosting
 
@@ -43,8 +42,8 @@ Main areas:
 
 - **App lifecycle** — `IAppInitializer` + `AddAppInitializer`, `FireAndForget`, `ApplicationHelper`, `EnvironmentHelper`.
 - **Ids and hashing** — `UniqueIdGenerator`, `PublicId`, `UniqueKeyGenerator`, `XXHasher`.
-- **Date and time** — `IDateTimeService`, `DateTimePeriod`, `NullableDateTimePeriod`, `DateTimeHelper`,
-  `TimeZoneHelper` (NodaTime).
+- **Date and time** — `DateTimePeriod`, `NullableDateTimePeriod`, `DateTimeHelper`, `TimeZoneHelper` (NodaTime);
+  for "now" use `System.TimeProvider`.
 - **Models** — `Response`/`Response<T>`, `Error`, `Page`, `PaginationResponse`.
 - **Text** — string/`StringBuilder` extensions, `PhoneHelper`, `Transliteration`, `WebAddressValidator`,
   `SensitiveDataProtector`, file size humanization.
@@ -57,6 +56,8 @@ for phone, transliteration and sensitive data examples.
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
+- [Curiosus.Tools 3.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools/3.0)
 - [Curiosus.Tools.Web](https://www.nuget.org/packages/Curiosus.Tools.Web) — ASP.NET Core helpers
 - [Curiosus.Hosting](https://www.nuget.org/packages/Curiosus.Hosting) — app bootstrappers that run `IAppInitializer`s
 - [Curiosus.Configuration](https://www.nuget.org/packages/Curiosus.Configuration) — validatable options used here

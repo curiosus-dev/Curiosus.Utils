@@ -47,6 +47,7 @@ The `IList<string>` overloads of `ZipFilesToStreamAsync` and `ZipFilesToFileAsyn
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.Archiver.SharpZip](https://www.nuget.org/packages/Curiosus.Archiver.SharpZip) — `IArchiver` implementation based on SharpZipLib
 - [Curiosus.Tools](https://www.nuget.org/packages/Curiosus.Tools) — temp files (`TempFileStream`, `TempFileOptions`)
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

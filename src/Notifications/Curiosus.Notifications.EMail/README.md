@@ -56,6 +56,7 @@ and register it with `services.AddEMailNotificationPostProcessor<MyPostProcessor
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.Notifications](https://www.nuget.org/packages/Curiosus.Notifications) — notificator and base classes
 - [Curiosus.EMail](https://www.nuget.org/packages/Curiosus.EMail) — `IEMailSender` abstraction;
   providers: [SMTP](https://www.nuget.org/packages/Curiosus.EMail.SMTP),

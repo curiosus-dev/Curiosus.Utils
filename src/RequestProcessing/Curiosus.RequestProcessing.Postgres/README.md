@@ -64,11 +64,30 @@ services.AddPostgresRequestProcessor<
     nodeOptions);
 ```
 
-On the database side, send a notification when a request is added, e.g. `NOTIFY new_request;` from a trigger,
-and put `new_request` into `PostgresEventReceiver.EventNames`.
+On the database side, send a notification when a request is added and put the channel into
+`PostgresEventReceiver.EventNames`. From C#, send it with `NotifyAsync` in the transaction that inserts the request:
+the notification goes out on commit and is dropped on rollback.
+
+```csharp
+await using var connection = await dataSource.OpenConnectionAsync(ct);
+await using var transaction = await connection.BeginTransactionAsync(ct);
+// INSERT INTO requests ...
+await connection.NotifyAsync("new_request", cancellationToken: ct); // or dataSource.NotifyAsync(...) outside a transaction
+await transaction.CommitAsync(ct);
+```
+
+From a trigger, use `PERFORM pg_notify('new_request', '');` or `NOTIFY new_request;`.
+
+Channel names are used exactly as written, they are case-sensitive: `MyChannel` in `EventNames` receives
+`pg_notify('MyChannel', ...)`, `NOTIFY "MyChannel"` and `NotifyAsync("MyChannel")`, but not an unquoted
+`NOTIFY MyChannel`, which PostgreSQL folds to `mychannel`. Lower-case names work everywhere. A name must be non-empty,
+at most 63 bytes in UTF-8 and have no NUL character, otherwise options validation fails. The payload of a notification
+must be shorter than 8000 bytes.
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
+- [Curiosus.RequestProcessing.Postgres 2.1 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-requestprocessing-postgres/2.1)
 - [Curiosus.RequestProcessing](https://www.nuget.org/packages/Curiosus.RequestProcessing) — workers, dispatcher, bootstrapper
 - [Curiosus.RequestProcessing.RabbitMQ](https://www.nuget.org/packages/Curiosus.RequestProcessing.RabbitMQ) — RabbitMQ transport
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

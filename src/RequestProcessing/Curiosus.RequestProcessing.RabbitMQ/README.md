@@ -93,6 +93,7 @@ A complete consumer and producer is in
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.RequestProcessing](https://www.nuget.org/packages/Curiosus.RequestProcessing) — workers, dispatcher, bootstrapper
 - [Curiosus.RequestProcessing.Postgres](https://www.nuget.org/packages/Curiosus.RequestProcessing.Postgres) — Postgres transport
 - [Curiosus.RabbitMQ](https://www.nuget.org/packages/Curiosus.RabbitMQ) — RabbitMQ RPC client
