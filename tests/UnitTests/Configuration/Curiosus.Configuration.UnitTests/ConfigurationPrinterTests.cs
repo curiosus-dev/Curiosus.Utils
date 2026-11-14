@@ -65,6 +65,16 @@ public class ConfigurationPrinterTests
     }
 
     [Fact]
+    public void GetLog_CollectionOfUrisWithCredentials_ElementsMasked()
+    {
+        var options = new EndpointsOptions();
+
+        var log = _printer.GetLog(options);
+
+        log.Should().Contain("[***,https://public.example.com,***]").And.NotContain(Secret);
+    }
+
+    [Fact]
     public void GetLog_NullSecret_PrintedAsNull()
     {
         var options = new SecretOptions { Password = null };
@@ -147,6 +157,14 @@ public class ConfigurationPrinterTests
         public string[] Tokens { get; set; } = [Secret];
 
         public string ConnectionString { get; set; } = $"Host=db;Database=app;Password={Secret}";
+    }
+
+    private class EndpointsOptions : ILoggableOptions
+    {
+        public string[] Endpoints { get; set; } =
+            [$"amqp://app:{Secret}@rabbit-1/vhost", "https://public.example.com", $"amqp://app:{Secret}@rabbit-2/vhost"];
+
+        public List<string> Mirrors { get; set; } = [$"https://user:{Secret}@mirror.example.com"];
     }
 
     private class ParentOptions : ILoggableOptions

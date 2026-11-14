@@ -119,7 +119,9 @@ namespace Curiosus.Configuration
                 var enumerator = collection.GetEnumerator();
                 while (enumerator.MoveNext())
                 {
-                    arr.Add(enumerator.Current);
+                    arr.Add(enumerator.Current is string text && SecretMasker.HasUriCredentials(text)
+                        ? SecretMasker.Mask
+                        : enumerator.Current);
                 }
 
                 return "[" + string.Join(",", arr.ToArray()) + "]";
