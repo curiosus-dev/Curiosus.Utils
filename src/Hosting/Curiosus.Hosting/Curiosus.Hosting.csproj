@@ -40,6 +40,7 @@
         <PackageReference Include="Microsoft.Extensions.Localization.Abstractions" />
         <PackageReference Include="Microsoft.Extensions.Logging" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+        <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
         <PackageReference Include="NLog.Extensions.Logging" />
         <PackageReference Include="NLog.MailKit" />
         <PackageReference Include="System.ComponentModel.Annotations" />
