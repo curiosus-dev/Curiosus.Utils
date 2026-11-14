@@ -25,8 +25,8 @@ public static class ConfigurationLoggingServiceCollectionExtensions
     /// <para>
     /// Values of keys whose path contains <c>password</c>, <c>pwd</c>, <c>passphrase</c>, <c>secret</c>, <c>token</c>,
     /// <c>credential</c>, <c>apikey</c>, <c>privatekey</c> (not <c>privatekeypath</c>), <c>signature</c>, <c>salt</c> or
-    /// a segment ending with <c>key</c> or <c>keys</c>, and values with a URI that has user info
-    /// (<c>amqp://user:pass@host</c>), print <c>***</c>; connection strings (paths containing <c>connectionstring</c>)
+    /// a segment ending with <c>key</c> or <c>keys</c>, and values that carry a secret themselves (a URI with user info,
+    /// a URL with <c>?token=</c>, <c>?sig=</c>, <c>?key=</c>, <c>?code=</c>, a webhook URL), print <c>***</c>; connection strings (paths containing <c>connectionstring</c>)
     /// print only well-known non-secret keys.
     /// </para>
     /// </remarks>

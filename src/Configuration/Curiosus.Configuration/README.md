@@ -69,7 +69,9 @@ Console.WriteLine(new ConfigurationPrinter().GetLog(options)); // prints all pub
 Masking (`ConfigurationPrinter` and `LogConfigurationOnStart`): `***` is printed instead of the value of every
 property or dictionary key whose name contains `password`, `pwd`, `passphrase`, `secret`, `token`, `credential`,
 `apikey`, `privatekey` (not `privatekeypath`), `signature`, `salt` or ends with `key` or `keys` (case-insensitive),
-and of every value with a URI that has user info (`amqp://user:pass@host`). For names containing `connectionstring`
+and of every value that carries a secret itself: a URI with user info (`amqp://user:pass@host`), a URL with a secret
+query parameter (`?token=`, `?sig=`, `?key=`, `?code=`, ...) or a Slack, Discord, Teams or Telegram bot webhook URL.
+For names containing `connectionstring`
 it prints only the values of well-known non-secret keys (host, port, database, user, timeouts, ...) and masks the rest; a value that can't be parsed or contains a URI (`amqp://user:pass@host`) is masked entirely.
 
 Name matching can be overridden per property:

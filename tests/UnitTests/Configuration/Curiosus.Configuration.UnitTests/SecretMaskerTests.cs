@@ -93,33 +93,42 @@ public class SecretMaskerTests
     [InlineData("https://key:s3cr3t@sentry.example.com/1")]
     [InlineData("see redis://:s3cr3t@cache:6379")]
     [InlineData("https://proxy.example.com/?target=amqp%3A%2F%2Fapp%3As3cr3t%40rabbit")]
-    public void HasUriCredentials_UriWithUserInfo_True(string value)
+    [InlineData("https://api.example.com/v1?token=s3cr3t")]
+    [InlineData("https://store.blob.core.windows.net/c?sv=2024-01-01&sig=s3cr3t")]
+    [InlineData("https://fn.azurewebsites.net/api/f?code=s3cr3t")]
+    [InlineData("https://maps.example.com/geo?q=x&key=s3cr3t")]
+    [InlineData("https://hooks.slack.com/services/T000/B000/s3cr3t")]
+    [InlineData("https://discord.com/api/webhooks/123/s3cr3t")]
+    [InlineData("https://api.telegram.org/bot123456:s3cr3t/sendMessage")]
+    public void HasSecretInValue_SecretInValue_True(string value)
     {
-        SecretMasker.HasUriCredentials(value).Should().BeTrue();
+        SecretMasker.HasSecretInValue(value).Should().BeTrue();
     }
 
     [Theory]
     [InlineData("https://example.com/path")]
     [InlineData("https://example.com/user@domain")]
     [InlineData("admin@example.com")]
-    public void HasUriCredentials_NoUserInfo_False(string value)
+    [InlineData("https://example.com/search?q=token&page=2")]
+    [InlineData("https://example.com/?keyword=x")]
+    public void HasSecretInValue_NoSecret_False(string value)
     {
-        SecretMasker.HasUriCredentials(value).Should().BeFalse();
+        SecretMasker.HasSecretInValue(value).Should().BeFalse();
     }
 
     [Fact]
-    public void HasUriCredentials_UriObjects()
+    public void HasSecretInValue_UriObjects()
     {
-        SecretMasker.HasUriCredentials((object)new System.Uri("amqp://app:s3cr3t@rabbit/vhost")).Should().BeTrue();
-        SecretMasker.HasUriCredentials((object)new System.Uri("https://public.example.com")).Should().BeFalse();
-        SecretMasker.HasUriCredentials((object)new System.Uri("https://proxy.example.com/?target=amqp://app:s3cr3t@rabbit"))
+        SecretMasker.HasSecretInValue((object)new System.Uri("amqp://app:s3cr3t@rabbit/vhost")).Should().BeTrue();
+        SecretMasker.HasSecretInValue((object)new System.Uri("https://public.example.com")).Should().BeFalse();
+        SecretMasker.HasSecretInValue((object)new System.Uri("https://proxy.example.com/?target=amqp://app:s3cr3t@rabbit"))
             .Should().BeTrue();
-        SecretMasker.HasUriCredentials((object)new System.Uri("https://proxy.example.com/#amqp://app:s3cr3t@rabbit"))
+        SecretMasker.HasSecretInValue((object)new System.Uri("https://proxy.example.com/#amqp://app:s3cr3t@rabbit"))
             .Should().BeTrue();
-        SecretMasker.HasUriCredentials(
+        SecretMasker.HasSecretInValue(
                 (object)new System.Uri("https://proxy.example.com/?target=amqp%3A%2F%2Fapp%3As3cr3t%40rabbit"))
             .Should().BeTrue();
-        SecretMasker.HasUriCredentials((object)42).Should().BeFalse();
-        SecretMasker.HasUriCredentials((object?)null).Should().BeFalse();
+        SecretMasker.HasSecretInValue((object)42).Should().BeFalse();
+        SecretMasker.HasSecretInValue((object?)null).Should().BeFalse();
     }
 }

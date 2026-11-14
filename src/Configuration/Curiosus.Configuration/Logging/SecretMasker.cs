@@ -31,8 +31,14 @@ namespace Curiosus.Configuration
             "password|pwd|passphrase|secret|token|credential|apikey|privatekey(?!path)|signature|salt|keys?$|connectionstring",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
-        private static readonly Regex UriCredentialsRegex = new(
-            @"[a-z][a-z0-9+.\-]*://[^/?#\s@]+@",
+        private static readonly Regex ValueSecretRegex = new(
+            // URI user info
+            @"[a-z][a-z0-9+.\-]*://[^/?#\s@]+@"
+            // secret query parameters
+            + @"|[?&](access_token|token|api[_-]?key|key|sig|signature|code|secret|client_secret|password|pwd|sas|sv)=[^&#\s]"
+            // webhook URLs whose path is the secret
+            + @"|hooks\.slack\.com/services/|discord(app)?\.com/api/webhooks/|webhook\.office\.com/|outlook\.office\.com/webhook/"
+            + @"|api\.telegram\.org/bot\d+:",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         private static readonly Regex ConnectionStringNameRegex = new(
@@ -41,36 +47,38 @@ namespace Curiosus.Configuration
 
         /// <summary>
         /// Masks the value of a configuration key: a connection string keeps its non-secret parts, the value of a key
-        /// with a secret segment or with URI credentials becomes <see cref="Mask"/>, other values are returned as is.
+        /// with a secret segment or a value that carries a secret becomes <see cref="Mask"/>, other values are returned as is.
         /// </summary>
         public static string MaskValue(string path, string value)
         {
             var segments = path.Split(':');
             if (segments.Any(IsConnectionStringName)) return MaskConnectionString(value);
-            if (segments.Any(IsSecretName) || HasUriCredentials(value)) return Mask;
+            if (segments.Any(IsSecretName) || HasSecretInValue(value)) return Mask;
 
             return value;
         }
 
         /// <summary>
-        /// Returns <c>true</c> when the value contains a URI with user info (<c>amqp://user:pass@host</c>):
-        /// its password would leak whatever the name of the key is.
+        /// Returns <c>true</c> when the value itself carries a secret, whatever the name of its key is: a URI with user info
+        /// (<c>amqp://user:pass@host</c>), a URL with a secret query parameter (<c>?token=</c>, <c>?sig=</c>,
+        /// <c>?key=</c>, <c>?code=</c>, ...) or a webhook URL whose path is the secret (Slack, Discord, Teams, a Telegram
+        /// bot token).
         /// </summary>
         /// <remarks>
-        /// The unescaped value is checked too, so a percent-encoded URI (<c>amqp%3A%2F%2Fuser%3Apass%40host</c>) nested
-        /// in a query string is found as well.
+        /// The unescaped value is checked too, so a percent-encoded URL nested in a query string is found as well.
         /// </remarks>
-        public static bool HasUriCredentials(string value)
-            => UriCredentialsRegex.IsMatch(value) || UriCredentialsRegex.IsMatch(Uri.UnescapeDataString(value));
+        public static bool HasSecretInValue(string value)
+            => ValueSecretRegex.IsMatch(value) || ValueSecretRegex.IsMatch(Uri.UnescapeDataString(value));
 
         /// <summary>
-        /// Returns <c>true</c> when the value is a string or a <see cref="Uri"/> with user info.
+        /// Returns <c>true</c> when the value is a string or a <see cref="Uri"/> that carries a secret,
+        /// see <see cref="HasSecretInValue(string)"/>.
         /// </summary>
-        public static bool HasUriCredentials(object? value) => value switch
+        public static bool HasSecretInValue(object? value) => value switch
         {
-            string text => HasUriCredentials(text),
-            Uri { IsAbsoluteUri: true } uri => !String.IsNullOrEmpty(uri.UserInfo) || HasUriCredentials(uri.OriginalString),
-            Uri uri => HasUriCredentials(uri.OriginalString),
+            string text => HasSecretInValue(text),
+            Uri { IsAbsoluteUri: true } uri => !String.IsNullOrEmpty(uri.UserInfo) || HasSecretInValue(uri.OriginalString),
+            Uri uri => HasSecretInValue(uri.OriginalString),
             _ => false,
         };
 

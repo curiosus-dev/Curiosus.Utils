@@ -74,7 +74,7 @@ namespace Curiosus.Configuration
             }
 
             if (SecretMasker.IsSecretName(name)) return SecretMasker.Mask;
-            if (SecretMasker.HasUriCredentials(value)) return SecretMasker.Mask;
+            if (SecretMasker.HasSecretInValue(value)) return SecretMasker.Mask;
 
             return ValueToString(value, offset, defaultWidth);
         }
@@ -119,7 +119,7 @@ namespace Curiosus.Configuration
                 var enumerator = collection.GetEnumerator();
                 while (enumerator.MoveNext())
                 {
-                    arr.Add(SecretMasker.HasUriCredentials(enumerator.Current) ? SecretMasker.Mask : enumerator.Current);
+                    arr.Add(SecretMasker.HasSecretInValue(enumerator.Current) ? SecretMasker.Mask : enumerator.Current);
                 }
 
                 return "[" + string.Join(",", arr.ToArray()) + "]";

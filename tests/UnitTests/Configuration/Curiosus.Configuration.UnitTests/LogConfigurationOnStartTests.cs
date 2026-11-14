@@ -29,13 +29,14 @@ public class LogConfigurationOnStartTests
     {
         var view = ConfigurationStartupLogger.BuildView(
             BuildConfiguration(),
-            Sections("Smtp", "Auth", "ConnectionStrings", "Bot", "Rabbit"));
+            Sections("Smtp", "Auth", "ConnectionStrings", "Bot", "Rabbit", "Alerts"));
 
         view.Should().NotContain(Secret);
         view.Should().Contain("Smtp:Password = ***")
             .And.Contain("Auth:Key = ***")
             .And.Contain("Bot:Tokens:0 = ***")
             .And.Contain("Rabbit:Url = ***")
+            .And.Contain("Alerts:Webhook = ***")
             .And.ContainEquivalentOf("ConnectionStrings:Default = host=db;database=app;password=***");
     }
 
@@ -148,6 +149,7 @@ public class LogConfigurationOnStartTests
             ["Other:Value"] = "x",
             ["AllowedHosts"] = "*",
             ["Rabbit:Url"] = $"amqp://app:{Secret}@rabbit/vhost",
+            ["Alerts:Webhook"] = $"https://hooks.slack.com/services/T000/B000/{Secret}",
         })
         .AddInMemoryCollection(new Dictionary<string, string?> { ["Smtp:Port"] = "2525" })
         .Build();
