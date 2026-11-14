@@ -92,6 +92,7 @@ public class SecretMaskerTests
     [InlineData("amqp://user:s3cr3t@rabbit/vhost")]
     [InlineData("https://key:s3cr3t@sentry.example.com/1")]
     [InlineData("see redis://:s3cr3t@cache:6379")]
+    [InlineData("https://proxy.example.com/?target=amqp%3A%2F%2Fapp%3As3cr3t%40rabbit")]
     public void HasUriCredentials_UriWithUserInfo_True(string value)
     {
         SecretMasker.HasUriCredentials(value).Should().BeTrue();
@@ -111,6 +112,13 @@ public class SecretMaskerTests
     {
         SecretMasker.HasUriCredentials((object)new System.Uri("amqp://app:s3cr3t@rabbit/vhost")).Should().BeTrue();
         SecretMasker.HasUriCredentials((object)new System.Uri("https://public.example.com")).Should().BeFalse();
+        SecretMasker.HasUriCredentials((object)new System.Uri("https://proxy.example.com/?target=amqp://app:s3cr3t@rabbit"))
+            .Should().BeTrue();
+        SecretMasker.HasUriCredentials((object)new System.Uri("https://proxy.example.com/#amqp://app:s3cr3t@rabbit"))
+            .Should().BeTrue();
+        SecretMasker.HasUriCredentials(
+                (object)new System.Uri("https://proxy.example.com/?target=amqp%3A%2F%2Fapp%3As3cr3t%40rabbit"))
+            .Should().BeTrue();
         SecretMasker.HasUriCredentials((object)42).Should().BeFalse();
         SecretMasker.HasUriCredentials((object?)null).Should().BeFalse();
     }

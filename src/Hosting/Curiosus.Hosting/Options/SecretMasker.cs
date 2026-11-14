@@ -59,7 +59,12 @@ namespace Curiosus.Hosting
         /// Returns <c>true</c> when the value contains a URI with user info (<c>amqp://user:pass@host</c>):
         /// its password would leak whatever the name of the key is.
         /// </summary>
-        public static bool HasUriCredentials(string value) => UriCredentialsRegex.IsMatch(value);
+        /// <remarks>
+        /// The unescaped value is checked too, so a percent-encoded URI (<c>amqp%3A%2F%2Fuser%3Apass%40host</c>) nested
+        /// in a query string is found as well.
+        /// </remarks>
+        public static bool HasUriCredentials(string value)
+            => UriCredentialsRegex.IsMatch(value) || UriCredentialsRegex.IsMatch(Uri.UnescapeDataString(value));
 
         /// <summary>
         /// Returns <c>true</c> when a property or key with this name holds a secret.

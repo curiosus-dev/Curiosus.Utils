@@ -93,6 +93,7 @@ public class SecretMaskerTests
     [InlineData("amqp://user:s3cr3t@rabbit/vhost")]
     [InlineData("https://key:s3cr3t@sentry.example.com/1")]
     [InlineData("see redis://:s3cr3t@cache:6379")]
+    [InlineData("https://proxy.example.com/?target=amqp%3A%2F%2Fapp%3As3cr3t%40rabbit")]
     public void HasUriCredentials_UriWithUserInfo_True(string value)
     {
         SecretMasker.HasUriCredentials(value).Should().BeTrue();
