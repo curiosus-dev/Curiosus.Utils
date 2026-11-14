@@ -119,20 +119,21 @@ namespace Curiosus.RequestProcessing.Postgres
         /// </summary>
         private NpgsqlCommand BuildSubscribeCommand(NpgsqlConnection connection)
         {
+            return new NpgsqlCommand(BuildListenSql(_eventsToSubscribe), connection);
+        }
+
+        /// <summary>
+        /// Builds <c>LISTEN</c> statements with every channel quoted as an identifier, so names are used as written.
+        /// </summary>
+        internal static string BuildListenSql(IEnumerable<string> channels)
+        {
             var strBuilder = new StringBuilder();
-            foreach (var eventName in _eventsToSubscribe)
+            foreach (var channel in channels)
             {
-                if (String.IsNullOrWhiteSpace(eventName))
-                {
-                    _logger.LogWarning("В списке события для подписки есть пустая строка");
-                    continue;
-                }
-                
-                strBuilder.AppendLine($"listen {eventName};");
+                strBuilder.Append("LISTEN ").Append(PgChannelName.Quote(channel)).Append(';');
             }
 
-            var commandQuery = strBuilder.ToString();
-            return new NpgsqlCommand(commandQuery, connection);
+            return strBuilder.ToString();
         }
 
         /// <summary>
