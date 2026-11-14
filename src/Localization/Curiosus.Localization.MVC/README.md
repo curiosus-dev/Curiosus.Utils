@@ -46,5 +46,6 @@ Plural forms with the standard `IViewLocalizer` (looks up `key_1`, `key_2` or `k
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.Localization](https://www.nuget.org/packages/Curiosus.Localization) — core localizer and options
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

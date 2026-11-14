@@ -55,7 +55,8 @@ Curiosus.Configuration (base)
   messages or defaults, or a security fix that needs credential rotation) adds or extends the page of the package
   version in `docs/migrations/<package-id-lowercase>/<major.minor>.md` (copy `docs/migrations/_template.md`), links it
   with its absolute URL from the CHANGELOG entries (the **Breaking** entry when there is one) of that package and of
-  packages that ship the change through a dependency, and updates the package row in `docs/migrations/index.md`.
+  packages that ship the change through a dependency, updates the package row in `docs/migrations/index.md` and adds
+  the page to "See also" of the package README (every package README links the guides there).
   A PR removing a package adds its page and links it from the README package table and the NuGet deprecation message.
   Conventions: "Writing a migration page" in `docs/migrations/index.md`.
 

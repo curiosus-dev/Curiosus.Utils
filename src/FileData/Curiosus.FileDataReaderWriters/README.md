@@ -56,6 +56,7 @@ Formats are ignored by writers that do not support them (CSV).
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.FileDataReaderWriters.Npoi](https://www.nuget.org/packages/Curiosus.FileDataReaderWriters.Npoi) — XLSX writers (NPOI)
 - [Curiosus.FileDataReaderWriters.SylvanCsv](https://www.nuget.org/packages/Curiosus.FileDataReaderWriters.SylvanCsv) — CSV reader and writer
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

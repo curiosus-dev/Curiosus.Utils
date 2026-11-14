@@ -66,6 +66,7 @@ Other helpers:
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.Hosting.Web](https://www.nuget.org/packages/Curiosus.Hosting.Web) — bootstrapper for ASP.NET Core apps
 - [Curiosus.Configuration.YML](https://www.nuget.org/packages/Curiosus.Configuration.YML) — YAML configuration provider
 - [Curiosus.Tools](https://www.nuget.org/packages/Curiosus.Tools) — `IAppInitializer` and other basic helpers

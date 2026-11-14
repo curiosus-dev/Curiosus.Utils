@@ -75,7 +75,7 @@ issues that will add the page. Removed packages get a page too: it tells what re
 | `Curiosity.SMS` | [Curiosus.SMS](../packages/sms/curiosus-sms.md) | 3.0, planned in [#81](https://github.com/curiosus-dev/Curiosus.Utils/issues/81) |
 | `Curiosity.SMS.Iqsms` | [Curiosus.SMS.Iqsms](../packages/sms/curiosus-sms-iqsms.md) | 4.0, planned in [#81](https://github.com/curiosus-dev/Curiosus.Utils/issues/81), [#82](https://github.com/curiosus-dev/Curiosus.Utils/issues/82) |
 | `Curiosity.SMS.Smsc` | [Curiosus.SMS.Smsc](../packages/sms/curiosus-sms-smsc.md) | 4.0, planned in [#81](https://github.com/curiosus-dev/Curiosus.Utils/issues/81), [#82](https://github.com/curiosus-dev/Curiosus.Utils/issues/82) |
-| `Curiosity.Tools` | [Curiosus.Tools](../packages/misc/curiosus-tools.md) | 3.0, planned in [#47](https://github.com/curiosus-dev/Curiosus.Utils/issues/47)–[#56](https://github.com/curiosus-dev/Curiosus.Utils/issues/56) |
+| `Curiosity.Tools` | [Curiosus.Tools](../packages/misc/curiosus-tools.md) | [3.0](./curiosus-tools/3.0.md) (in progress), planned in [#47](https://github.com/curiosus-dev/Curiosus.Utils/issues/47)–[#56](https://github.com/curiosus-dev/Curiosus.Utils/issues/56) |
 | `Curiosity.Tools.Web` | [Curiosus.Tools.Web](../packages/misc/curiosus-tools-web.md) | 4.0, planned in [#60](https://github.com/curiosus-dev/Curiosus.Utils/issues/60)–[#67](https://github.com/curiosus-dev/Curiosus.Utils/issues/67) |
 
 ## Rename Curiosity to Curiosus
@@ -171,4 +171,5 @@ fixes that need credentials rotated. When unsure, write the page: a short page c
   because CHANGELOGs are read on GitHub, nuget.org and this site:
   `https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting/4.0`. Packages that ship the change
   through a dependency (`Curiosus.Hosting` for `Curiosus.Configuration`) link it from their entry too.
-- The pull request updates the row of the package in the [Packages](#packages) table.
+- The pull request updates the row of the package in the [Packages](#packages) table and adds the page to the
+  "See also" list of the package README (absolute URL), next to the link to these guides that every package README has.

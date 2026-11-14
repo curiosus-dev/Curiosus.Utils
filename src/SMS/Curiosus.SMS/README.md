@@ -45,6 +45,7 @@ A custom provider implements both `SendSmsAsync` overloads of `ISmsSender` and r
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.SMS.Smsc](https://www.nuget.org/packages/Curiosus.SMS.Smsc) — sender for smsc.ru
 - [Curiosus.SMS.Iqsms](https://www.nuget.org/packages/Curiosus.SMS.Iqsms) — sender for iqsms.ru
 - [Curiosus.Notifications.SMS](https://www.nuget.org/packages/Curiosus.Notifications.SMS) — SMS notification channel

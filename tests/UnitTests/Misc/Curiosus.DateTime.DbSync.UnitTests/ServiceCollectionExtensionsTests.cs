@@ -16,26 +16,24 @@ namespace Curiosus.DateTime.DbSync.UnitTests;
 public class ServiceCollectionExtensionsTests
 {
     [Fact]
-    public void Default_TimeProviderUntouched()
+    public void Registered_TimeProviderIsDbSync()
     {
         var services = CreateServices();
         services.AddSingleton<IDbClock>(new StubDbClock());
-        services.TryAddSingleton(TimeProvider.System);
         services.AddCuriosusDbSyncTimeProvider();
 
         using var provider = services.BuildServiceProvider();
 
-        provider.GetRequiredService<TimeProvider>().Should().BeSameAs(TimeProvider.System);
-        provider.GetRequiredService<DbSyncTimeProvider>().Should().NotBeNull();
+        provider.GetRequiredService<TimeProvider>().Should().BeSameAs(provider.GetRequiredService<DbSyncTimeProvider>());
         provider.GetServices<IHostedService>().Should().ContainSingle(s => s is DbTimeSyncService);
     }
 
     [Fact]
-    public void RegisterAsTimeProvider_RegisteredBefore_Replaced()
+    public void SystemRegisteredBefore_Replaced()
     {
         var services = CreateServices();
-        services.TryAddSingleton(TimeProvider.System);
-        services.AddCuriosusDbSyncTimeProvider(registerAsTimeProvider: true);
+        services.AddSingleton(TimeProvider.System);
+        services.AddCuriosusDbSyncTimeProvider();
 
         using var provider = services.BuildServiceProvider();
 
@@ -43,10 +41,10 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void RegisterAsTimeProvider_TryAddAfter_StillDbSync()
+    public void SystemTryAddedAfter_StillDbSync()
     {
         var services = CreateServices();
-        services.AddCuriosusDbSyncTimeProvider(registerAsTimeProvider: true);
+        services.AddCuriosusDbSyncTimeProvider();
         services.TryAddSingleton(TimeProvider.System);
 
         using var provider = services.BuildServiceProvider();

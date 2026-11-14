@@ -37,6 +37,7 @@ await retryPolicy.ExecuteAsync(async ct =>
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.DAL.EF](https://www.nuget.org/packages/Curiosus.DAL.EF) — EF Core base data contexts
 - [Curiosus.DAL](https://www.nuget.org/packages/Curiosus.DAL) — data access abstractions
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

@@ -50,5 +50,6 @@ Concurrent misses are not deduplicated: several callers may run the factory at t
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.Tools](https://www.nuget.org/packages/Curiosus.Tools) — basic helpers
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

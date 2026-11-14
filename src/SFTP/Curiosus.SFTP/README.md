@@ -60,5 +60,6 @@ Either `SshPassword` or `SshPrivateKeyPath` must be specified.
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.SFTP.SSH.NET](https://www.nuget.org/packages/Curiosus.SFTP.SSH.NET) — implementation based on SSH.NET
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

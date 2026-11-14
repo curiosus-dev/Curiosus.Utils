@@ -53,6 +53,7 @@ Always pass values as parameters — never concatenate them into `sqlTemplate`.
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.DAL](https://www.nuget.org/packages/Curiosus.DAL) — data access abstractions
 - [Curiosus.DAL.EF](https://www.nuget.org/packages/Curiosus.DAL.EF) — EF Core contexts that can be used with `ISqlExecutor`
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

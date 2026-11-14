@@ -59,6 +59,7 @@ Notes:
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.SFTP](https://www.nuget.org/packages/Curiosus.SFTP) — SFTP abstractions and options
 - [Curiosus.Tools](https://www.nuget.org/packages/Curiosus.Tools) — temp files and app initializers
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

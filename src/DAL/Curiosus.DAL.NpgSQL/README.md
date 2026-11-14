@@ -57,6 +57,7 @@ var pattern = $"%{LikeFunctionHelpers.RemoveSpecialChars(userInput)}%";
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.DAL](https://www.nuget.org/packages/Curiosus.DAL) — data access abstractions
 - [Curiosus.DAL.EF](https://www.nuget.org/packages/Curiosus.DAL.EF) — EF Core base data contexts
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages
