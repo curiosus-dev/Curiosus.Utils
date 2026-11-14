@@ -36,6 +36,8 @@ namespace Curiosus.Configuration
             @"[a-z][a-z0-9+.\-]*://[^/?#\s@]+@"
             // secret query parameters
             + @"|[?&](access_token|token|api[_-]?key|key|sig|signature|code|secret|client_secret|password|pwd|sas|sv)=[^&#\s]"
+            // secret key=value pairs of connection strings and similar values: Server=x;Password=y, host:6379,password=y
+            + @"|(?:^|[;,])\s*(password|pwd|passphrase|account[_ ]?key|shared[_ ]?access[_ ]?key|sig|token|secret|client_secret|api[_-]?key)\s*=\s*[^;,\s]"
             // webhook URLs whose path is the secret
             + @"|hooks\.slack\.com/services/|discord(app)?\.com/api/webhooks/|webhook\.office\.com/|outlook\.office\.com/webhook/"
             + @"|api\.telegram\.org/bot\d+:",
@@ -61,7 +63,8 @@ namespace Curiosus.Configuration
         /// <summary>
         /// Returns <c>true</c> when the value itself carries a secret, whatever the name of its key is: a URI with user info
         /// (<c>amqp://user:pass@host</c>), a URL with a secret query parameter (<c>?token=</c>, <c>?sig=</c>,
-        /// <c>?key=</c>, <c>?code=</c>, ...) or a webhook URL whose path is the secret (Slack, Discord, Teams, a Telegram
+        /// <c>?key=</c>, <c>?code=</c>, ...), a secret pair of a connection string (<c>Server=x;Password=y</c>,
+        /// <c>host:6379,password=y</c>) or a webhook URL whose path is the secret (Slack, Discord, Teams, a Telegram
         /// bot token).
         /// </summary>
         /// <remarks>
