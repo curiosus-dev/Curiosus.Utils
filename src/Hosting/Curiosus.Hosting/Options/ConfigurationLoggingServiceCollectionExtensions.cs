@@ -17,8 +17,9 @@ public static class ConfigurationLoggingServiceCollectionExtensions
     /// </summary>
     /// <remarks>
     /// Values of keys whose path contains <c>password</c>, <c>pwd</c>, <c>passphrase</c>, <c>secret</c>, <c>token</c>,
-    /// <c>credential</c>, <c>apikey</c>, <c>privatekey</c> (not <c>privatekeypath</c>) or a segment ending with
-    /// <c>key</c> print <c>***</c>; connection strings (paths containing <c>connectionstring</c>) print only well-known
+    /// <c>credential</c>, <c>apikey</c>, <c>privatekey</c> (not <c>privatekeypath</c>), <c>signature</c>, <c>salt</c> or
+    /// a segment ending with <c>key</c> or <c>keys</c>, and values with a URI that has user info
+    /// (<c>amqp://user:pass@host</c>), print <c>***</c>; connection strings (paths containing <c>connectionstring</c>) print only well-known
     /// non-secret keys. Sections that aren't listed are not printed at all. Several calls add up.
     /// </remarks>
     /// <param name="services">Service collection.</param>

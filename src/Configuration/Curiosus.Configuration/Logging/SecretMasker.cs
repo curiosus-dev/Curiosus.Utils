@@ -28,12 +28,22 @@ namespace Curiosus.Configuration
         };
 
         private static readonly Regex SecretNameRegex = new(
-            "password|pwd|passphrase|secret|token|credential|apikey|privatekey(?!path)|key$|connectionstring",
+            "password|pwd|passphrase|secret|token|credential|apikey|privatekey(?!path)|signature|salt|keys?$|connectionstring",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+        private static readonly Regex UriCredentialsRegex = new(
+            @"[a-z][a-z0-9+.\-]*://[^/?#\s@]+@",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         private static readonly Regex ConnectionStringNameRegex = new(
             "connectionstring",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+        /// <summary>
+        /// Returns <c>true</c> when the value contains a URI with user info (<c>amqp://user:pass@host</c>):
+        /// its password would leak whatever the name of the key is.
+        /// </summary>
+        public static bool HasUriCredentials(string value) => UriCredentialsRegex.IsMatch(value);
 
         /// <summary>
         /// Returns <c>true</c> when a property or key with this name holds a secret.

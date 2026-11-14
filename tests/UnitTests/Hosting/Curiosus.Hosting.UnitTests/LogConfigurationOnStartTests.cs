@@ -27,12 +27,13 @@ public class LogConfigurationOnStartTests
     [Fact]
     public void BuildView_SecretsMasked()
     {
-        var view = ConfigurationStartupLogger.BuildView(BuildConfiguration(), ["Smtp", "Auth", "ConnectionStrings", "Bot"]);
+        var view = ConfigurationStartupLogger.BuildView(BuildConfiguration(), ["Smtp", "Auth", "ConnectionStrings", "Bot", "Rabbit"]);
 
         view.Should().NotContain(Secret);
         view.Should().Contain("Smtp:Password = ***")
             .And.Contain("Auth:Key = ***")
             .And.Contain("Bot:Tokens:0 = ***")
+            .And.Contain("Rabbit:Url = ***")
             .And.ContainEquivalentOf("ConnectionStrings:Default = host=db;database=app;password=***");
     }
 
@@ -85,6 +86,7 @@ public class LogConfigurationOnStartTests
             ["Bot:Tokens:0"] = Secret,
             ["ConnectionStrings:Default"] = $"Host=db;Database=app;Password={Secret}",
             ["Other:Value"] = "x",
+            ["Rabbit:Url"] = $"amqp://app:{Secret}@rabbit/vhost",
         })
         .AddInMemoryCollection(new Dictionary<string, string?> { ["Smtp:Port"] = "2525" })
         .Build();

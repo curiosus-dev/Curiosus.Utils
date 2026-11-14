@@ -136,6 +136,8 @@ public class ConfigurationPrinterTests
     {
         public string Host { get; set; } = "smtp.example.com";
 
+        public string Url { get; set; } = $"amqp://app:{Secret}@rabbit/vhost";
+
         public string? Password { get; set; } = Secret;
 
         public string ApiKey { get; set; } = Secret;

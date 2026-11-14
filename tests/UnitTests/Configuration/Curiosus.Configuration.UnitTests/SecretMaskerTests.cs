@@ -24,6 +24,9 @@ public class SecretMaskerTests
     [InlineData("password")]
     [InlineData("AwsCredentials")]
     [InlineData("PrivateKeyPem")]
+    [InlineData("SigningKeys")]
+    [InlineData("WebhookSignature")]
+    [InlineData("PasswordSalt")]
     public void IsSecretName_SecretNames_True(string name)
     {
         SecretMasker.IsSecretName(name).Should().BeTrue();
@@ -83,5 +86,23 @@ public class SecretMaskerTests
     public void MaskConnectionString_UnparsableOrUri_FullyMasked(string connectionString)
     {
         SecretMasker.MaskConnectionString(connectionString).Should().Be(SecretMasker.Mask);
+    }
+
+    [Theory]
+    [InlineData("amqp://user:s3cr3t@rabbit/vhost")]
+    [InlineData("https://key:s3cr3t@sentry.example.com/1")]
+    [InlineData("see redis://:s3cr3t@cache:6379")]
+    public void HasUriCredentials_UriWithUserInfo_True(string value)
+    {
+        SecretMasker.HasUriCredentials(value).Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("https://example.com/path")]
+    [InlineData("https://example.com/user@domain")]
+    [InlineData("admin@example.com")]
+    public void HasUriCredentials_NoUserInfo_False(string value)
+    {
+        SecretMasker.HasUriCredentials(value).Should().BeFalse();
     }
 }

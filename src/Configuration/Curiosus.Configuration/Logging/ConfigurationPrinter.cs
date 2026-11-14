@@ -74,6 +74,7 @@ namespace Curiosus.Configuration
             }
 
             if (SecretMasker.IsSecretName(name)) return SecretMasker.Mask;
+            if (value is string text && SecretMasker.HasUriCredentials(text)) return SecretMasker.Mask;
 
             return ValueToString(value, offset, defaultWidth);
         }
