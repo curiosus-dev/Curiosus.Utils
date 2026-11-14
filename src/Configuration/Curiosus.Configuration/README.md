@@ -35,7 +35,26 @@ public class AppOptions : IValidatableOptions, ILoggableOptions
 
 var options = builder.Configuration.Get<AppOptions>()!;
 options.AssertValid(); // throws ConfigurationValidationException with all errors
-Console.WriteLine(new ConfigurationPrinter().GetLog(options)); // prints all public properties
+Console.WriteLine(new ConfigurationPrinter().GetLog(options)); // prints all public properties, secrets masked
+```
+
+`ConfigurationPrinter` prints `***` instead of the value of every property or dictionary key whose name contains
+`password`, `pwd`, `passphrase`, `secret`, `token`, `credential`, `apikey`, `privatekey` (not `privatekeypath`) or
+ends with `key` (case-insensitive). For names containing
+`connectionstring` it prints only the values of well-known non-secret keys (host, port, database, user, timeouts, ...)
+and masks the rest; a value that can't be parsed or contains a URI (`amqp://user:pass@host`) is masked entirely.
+
+Name matching can be overridden per property:
+
+```csharp
+public class AppOptions : ILoggableOptions
+{
+    [Secret]
+    public string Endpoint { get; set; } = ""; // URL with credentials: always masked
+
+    [NotSecret]
+    public string ReCaptchaClientKey { get; set; } = ""; // public site key: printed as is
+}
 ```
 
 `ConfigurationValidationErrorCollection` prefixes field names (`prefix:Field`), which is handy for nested options.

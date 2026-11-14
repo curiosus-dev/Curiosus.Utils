@@ -56,3 +56,10 @@ Curiosus.Configuration (base)
   absolute URL from the CHANGELOG **Breaking** entry and updates the package row in `docs/migrations/index.md`.
   A PR removing a package adds its page and links it from the README package table and the NuGet deprecation message.
   Conventions: "Writing a migration page" in `docs/migrations/index.md`.
+
+## Gotchas
+
+- Add projects to `Curiosus.Utils.sln` by hand (copy the entries of a sibling project): `dotnet sln add` also adds
+  `x64`/`x86` platforms to every project of the solution.
+- The repository is a GitHub fork of `siisltd/Curiosity.Utils`, so `gh pr create` targets the parent by default:
+  pass `--repo curiosus-dev/Curiosus.Utils` (or run `gh repo set-default curiosus-dev/Curiosus.Utils` once).

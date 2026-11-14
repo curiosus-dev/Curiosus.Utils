@@ -37,4 +37,8 @@
       <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
     </ItemGroup>
 
+    <ItemGroup>
+      <InternalsVisibleTo Include="Curiosus.Configuration.UnitTests" />
+    </ItemGroup>
+
 </Project>
