@@ -65,3 +65,5 @@ Curiosus.Configuration (base)
   `x64`/`x86` platforms to every project of the solution.
 - The repository is a GitHub fork of `siisltd/Curiosity.Utils`, so `gh pr create` targets the parent by default:
   pass `--repo curiosus-dev/Curiosus.Utils` (or run `gh repo set-default curiosus-dev/Curiosus.Utils` once).
+- On `net10.0` `BackgroundService.StartAsync` runs `ExecuteAsync` on a background task, so timers it creates may not
+  exist yet when a test advances a `FakeTimeProvider` right after `StartAsync`: advance repeatedly until the loop reacts.
