@@ -5,8 +5,10 @@
 ### Security
 
 - `ConfigurationPrinter` masks secrets: the value of every property or dictionary key whose name contains `password`,
-  `pwd`, `secret`, `token`, `apikey` or ends with `key` (case-insensitive) is printed as `***`; for names containing
-  `connectionstring` only the `Password`/`Pwd` part of the connection string is masked. Earlier versions printed them
+  `pwd`, `passphrase`, `secret`, `token`, `credential`, `apikey`, `privatekey` (not `privatekeypath`) or ends with `key`
+  (case-insensitive) is printed as `***`; for names containing
+  `connectionstring` only the values of secret keys (`Password`, `Pwd`, `AccountKey`, ...) are masked, and a value
+  that can't be parsed or is a URI is masked entirely. Earlier versions printed them
   in clear text, so credentials of options printed at startup reached every log target: rotate them.
   ([#39](https://github.com/curiosus-dev/Curiosus.Utils/issues/39))
 

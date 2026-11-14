@@ -12,16 +12,14 @@ namespace Curiosus.Configuration
     {
         public const string Mask = "***";
 
+        private static readonly char[] UriKeyChars = [':', '/', '@'];
+
         private static readonly Regex SecretNameRegex = new(
-            "password|pwd|secret|token|apikey|key$|connectionstring",
+            "password|pwd|passphrase|secret|token|credential|apikey|privatekey(?!path)|key$|connectionstring",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         private static readonly Regex ConnectionStringNameRegex = new(
             "connectionstring",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-
-        private static readonly Regex ConnectionStringPasswordKeyRegex = new(
-            "^(password|pwd)$",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         /// <summary>
@@ -36,8 +34,9 @@ namespace Curiosus.Configuration
         public static bool IsConnectionStringName(string name) => ConnectionStringNameRegex.IsMatch(name);
 
         /// <summary>
-        /// Replaces the password of a connection string with <see cref="Mask"/> and keeps the other parts.
-        /// A value that can't be parsed is masked entirely.
+        /// Replaces the values of secret keys (password, account key, token, ...) of a connection string with
+        /// <see cref="Mask"/> and keeps the other parts. A value that can't be parsed or looks like a URI
+        /// (the password may be in its user info) is masked entirely.
         /// </summary>
         public static string MaskConnectionString(string connectionString)
         {
@@ -51,11 +50,10 @@ namespace Curiosus.Configuration
                 return Mask;
             }
 
-            var passwordKeys = builder.Keys
-                .Cast<string>()
-                .Where(key => ConnectionStringPasswordKeyRegex.IsMatch(key))
-                .ToArray();
-            foreach (var key in passwordKeys)
+            var keys = builder.Keys.Cast<string>().ToArray();
+            if (keys.Any(key => key.IndexOfAny(UriKeyChars) >= 0)) return Mask;
+
+            foreach (var key in keys.Where(IsSecretName))
             {
                 builder[key] = Mask;
             }

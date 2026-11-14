@@ -13,6 +13,8 @@ public class SecretMaskerTests
     [InlineData("ApiKey")]
     [InlineData("SmscPassword")]
     [InlineData("SshPassword")]
+    [InlineData("SshPrivateKeyPassphrase")]
+    [InlineData("ReCaptchaServerKey")]
     // app-style names
     [InlineData("ApiToken")]
     [InlineData("BotToken")]
@@ -20,6 +22,8 @@ public class SecretMaskerTests
     [InlineData("ClientSecret")]
     [InlineData("DbPwd")]
     [InlineData("password")]
+    [InlineData("AwsCredentials")]
+    [InlineData("PrivateKeyPem")]
     public void IsSecretName_SecretNames_True(string name)
     {
         SecretMasker.IsSecretName(name).Should().BeTrue();
@@ -31,6 +35,7 @@ public class SecretMaskerTests
     [InlineData("UserName")]
     [InlineData("KeyPrefix")]
     [InlineData("Timeout")]
+    [InlineData("SshPrivateKeyPath")]
     public void IsSecretName_OtherNames_False(string name)
     {
         SecretMasker.IsSecretName(name).Should().BeFalse();
@@ -50,6 +55,8 @@ public class SecretMaskerTests
     [InlineData("Host=db;Port=5432;Database=app;Username=app;Password=s3cr3t!")]
     [InlineData("Server=db;Database=app;User Id=app;Pwd=s3cr3t!")]
     [InlineData("Host=db;Database=app;PASSWORD=\"s3cr3t!;x\"")]
+    [InlineData("Host=db;Database=app;AccountKey=s3cr3t!")]
+    [InlineData("Host=db;Database=app;SharedAccessKey=s3cr3t!;ApiToken=s3cr3t!")]
     public void MaskConnectionString_HidesPasswordOnly(string connectionString)
     {
         var masked = SecretMasker.MaskConnectionString(connectionString);
@@ -57,9 +64,13 @@ public class SecretMaskerTests
         masked.Should().NotContain("s3cr3t").And.Contain(SecretMasker.Mask).And.Contain("db").And.Contain("app");
     }
 
-    [Fact]
-    public void MaskConnectionString_Unparsable_FullyMasked()
+    [Theory]
+    [InlineData("not a connection string s3cr3t")]
+    [InlineData("amqp://user:s3cr3t@db/vhost")]
+    [InlineData("amqp://user:s3cr3t@db/vhost?heartbeat=10")]
+    [InlineData("postgres://user:s3cr3t@db/app?sslmode=require&x=y")]
+    public void MaskConnectionString_UnparsableOrUri_FullyMasked(string connectionString)
     {
-        SecretMasker.MaskConnectionString("not a connection string s3cr3t").Should().Be(SecretMasker.Mask);
+        SecretMasker.MaskConnectionString(connectionString).Should().Be(SecretMasker.Mask);
     }
 }
