@@ -35,18 +35,18 @@ DbTimeSync:
   MaxAcceptedRtt: "00:00:01"    # samples with a longer round trip are discarded
 ```
 
-Inject `DbSyncTimeProvider` where "now" must match the database:
+It becomes the `TimeProvider` of the whole app, replacing the default one wherever it was registered: everything that
+takes a `TimeProvider` follows the database clock, ASP.NET Core and other libraries (cookie and token expiry) included.
 
 ```csharp
-public class LeaseService(DbSyncTimeProvider clock)
+public class LeaseService(TimeProvider clock)
 {
     public bool IsExpired(Lease lease) => lease.LockedUntil < clock.GetUtcNow();
 }
 ```
 
-`registerAsTimeProvider: true` replaces `TimeProvider` app-wide instead. It also shifts time checks of ASP.NET Core and
-other libraries (cookie and token expiry), which is why it is off by default. A keyed data source is selected with
-`dataSourceKey`.
+Inject `DbSyncTimeProvider` itself to read `IsSynchronized` or `Offset`. Code that needs the local clock regardless uses
+`TimeProvider.System` directly. A keyed data source is selected with `dataSourceKey`.
 
 ### How it works
 
