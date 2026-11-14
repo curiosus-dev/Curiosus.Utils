@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Security
+
+- Updated `Curiosus.Configuration` to the version that masks secrets in the configuration printed at startup: passwords, API keys, tokens and
+  the password of connection strings were logged in clear text. Rotate credentials logged by earlier versions.
+  ([#39](https://github.com/curiosus-dev/Curiosus.Utils/issues/39))
+
 ## [3.0.0] - 2026-10-03
 
 ### Changed

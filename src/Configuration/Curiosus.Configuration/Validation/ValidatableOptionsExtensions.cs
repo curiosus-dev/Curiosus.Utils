@@ -20,8 +20,8 @@ namespace Curiosus.Configuration
             if (errors.Count == 0) return;
             
             var optionName = String.IsNullOrWhiteSpace(prefix)
-                ? " "
-                : $"{prefix} ";
+                ? "Options"
+                : $"Option {prefix}";
             
             var errorsBuilder = new StringBuilder();
             foreach (var validationError in errors)
@@ -29,7 +29,7 @@ namespace Curiosus.Configuration
                 errorsBuilder.AppendLine($"{validationError.FieldName}: {validationError.Error}");
             }
             
-            var message = $"Option {optionName}are invalid. Errors: {Environment.NewLine}{errorsBuilder}";
+            var message = $"{optionName} are invalid. Errors: {Environment.NewLine}{errorsBuilder}";
             throw new ConfigurationValidationException(message, errors);
         }
     }

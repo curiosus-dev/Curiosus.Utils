@@ -51,3 +51,8 @@ Curiosus.Configuration (base)
 - **Documentation:** Docusaurus on GitHub Pages at https://curiosus-dev.github.io/Curiosus.Utils/, built from `docs/`
   (site settings in `docs.json`). `docs/index.md` is a symlink to `README.md`, package READMEs are symlinked into
   `docs/packages/<area>/` — add one for a new package. `website/` is synced from dotnet-tools.
+
+## Gotchas
+
+- Add projects to `Curiosus.Utils.sln` by hand (copy the entries of a sibling project): `dotnet sln add` also adds
+  `x64`/`x86` platforms to every project of the solution.

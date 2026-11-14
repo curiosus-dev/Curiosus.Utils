@@ -1,5 +1,25 @@
 # Changelog
 
+## [Unreleased]
+
+### Security
+
+- `ConfigurationPrinter` masks secrets: the value of every property or dictionary key whose name contains `password`,
+  `pwd`, `secret`, `token`, `apikey` or ends with `key` (case-insensitive) is printed as `***`; for names containing
+  `connectionstring` only the `Password`/`Pwd` part of the connection string is masked. Earlier versions printed them
+  in clear text, so credentials of options printed at startup reached every log target: rotate them.
+  ([#39](https://github.com/curiosus-dev/Curiosus.Utils/issues/39))
+
+### Fixed
+
+- `ConfigurationValidationException.Message` contains the message passed to it, which `AssertValid` fills with every
+  validation error, instead of the default "Exception of type ... was thrown".
+  `AssertValid` without a prefix says "Options are invalid" instead of "Option  are invalid".
+  ([#15](https://github.com/curiosus-dev/Curiosus.Utils/issues/15))
+- `ConfigurationPrinter` no longer throws on indexer properties and on `ILoggableOptions` array elements without
+  properties, and prints dictionaries as `{key=value, ...}` instead of `[[key, value], ...]`.
+  ([#39](https://github.com/curiosus-dev/Curiosus.Utils/issues/39))
+
 ## [2.0.0] - 2026-09-27
 
 ### Changed

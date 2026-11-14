@@ -36,16 +36,36 @@ namespace Curiosus.Configuration
             var type = options.GetType();
             foreach (var propertyInfo in type.GetProperties())
             {
+                if (propertyInfo.GetIndexParameters().Length > 0 || propertyInfo.GetMethod is not { IsPublic: true }) continue;
+
                 var propValue = propertyInfo.GetValue(options);
                 var currentOffset = (offset + defaultWidth);
                 var propName = $"{{{0}, {currentOffset}}}";
                 var pro = String.Format(propName, propertyInfo.Name);
-                builder.AppendLine($"{pro}: {ValueToString(propValue, currentOffset, 15)}");
+                builder.AppendLine($"{pro}: {NamedValueToString(propertyInfo.Name, propValue, currentOffset, 15)}");
             }
 
             // removed new line symbol - it's more beaty
-            builder.Remove(builder.Length - 1, 1);
+            if (builder.Length > 0)
+            {
+                builder.Remove(builder.Length - 1, 1);
+            }
+
             return builder.ToString();
+        }
+
+        private string NamedValueToString(string name, object? value, int offset, int defaultWidth)
+        {
+            if (value == null) return ModelNullText;
+
+            if (SecretMasker.IsConnectionStringName(name) && value is string connectionString)
+            {
+                return SecretMasker.MaskConnectionString(connectionString);
+            }
+
+            if (SecretMasker.IsSecretName(name)) return SecretMasker.Mask;
+
+            return ValueToString(value, offset, defaultWidth);
         }
 
         private string ValueToString(object? propValue, int offset, int defaultWidth)
@@ -70,6 +90,18 @@ namespace Curiosus.Configuration
                 return log.ToString();
             }
 
+            if (propValue is IDictionary dictionary)
+            {
+                var entries = new List<string>();
+                foreach (DictionaryEntry entry in dictionary)
+                {
+                    var key = entry.Key.ToString() ?? String.Empty;
+                    entries.Add($"{key}={NamedValueToString(key, entry.Value, offset, defaultWidth)}");
+                }
+
+                return "{" + string.Join(", ", entries) + "}";
+            }
+
             if (propValue is ICollection collection)
             {
                 var arr = new List<object>();
@@ -82,7 +114,7 @@ namespace Curiosus.Configuration
                 return "[" + string.Join(",", arr.ToArray()) + "]";
             }
 
-            return propValue.ToString();
+            return propValue.ToString() ?? ModelNullText;
         }
     }
 }

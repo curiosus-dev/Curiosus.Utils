@@ -35,8 +35,12 @@ public class AppOptions : IValidatableOptions, ILoggableOptions
 
 var options = builder.Configuration.Get<AppOptions>()!;
 options.AssertValid(); // throws ConfigurationValidationException with all errors
-Console.WriteLine(new ConfigurationPrinter().GetLog(options)); // prints all public properties
+Console.WriteLine(new ConfigurationPrinter().GetLog(options)); // prints all public properties, secrets masked
 ```
+
+`ConfigurationPrinter` prints `***` instead of the value of every property or dictionary key whose name contains
+`password`, `pwd`, `secret`, `token`, `apikey` or ends with `key` (case-insensitive). For names containing
+`connectionstring` it prints the connection string with only the `Password`/`Pwd` value masked.
 
 `ConfigurationValidationErrorCollection` prefixes field names (`prefix:Field`), which is handy for nested options.
 
