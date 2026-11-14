@@ -164,7 +164,7 @@ namespace Curiosus.Hosting.UnitTests
 
             var act = () => builder.AddCuriosusLogging();
 
-            act.Should().Throw<System.ComponentModel.DataAnnotations.ValidationException>();
+            act.Should().Throw<Microsoft.Extensions.Options.OptionsValidationException>();
         }
 
         [Fact]

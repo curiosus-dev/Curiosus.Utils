@@ -1,5 +1,4 @@
 using System;
-using System.ComponentModel.DataAnnotations;
 using Curiosus.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +14,8 @@ namespace Curiosus.Hosting
     /// </summary>
     public static class CuriosusLoggingExtensions
     {
+        private const string WebApplicationBuilderTypeName = "Microsoft.AspNetCore.Builder.WebApplicationBuilder";
+
         /// <summary>
         /// Name of the logger that gets "{AppName} is started".
         /// </summary>
@@ -36,27 +37,28 @@ namespace Curiosus.Hosting
         /// <returns>Options builder of <see cref="CuriosusLoggingOptions"/>.</returns>
         /// <remarks>
         /// The app name is the <c>AppName</c> configuration key, or <see cref="IHostEnvironment.ApplicationName"/>.
-        /// Paths are relative to the content root. In a web app the NLog.Web <c>${aspnet-*}</c> renderers are registered. Other values reach NLog.config with
-        /// <c>${configsetting:item=Section.Key}</c>.
+        /// Paths are relative to the content root. In a web app the NLog.Web <c>${aspnet-*}</c> renderers are
+        /// registered. Other values reach NLog.config with <c>${configsetting:item=Section.Key}</c>.
         /// </remarks>
-        /// <exception cref="ValidationException">The options are invalid.</exception>
+        /// <exception cref="OptionsValidationException">The options are invalid.</exception>
         public static OptionsBuilder<CuriosusLoggingOptions> AddCuriosusLogging(
             this IHostApplicationBuilder builder,
             Action<CuriosusLoggingOptions>? configure = null)
         {
             if (builder == null) throw new ArgumentNullException(nameof(builder));
 
-            var options = new CuriosusLoggingOptions();
-            builder.Configuration.GetSection(CuriosusLoggingOptions.SectionName).Bind(options);
-            configure?.Invoke(options);
-            Validator.ValidateObject(options, new ValidationContext(options), validateAllProperties: true);
+            var options = builder.Configuration.GetCuriosusOptions(CuriosusLoggingOptions.SectionName, configure);
 
             var appName = builder.Configuration[CuriosusLogging.AppNameConfigurationKey] is { Length: > 0 } name
                 ? name
                 : builder.Environment.ApplicationName;
 
             CuriosusLogging.LoadConfiguration(
-                options, appName, builder.Environment.ContentRootPath, builder.Configuration);
+                options,
+                appName,
+                builder.Environment.ContentRootPath,
+                builder.Configuration,
+                registerNLogWeb: builder.GetType().FullName == WebApplicationBuilderTypeName);
 
             builder.Logging.ClearProviders();
             builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);

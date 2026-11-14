@@ -22,7 +22,8 @@ namespace Curiosus.Hosting
             CuriosusLoggingOptions options,
             string appName,
             string basePath,
-            IConfiguration configuration)
+            IConfiguration? configuration,
+            bool registerNLogWeb)
         {
             var configurationPath = Path.GetFullPath(options.LogConfigurationPath, basePath);
             var outputDirectory = Path.GetFullPath(options.LogOutputDirectory, basePath);
@@ -30,8 +31,8 @@ namespace Curiosus.Hosting
             var factory = LogManager.Setup()
                 .SetupExtensions(extensions =>
                 {
-                    extensions.RegisterConfigSettings(configuration);
-                    RegisterNLogWeb(extensions);
+                    if (configuration != null) extensions.RegisterConfigSettings(configuration);
+                    if (registerNLogWeb) RegisterNLogWeb(extensions);
                 })
                 .LoadConfigurationFromFile(configurationPath, optional: false)
                 .LogFactory;
@@ -44,8 +45,8 @@ namespace Curiosus.Hosting
         }
 
         /// <summary>
-        /// Registers the NLog.Web <c>${aspnet-*}</c> renderers when <c>NLog.Web.AspNetCore</c> is available, which it is
-        /// in web apps. Hosting has no dependency on ASP.NET Core, so it is looked up by name.
+        /// Registers the NLog.Web <c>${aspnet-*}</c> renderers of a web app. Hosting has no dependency on ASP.NET Core,
+        /// so <c>NLog.Web.AspNetCore</c> is looked up by name: a web app that doesn't reference it gets no renderers.
         /// </summary>
         private static void RegisterNLogWeb(ISetupExtensionsBuilder extensions)
         {

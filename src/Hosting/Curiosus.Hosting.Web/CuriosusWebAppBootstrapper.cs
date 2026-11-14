@@ -33,6 +33,9 @@ namespace Curiosus.Hosting.Web
         where TStartup : class
     {
         /// <inheritdoc />
+        protected override bool IsWebApp => true;
+
+        /// <inheritdoc />
         protected override async Task<int> RunInternalAsync(
             string[] rawArguments,
             TArgs arguments,
