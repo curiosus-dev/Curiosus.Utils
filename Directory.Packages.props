@@ -22,6 +22,7 @@
         <PackageVersion Include="Microsoft.Extensions.Localization.Abstractions" Version="10.0.3" />
         <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.3" />
         <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.3" />
+        <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.3" />
         <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.3" />
 
         <!-- EF Core -->
@@ -86,6 +87,7 @@
         <PackageVersion Update="Microsoft.Extensions.Localization.Abstractions" Version="9.0.13" />
         <PackageVersion Update="Microsoft.Extensions.Logging" Version="9.0.13" />
         <PackageVersion Update="Microsoft.Extensions.Logging.Abstractions" Version="9.0.13" />
+        <PackageVersion Update="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.13" />
         <PackageVersion Update="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.13" />
         <PackageVersion Update="Microsoft.EntityFrameworkCore" Version="9.0.13" />
         <PackageVersion Update="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.13" />

@@ -2,11 +2,24 @@
 
 ## [Unreleased]
 
+### Added
+
+- `AddCuriosusOptions<T>("Section")` and a named overload: bind options to a configuration section with
+  `Microsoft.Extensions.Options`, validate them with data annotations (nested objects included) and fail the host start
+  when they are invalid. ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+- `LogConfigurationOnStart()`: logs the configuration before hosted services start, one line per value with the
+  provider it came from, secrets masked. Without arguments the whole configuration except sectionless environment
+  variables (`PATH`, ...); with sections only them; `ExcludedSections` leaves sections out.
+  ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+- Dependencies on `Microsoft.Extensions.Hosting.Abstractions`, `Microsoft.Extensions.Options.ConfigurationExtensions`
+  and `Microsoft.Extensions.Options.DataAnnotations`.
+
 ### Deprecated
 
-- The package is deprecated and will be removed once every Curiosus package has moved its options to
-  `Microsoft.Extensions.Options`. Move your own options now with `AddCuriosusOptions<T>` and `LogConfigurationOnStart`
-  of `Curiosus.Hosting`, see the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-configuration/3.0).
+- `IValidatableOptions`, `AssertValid`, `ConfigurationValidationError(Collection)`, `ConfigurationValidationException`,
+  `ILoggableOptions`, `ConfigurationPrinter`, `IConfigurationProvider<T>` and `ConfigurationProviderBase<T>` are removed
+  in 3.0 in favour of `AddCuriosusOptions<T>` and `LogConfigurationOnStart`; Curiosus packages move their options with
+  their next majors. See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-configuration/3.0).
   ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
 
 The startup configuration dump and validation errors look different: see the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-configuration/2.1).

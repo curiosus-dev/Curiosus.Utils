@@ -40,6 +40,19 @@ namespace Curiosus.Configuration
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         /// <summary>
+        /// Masks the value of a configuration key: a connection string keeps its non-secret parts, the value of a key
+        /// with a secret segment or with URI credentials becomes <see cref="Mask"/>, other values are returned as is.
+        /// </summary>
+        public static string MaskValue(string path, string value)
+        {
+            var segments = path.Split(':');
+            if (segments.Any(IsConnectionStringName)) return MaskConnectionString(value);
+            if (segments.Any(IsSecretName) || HasUriCredentials(value)) return Mask;
+
+            return value;
+        }
+
+        /// <summary>
         /// Returns <c>true</c> when the value contains a URI with user info (<c>amqp://user:pass@host</c>):
         /// its password would leak whatever the name of the key is.
         /// </summary>

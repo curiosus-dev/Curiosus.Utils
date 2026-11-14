@@ -64,27 +64,6 @@ Other helpers:
 - `IConfigurationWithMailLogger` — implement it in your config to pass SMTP settings (`LoggerMail`) to the mail
   target variables of your `NLog.config`.
 
-## Options
-
-Bind options to a configuration section, validate them with data annotations and fail the start when they are invalid:
-
-```csharp
-public class SmtpOptions
-{
-    [Required] public string Host { get; set; } = null!;
-    [Range(1, 65535)] public int Port { get; set; } = 25;
-}
-
-services.AddCuriosusOptions<SmtpOptions>("Smtp");                      // IOptions<SmtpOptions>
-services.AddCuriosusOptions<SmtpOptions>("backup", "Mail:Backup");     // named: IOptionsMonitor<SmtpOptions>.Get("backup")
-services.LogConfigurationOnStart("Smtp", "Mail");                      // startup dump, secrets masked
-```
-
-`LogConfigurationOnStart` prints only the listed sections, one line per value with the provider it came from, so you see
-whether a value came from a file, an environment variable or the command line. They replace `IValidatableOptions` and
-`ConfigurationPrinter` of the deprecated `Curiosus.Configuration`, see the
-[migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-configuration/3.0).
-
 ## See also
 
 - [Curiosus.Hosting.Web](https://www.nuget.org/packages/Curiosus.Hosting.Web) — bootstrapper for ASP.NET Core apps

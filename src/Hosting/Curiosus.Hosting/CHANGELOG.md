@@ -2,17 +2,6 @@
 
 ## [Unreleased]
 
-### Added
-
-- `AddCuriosusOptions<T>("Section")` (and a named overload): binds options to a configuration section, validates them
-  with data annotations, nested objects included, and fails the host start when they are invalid. Replaces
-  `IValidatableOptions` + `AssertValid()` of the deprecated `Curiosus.Configuration`, see the
-  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-configuration/3.0). ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
-- `LogConfigurationOnStart("Section", ...)`: logs the listed sections before hosted services start, one line per value
-  with the provider it came from, secrets masked with the rules of `ConfigurationPrinter`.
-  ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
-- Dependency on `Microsoft.Extensions.Options.DataAnnotations`.
-
 ### Security
 
 - Updated `Curiosus.Configuration` to the version that masks secrets in the configuration printed at startup: passwords,

@@ -9,7 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Xunit;
 
-namespace Curiosus.Hosting.UnitTests;
+namespace Curiosus.Configuration.UnitTests;
 
 public class AddCuriosusOptionsTests
 {

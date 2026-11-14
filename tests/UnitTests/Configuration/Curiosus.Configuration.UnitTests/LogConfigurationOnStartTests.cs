@@ -10,7 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
-namespace Curiosus.Hosting.UnitTests;
+namespace Curiosus.Configuration.UnitTests;
 
 public class LogConfigurationOnStartTests
 {
@@ -19,7 +19,7 @@ public class LogConfigurationOnStartTests
     [Fact]
     public void BuildView_OnlyListedSections()
     {
-        var view = ConfigurationStartupLogger.BuildView(BuildConfiguration(), ["Smtp"]);
+        var view = ConfigurationStartupLogger.BuildView(BuildConfiguration(), Sections("Smtp"));
 
         view.Should().Contain("Smtp:Host = smtp.local").And.NotContain("Other");
     }
@@ -27,7 +27,9 @@ public class LogConfigurationOnStartTests
     [Fact]
     public void BuildView_SecretsMasked()
     {
-        var view = ConfigurationStartupLogger.BuildView(BuildConfiguration(), ["Smtp", "Auth", "ConnectionStrings", "Bot", "Rabbit"]);
+        var view = ConfigurationStartupLogger.BuildView(
+            BuildConfiguration(),
+            Sections("Smtp", "Auth", "ConnectionStrings", "Bot", "Rabbit"));
 
         view.Should().NotContain(Secret);
         view.Should().Contain("Smtp:Password = ***")
@@ -40,7 +42,7 @@ public class LogConfigurationOnStartTests
     [Fact]
     public void BuildView_ShowsWinningProvider()
     {
-        var view = ConfigurationStartupLogger.BuildView(BuildConfiguration(), ["Smtp"]);
+        var view = ConfigurationStartupLogger.BuildView(BuildConfiguration(), Sections("Smtp"));
 
         var hostLine = view.Split('\n').Single(l => l.StartsWith("Smtp:Host"));
         hostLine.Should().Contain("MemoryConfigurationProvider");
@@ -50,7 +52,7 @@ public class LogConfigurationOnStartTests
     [Fact]
     public void BuildView_MissingSection_SaysNotSet()
     {
-        ConfigurationStartupLogger.BuildView(BuildConfiguration(), ["Nope"]).Should().Be("Nope: (not set)");
+        ConfigurationStartupLogger.BuildView(BuildConfiguration(), Sections("Nope")).Should().Be("Nope: (not set)");
     }
 
     [Fact]
@@ -76,6 +78,64 @@ public class LogConfigurationOnStartTests
         entries[configIndex].Should().Contain("Smtp:Host").And.Contain("Auth:Key = ***").And.NotContain(Secret);
     }
 
+    [Fact]
+    public void BuildView_NoSections_WholeConfigurationMasked()
+    {
+        var view = ConfigurationStartupLogger.BuildView(BuildConfiguration(), Sections());
+
+        view.Should().Contain("Smtp:Host = smtp.local").And.Contain("Other:Value = x").And.Contain("AllowedHosts = *");
+        view.Should().NotContain(Secret);
+    }
+
+    [Fact]
+    public void BuildView_NoSections_SectionlessEnvironmentVariablesSkipped()
+    {
+        System.Environment.SetEnvironmentVariable("CURIOSUS_LOGTEST_FLAT", "noise");
+        System.Environment.SetEnvironmentVariable("CURIOSUS_LOGTEST_ALLOWEDHOSTS", "example.com");
+        System.Environment.SetEnvironmentVariable("CURIOSUS_LOGTEST_SMTP__PASSWORD", Secret);
+        System.Environment.SetEnvironmentVariable("CURIOSUS_LOGTEST_SMTP__USER", "mailer");
+        try
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?> { ["AllowedHosts"] = "*" })
+                .AddEnvironmentVariables("CURIOSUS_LOGTEST_")
+                .Build();
+
+            var view = ConfigurationStartupLogger.BuildView(configuration, Sections());
+
+            view.Should().NotContain("FLAT", "a sectionless variable only the environment sets is not app configuration");
+            view.Should().Contain("ALLOWEDHOSTS = example.com (EnvironmentVariablesConfigurationProvider",
+                "it overrides a value of another provider");
+            view.Should().Contain("SMTP:PASSWORD = ***").And.Contain("SMTP:USER = mailer").And.NotContain(Secret);
+        }
+        finally
+        {
+            foreach (var name in new[] { "FLAT", "ALLOWEDHOSTS", "SMTP__PASSWORD", "SMTP__USER" })
+            {
+                System.Environment.SetEnvironmentVariable("CURIOSUS_LOGTEST_" + name, null);
+            }
+        }
+    }
+
+    [Fact]
+    public void BuildView_ExcludedSections_Skipped()
+    {
+        var options = Sections();
+        options.ExcludedSections.Add("Other");
+        options.ExcludedSections.Add("Smtp:Port");
+
+        var view = ConfigurationStartupLogger.BuildView(BuildConfiguration(), options);
+
+        view.Should().NotContain("Other:").And.NotContain("Smtp:Port").And.Contain("Smtp:Host");
+    }
+
+    private static ConfigurationStartupLogOptions Sections(params string[] sections)
+    {
+        var options = new ConfigurationStartupLogOptions();
+        options.Sections.AddRange(sections);
+        return options;
+    }
+
     private static IConfiguration BuildConfiguration() => new ConfigurationBuilder()
         .AddInMemoryCollection(new Dictionary<string, string?>
         {
@@ -86,6 +146,7 @@ public class LogConfigurationOnStartTests
             ["Bot:Tokens:0"] = Secret,
             ["ConnectionStrings:Default"] = $"Host=db;Database=app;Password={Secret}",
             ["Other:Value"] = "x",
+            ["AllowedHosts"] = "*",
             ["Rabbit:Url"] = $"amqp://app:{Secret}@rabbit/vhost",
         })
         .AddInMemoryCollection(new Dictionary<string, string?> { ["Smtp:Port"] = "2525" })

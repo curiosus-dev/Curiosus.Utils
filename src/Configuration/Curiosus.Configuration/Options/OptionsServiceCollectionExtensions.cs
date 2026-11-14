@@ -2,7 +2,7 @@ using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-namespace Curiosus.Hosting;
+namespace Curiosus.Configuration;
 
 /// <summary>
 /// Registration of options bound from configuration and validated at start.

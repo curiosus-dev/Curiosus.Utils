@@ -5,8 +5,8 @@
         
         <PackageId>Curiosus.Configuration</PackageId>
         <Title>Curiosus.Configuration</Title>
-        <Description>Class for working with configuration: logging, validation, etc.</Description>
-        <Summary>Class for working with configuration: logging, validation, etc.</Summary>
+        <Description>Options bound from configuration and validated at start, and a startup configuration dump with secrets masked.</Description>
+        <Summary>Options bound from configuration and validated at start, and a startup configuration dump with secrets masked.</Summary>
         <PackageTags>Curiosus; configuration; logging; validation</PackageTags>
         <Language>English</Language>
 
@@ -35,6 +35,9 @@
       <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
       <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" />
       <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
+      <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+      <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+      <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
     </ItemGroup>
 
     <ItemGroup>
