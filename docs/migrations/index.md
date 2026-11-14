@@ -5,8 +5,8 @@ description: How to move apps from Curiosity.* 1.x to the current Curiosus.* pac
 
 # Migration guides
 
-Every major version of a package that breaks your code has a migration page here: what changed, why, before → after
-code and a checklist. The **Breaking** entries of the package CHANGELOGs link to these pages.
+Every package version that breaks your code or changes behaviour you rely on has a migration page here: what
+changed, why, before → after code and a checklist. The package CHANGELOGs link to these pages.
 
 This page is the starting point for apps that still use `Curiosity.*` 1.x: the order of the steps, where each package
 went and the changes that apply to all packages.
@@ -43,7 +43,7 @@ issues that will add the page. Removed packages get a page too: it tells what re
 | `Curiosity.Archiver` | [Curiosus.Archiver](../packages/archiver/curiosus-archiver.md) | 3.0, planned in [#92](https://github.com/curiosus-dev/Curiosus.Utils/issues/92) |
 | `Curiosity.Archiver.SharpZip` | [Curiosus.Archiver.SharpZip](../packages/archiver/curiosus-archiver-sharpzip.md) | removed in favour of `Curiosus.Archiver`, planned in [#92](https://github.com/curiosus-dev/Curiosus.Utils/issues/92) |
 | `Curiosity.Cache.MemoryCache` | [Curiosus.Cache.MemoryCache](../packages/misc/curiosus-cache-memorycache.md) | removed in favour of `IMemoryCache.GetOrCreateAsync`, planned in [#59](https://github.com/curiosus-dev/Curiosus.Utils/issues/59) |
-| `Curiosity.Configuration` | [Curiosus.Configuration](../packages/configuration/curiosus-configuration.md) | removed in favour of `Microsoft.Extensions.Options`, planned in [#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44) |
+| `Curiosity.Configuration` | [Curiosus.Configuration](../packages/configuration/curiosus-configuration.md), [2.1 notes](./curiosus-configuration/2.1.md) | removed in favour of `Microsoft.Extensions.Options`, planned in [#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44) |
 | `Curiosity.Configuration.YML` | [Curiosus.Configuration.YML](../packages/configuration/curiosus-configuration-yaml.md) | removed in favour of `AddCuriosusConfiguration` of `Curiosus.Hosting`, planned in [#40](https://github.com/curiosus-dev/Curiosus.Utils/issues/40) |
 | `Curiosity.DAL` | [Curiosus.DAL](../packages/dal/curiosus-dal.md) | removed in favour of `Curiosus.DAL.EF`, planned in [#68](https://github.com/curiosus-dev/Curiosus.Utils/issues/68) |
 | `Curiosity.DAL.Dapper` | [Curiosus.DAL.Dapper](../packages/dal/curiosus-dal-dapper.md) | removed in favour of Dapper or EF Core raw SQL, planned in [#71](https://github.com/curiosus-dev/Curiosus.Utils/issues/71) |
@@ -152,18 +152,23 @@ will have the recipe.
 
 ## Writing a migration page
 
-For contributors: a pull request with a breaking change adds or extends the migration page of each package it breaks.
+For contributors: a pull request that changes behaviour consumers must act on adds or extends the migration page of
+each package it changes. That is every breaking change, and also changed output, messages or defaults, and security
+fixes that need credentials rotated. When unsure, write the page: a short page costs less than a surprised consumer.
 
-- One page per package major: `docs/migrations/<package-id-lowercase>/<major.minor>.md`, for example
-  `curiosus-hosting/4.0.md`, and a `_category_.json` with the package id as the label next to the first page of a
+- One page per package version: `docs/migrations/<package-id-lowercase>/<major.minor>.md`, for example
+  `curiosus-hosting/4.0.md` or `curiosus-configuration/2.1.md` for a minor version that changes behaviour, and a `_category_.json` with the package id as the label next to the first page of a
   package. Copy [`_template.md`](https://github.com/curiosus-dev/Curiosus.Utils/blob/main/docs/migrations/_template.md).
 - Front matter sets `id`, `slug` and `title` explicitly (Docusaurus would read `4.0` as a number prefix otherwise) and
-  `sidebar_position: 100 - major`, so the newest major comes first.
+  `sidebar_position: 100 - major`, so the newest major comes first (a minor of the same major gets the same position
+  and sorts by title).
 - Several issues that break one package in one major share its page, one section per issue, each linking its issue.
 - The page says which target framework it requires, lists the breaking changes, and for each: why, before → after code,
   a checklist.
 - A removed package gets a page for the major it would have had next (`curiosus-hosting-web/4.0.md`); the README
   package table and the NuGet deprecation message link to it, and the pages of the packages that replace it too.
-- The **Breaking** entry of the CHANGELOG links the page with its absolute URL, because CHANGELOGs are read on GitHub,
-  nuget.org and this site: `https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting/4.0`.
+- The CHANGELOG entries of the change (the **Breaking** entry when there is one) link the page with its absolute URL,
+  because CHANGELOGs are read on GitHub, nuget.org and this site:
+  `https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting/4.0`. Packages that ship the change
+  through a dependency (`Curiosus.Hosting` for `Curiosus.Configuration`) link it from their entry too.
 - The pull request updates the row of the package in the [Packages](#packages) table.

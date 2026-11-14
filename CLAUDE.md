@@ -51,9 +51,11 @@ Curiosus.Configuration (base)
 - **Documentation:** Docusaurus on GitHub Pages at https://curiosus-dev.github.io/Curiosus.Utils/, built from `docs/`
   (site settings in `docs.json`). `docs/index.md` is a symlink to `README.md`, package READMEs are symlinked into
   `docs/packages/<area>/` — add one for a new package. `website/` is synced from dotnet-tools.
-- **Migration guides:** a PR with a breaking change adds or extends the page of each broken package major in
-  `docs/migrations/<package-id-lowercase>/<major.minor>.md` (copy `docs/migrations/_template.md`), links it with its
-  absolute URL from the CHANGELOG **Breaking** entry and updates the package row in `docs/migrations/index.md`.
+- **Migration guides:** a PR that changes behaviour consumers must act on (a breaking change, but also changed output,
+  messages or defaults, or a security fix that needs credential rotation) adds or extends the page of the package
+  version in `docs/migrations/<package-id-lowercase>/<major.minor>.md` (copy `docs/migrations/_template.md`), links it
+  with its absolute URL from the CHANGELOG entries (the **Breaking** entry when there is one) of that package and of
+  packages that ship the change through a dependency, and updates the package row in `docs/migrations/index.md`.
   A PR removing a package adds its page and links it from the README package table and the NuGet deprecation message.
   Conventions: "Writing a migration page" in `docs/migrations/index.md`.
 
