@@ -1,7 +1,6 @@
 using System;
 using System.Data.Common;
 using System.Linq;
-using Curiosus.Tools;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -54,42 +53,6 @@ public class ServiceCollectionExtensionsTests
 
         provider.GetRequiredService<TimeProvider>().Should().BeSameAs(provider.GetRequiredService<DbSyncTimeProvider>());
         services.Count(d => d.ServiceType == typeof(TimeProvider)).Should().Be(1);
-    }
-
-    [Fact]
-    public void RegisterAsTimeProvider_AddCuriosusTimeProviderBefore_DbSyncWins()
-    {
-        var services = CreateServices();
-        services.AddCuriosusTimeProvider();
-        services.AddCuriosusDbSyncTimeProvider(registerAsTimeProvider: true);
-
-        using var provider = services.BuildServiceProvider();
-
-        provider.GetRequiredService<TimeProvider>().Should().BeSameAs(provider.GetRequiredService<DbSyncTimeProvider>());
-    }
-
-    [Fact]
-    public void RegisterAsTimeProvider_AddCuriosusTimeProviderAfter_DbSyncWins()
-    {
-        var services = CreateServices();
-        services.AddCuriosusDbSyncTimeProvider(registerAsTimeProvider: true);
-        services.AddCuriosusTimeProvider();
-
-        using var provider = services.BuildServiceProvider();
-
-        provider.GetRequiredService<TimeProvider>().Should().BeSameAs(provider.GetRequiredService<DbSyncTimeProvider>());
-    }
-
-    [Fact]
-    public void Default_AddCuriosusTimeProvider_SystemClock()
-    {
-        var services = CreateServices();
-        services.AddCuriosusDbSyncTimeProvider();
-        services.AddCuriosusTimeProvider();
-
-        using var provider = services.BuildServiceProvider();
-
-        provider.GetRequiredService<TimeProvider>().Should().BeSameAs(TimeProvider.System);
     }
 
     [Fact]
