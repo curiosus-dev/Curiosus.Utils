@@ -5,7 +5,9 @@
 ### Security
 
 - Updated `Curiosus.Configuration` (through `Curiosus.Hosting`) to the version that masks secrets in the configuration
-  printed at startup: passwords, API keys, tokens and the password of connection strings were logged in clear text. Rotate credentials logged by earlier versions.
+  printed at startup: passwords, API keys, tokens and the password of connection strings were logged in clear text.
+  Rotate credentials logged by earlier versions, see the
+  [Curiosus.Configuration 2.1 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-configuration/2.1).
   ([#39](https://github.com/curiosus-dev/Curiosus.Utils/issues/39))
 
 ## [3.0.0] - 2026-10-03

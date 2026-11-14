@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+The startup configuration dump and validation errors look different: see the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-configuration/2.1).
+
 ### Added
 
 - `[Secret]` and `[NotSecret]` attributes on option properties override the name-based masking of
@@ -13,10 +15,10 @@
 
 - `ConfigurationPrinter` masks secrets: the value of every property or dictionary key whose name contains `password`,
   `pwd`, `passphrase`, `secret`, `token`, `credential`, `apikey`, `privatekey` (not `privatekeypath`) or ends with `key`
-  (case-insensitive) is printed as `***`; for names containing
-  `connectionstring` only the values of well-known non-secret keys (host, port, database, user, timeouts, ...) are
-  printed, all other values are masked, and a value that can't be parsed or contains a URI is masked entirely. Earlier versions printed them
-  in clear text, so credentials of options printed at startup reached every log target: rotate them.
+  (case-insensitive) is printed as `***`; for names containing `connectionstring` only the values of well-known
+  non-secret keys (host, port, database, user, timeouts, ...) are printed, all other values are masked, and a value that
+  can't be parsed or contains a URI is masked entirely. Earlier versions printed them in clear text, so credentials of
+  options printed at startup reached every log target: rotate them, see the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-configuration/2.1).
   ([#39](https://github.com/curiosus-dev/Curiosus.Utils/issues/39))
 
 ### Fixed
