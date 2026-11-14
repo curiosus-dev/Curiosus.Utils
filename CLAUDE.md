@@ -56,3 +56,5 @@ Curiosus.Configuration (base)
 
 - Add projects to `Curiosus.Utils.sln` by hand (copy the entries of a sibling project): `dotnet sln add` also adds
   `x64`/`x86` platforms to every project of the solution.
+- The repository is a GitHub fork of `siisltd/Curiosity.Utils`, so `gh pr create` targets the parent by default:
+  pass `--repo curiosus-dev/Curiosus.Utils` (or run `gh repo set-default curiosus-dev/Curiosus.Utils` once).
