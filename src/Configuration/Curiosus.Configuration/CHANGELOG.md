@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+### Added
+
+- `AddCuriosusOptions<T>("Section")` and a named overload: bind options to a configuration section with
+  `Microsoft.Extensions.Options`, validate them with data annotations (nested objects included) and fail the host start
+  when they are invalid. ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+- `LogConfigurationOnStart()`: logs the configuration before hosted services start, one line per value with the
+  provider it came from, secrets masked. Without arguments the whole configuration except sectionless environment
+  variables (`PATH`, ...); with sections only them; `ExcludedSections` leaves sections out.
+  ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+- Dependencies on `Microsoft.Extensions.Hosting.Abstractions`, `Microsoft.Extensions.Options.ConfigurationExtensions`
+  and `Microsoft.Extensions.Options.DataAnnotations`.
+
+### Deprecated
+
+- `IValidatableOptions`, `AssertValid`, `ConfigurationValidationError(Collection)`, `ConfigurationValidationException`,
+  `ILoggableOptions`, `ConfigurationPrinter`, `IConfigurationProvider<T>` and `ConfigurationProviderBase<T>` are removed
+  in 3.0 in favour of `AddCuriosusOptions<T>` and `LogConfigurationOnStart`; Curiosus packages move their options with
+  their next majors. See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-configuration/3.0).
+  ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+
 The startup configuration dump and validation errors look different: see the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-configuration/2.1).
 
 ### Added
@@ -14,8 +34,10 @@ The startup configuration dump and validation errors look different: see the [mi
 ### Security
 
 - `ConfigurationPrinter` masks secrets: the value of every property or dictionary key whose name contains `password`,
-  `pwd`, `passphrase`, `secret`, `token`, `credential`, `apikey`, `privatekey` (not `privatekeypath`) or ends with `key`
-  (case-insensitive) is printed as `***`; for names containing `connectionstring` only the values of well-known
+  `pwd`, `passphrase`, `secret`, `token`, `credential`, `apikey`, `privatekey` (not `privatekeypath`), `signature`,
+  `salt` or ends with `key` or `keys` (case-insensitive), and every value that carries a secret itself (a URI with user
+  info `amqp://user:pass@host`, a URL with `?token=`/`?sig=`/`?key=`/`?code=`, a Slack, Discord, Teams or Telegram
+  bot webhook URL), is printed as `***`; for names containing `connectionstring` only the values of well-known
   non-secret keys (host, port, database, user, timeouts, ...) are printed, all other values are masked, and a value that
   can't be parsed or contains a URI is masked entirely. Earlier versions printed them in clear text, so credentials of
   options printed at startup reached every log target: rotate them, see the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-configuration/2.1).

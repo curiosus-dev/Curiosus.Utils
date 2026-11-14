@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using FluentAssertions;
 using Xunit;
@@ -62,6 +63,16 @@ public class ConfigurationPrinterTests
         var log = _printer.GetLog(options);
 
         log.Should().Contain("{Region=eu, Auth:Key=***}").And.NotContain(Secret);
+    }
+
+    [Fact]
+    public void GetLog_CollectionOfUrisWithCredentials_ElementsMasked()
+    {
+        var options = new EndpointsOptions();
+
+        var log = _printer.GetLog(options);
+
+        log.Should().Contain("[***,https://public.example.com,***]").And.NotContain(Secret);
     }
 
     [Fact]
@@ -136,6 +147,8 @@ public class ConfigurationPrinterTests
     {
         public string Host { get; set; } = "smtp.example.com";
 
+        public string Url { get; set; } = $"amqp://app:{Secret}@rabbit/vhost";
+
         public string? Password { get; set; } = Secret;
 
         public string ApiKey { get; set; } = Secret;
@@ -145,6 +158,18 @@ public class ConfigurationPrinterTests
         public string[] Tokens { get; set; } = [Secret];
 
         public string ConnectionString { get; set; } = $"Host=db;Database=app;Password={Secret}";
+    }
+
+    private class EndpointsOptions : ILoggableOptions
+    {
+        public string[] Endpoints { get; set; } =
+            [$"amqp://app:{Secret}@rabbit-1/vhost", "https://public.example.com", $"amqp://app:{Secret}@rabbit-2/vhost"];
+
+        public List<string> Mirrors { get; set; } = [$"https://user:{Secret}@mirror.example.com"];
+
+        public Uri Broker { get; set; } = new($"amqp://app:{Secret}@rabbit/vhost");
+
+        public Uri[] Brokers { get; set; } = [new($"amqp://app:{Secret}@rabbit/vhost"), new("https://public.example.com")];
     }
 
     private class ParentOptions : ILoggableOptions
