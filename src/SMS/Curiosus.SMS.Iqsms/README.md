@@ -63,6 +63,7 @@ services.AddHttpClient(IqsmsSender.HttpClientName, client => client.Timeout = Ti
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.SMS](https://www.nuget.org/packages/Curiosus.SMS) — `ISmsSender` abstraction
 - [Curiosus.SMS.Smsc](https://www.nuget.org/packages/Curiosus.SMS.Smsc) — sender for smsc.ru
 - [Curiosus.Notifications.SMS](https://www.nuget.org/packages/Curiosus.Notifications.SMS) — SMS notification channel

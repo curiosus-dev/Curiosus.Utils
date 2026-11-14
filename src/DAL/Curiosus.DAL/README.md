@@ -55,6 +55,7 @@ public class OrderService(ICuriosusDataContextFactory contextFactory, ILogger<Or
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.DAL.EF](https://www.nuget.org/packages/Curiosus.DAL.EF) — EF Core base contexts implementing these interfaces
 - [Curiosus.DAL.Dapper](https://www.nuget.org/packages/Curiosus.DAL.Dapper) — `ISqlExecutor` implementation on Dapper
 - [Curiosus.DAL.EF.Polly](https://www.nuget.org/packages/Curiosus.DAL.EF.Polly) — Polly policy for EF concurrency errors

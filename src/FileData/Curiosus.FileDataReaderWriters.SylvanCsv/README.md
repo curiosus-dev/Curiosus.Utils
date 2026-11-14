@@ -52,6 +52,7 @@ using (var writer = new CsvFileWriter("export.csv"))
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.FileDataReaderWriters](https://www.nuget.org/packages/Curiosus.FileDataReaderWriters) — reader/writer contracts
 - [Curiosus.FileDataReaderWriters.Npoi](https://www.nuget.org/packages/Curiosus.FileDataReaderWriters.Npoi) — XLSX writers
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

@@ -55,6 +55,7 @@ and requires at least one channel and one builder to be registered.
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.Notifications.EMail](https://www.nuget.org/packages/Curiosus.Notifications.EMail) — EMail channel
 - [Curiosus.Notifications.SMS](https://www.nuget.org/packages/Curiosus.Notifications.SMS) — SMS channel
 - [Notifications documentation](https://curiosus-dev.github.io/Curiosus.Utils/notifications)

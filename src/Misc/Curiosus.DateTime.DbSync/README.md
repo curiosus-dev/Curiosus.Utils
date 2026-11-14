@@ -69,5 +69,7 @@ Coming from 2.x: see the
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
+- [Curiosus.DateTime.DbSync 3.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-datetime-dbsync/3.0)
 - [TimeProvider](https://learn.microsoft.com/dotnet/api/system.timeprovider) — the .NET clock abstraction
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

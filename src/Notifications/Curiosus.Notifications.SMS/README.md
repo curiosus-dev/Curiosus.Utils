@@ -53,6 +53,7 @@ and register it with `services.AddSmsNotificationPostProcessor<MyPostProcessor>(
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.Notifications](https://www.nuget.org/packages/Curiosus.Notifications) — notificator and base classes
 - [Curiosus.SMS](https://www.nuget.org/packages/Curiosus.SMS) — `ISmsSender` abstraction;
   providers: [Curiosus.SMS.Smsc](https://www.nuget.org/packages/Curiosus.SMS.Smsc),

@@ -171,4 +171,5 @@ fixes that need credentials rotated. When unsure, write the page: a short page c
   because CHANGELOGs are read on GitHub, nuget.org and this site:
   `https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting/4.0`. Packages that ship the change
   through a dependency (`Curiosus.Hosting` for `Curiosus.Configuration`) link it from their entry too.
-- The pull request updates the row of the package in the [Packages](#packages) table.
+- The pull request updates the row of the package in the [Packages](#packages) table and adds the page to the
+  "See also" list of the package README (absolute URL), next to the link to these guides that every package README has.

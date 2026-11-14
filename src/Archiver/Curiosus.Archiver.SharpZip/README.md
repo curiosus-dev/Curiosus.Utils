@@ -47,6 +47,7 @@ by old software (Windows XP, Android before 6.0).
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.Archiver](https://www.nuget.org/packages/Curiosus.Archiver) — `IArchiver` abstraction
 - [Curiosus.Tools](https://www.nuget.org/packages/Curiosus.Tools) — temp files infrastructure
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

@@ -62,6 +62,7 @@ with the Newtonsoft.Json format of 1.x; pass `jsonSerializerOptions` to `CreateC
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.RequestProcessing.RabbitMQ](https://www.nuget.org/packages/Curiosus.RequestProcessing.RabbitMQ)
   — receive and process requests from RabbitMQ
 - [Curiosus.Configuration](https://www.nuget.org/packages/Curiosus.Configuration) — options validation

@@ -69,6 +69,8 @@ and put `new_request` into `PostgresEventReceiver.EventNames`.
 
 ## See also
 
+- [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
+- [Curiosus.RequestProcessing.Postgres 2.1 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-requestprocessing-postgres/2.1)
 - [Curiosus.RequestProcessing](https://www.nuget.org/packages/Curiosus.RequestProcessing) — workers, dispatcher, bootstrapper
 - [Curiosus.RequestProcessing.RabbitMQ](https://www.nuget.org/packages/Curiosus.RequestProcessing.RabbitMQ) — RabbitMQ transport
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages
