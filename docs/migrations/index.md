@@ -75,7 +75,7 @@ issues that will add the page. Removed packages get a page too: it tells what re
 | `Curiosity.SMS` | [Curiosus.SMS](../packages/sms/curiosus-sms.md) | 3.0, planned in [#81](https://github.com/curiosus-dev/Curiosus.Utils/issues/81) |
 | `Curiosity.SMS.Iqsms` | [Curiosus.SMS.Iqsms](../packages/sms/curiosus-sms-iqsms.md) | 4.0, planned in [#81](https://github.com/curiosus-dev/Curiosus.Utils/issues/81), [#82](https://github.com/curiosus-dev/Curiosus.Utils/issues/82) |
 | `Curiosity.SMS.Smsc` | [Curiosus.SMS.Smsc](../packages/sms/curiosus-sms-smsc.md) | 4.0, planned in [#81](https://github.com/curiosus-dev/Curiosus.Utils/issues/81), [#82](https://github.com/curiosus-dev/Curiosus.Utils/issues/82) |
-| `Curiosity.Tools` | [Curiosus.Tools](../packages/misc/curiosus-tools.md) | 3.0, planned in [#47](https://github.com/curiosus-dev/Curiosus.Utils/issues/47)–[#56](https://github.com/curiosus-dev/Curiosus.Utils/issues/56) |
+| `Curiosity.Tools` | [Curiosus.Tools](../packages/misc/curiosus-tools.md) | [3.0](./curiosus-tools/3.0.md) (in progress), planned in [#47](https://github.com/curiosus-dev/Curiosus.Utils/issues/47)–[#56](https://github.com/curiosus-dev/Curiosus.Utils/issues/56) |
 | `Curiosity.Tools.Web` | [Curiosus.Tools.Web](../packages/misc/curiosus-tools-web.md) | 4.0, planned in [#60](https://github.com/curiosus-dev/Curiosus.Utils/issues/60)–[#67](https://github.com/curiosus-dev/Curiosus.Utils/issues/67) |
 
 ## Rename Curiosity to Curiosus

@@ -1,5 +1,19 @@
 # Changelog
 
+## [Unreleased]
+
+### Removed
+
+- **Breaking:** `IDateTimeService`, `LocalDateTimeService` and `AddLocalDateTimeService()` are removed in favour of
+  `System.TimeProvider`: inject `TimeProvider` and call `GetUtcNow().UtcDateTime` instead of `GetCurrentTimeUtc()`.
+  Release together with `Curiosus.DateTime.DbSync` 3.0, whose 2.x versions implement `IDateTimeService`. See the
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools/3.0). ([#54](https://github.com/curiosus-dev/Curiosus.Utils/issues/54))
+
+### Added
+
+- `AddCuriosusTimeProvider()` registers `TimeProvider.System` unless a `TimeProvider` is already registered.
+  ([#54](https://github.com/curiosus-dev/Curiosus.Utils/issues/54))
+
 ## [2.1.0] - 2026-10-03
 
 ### Added

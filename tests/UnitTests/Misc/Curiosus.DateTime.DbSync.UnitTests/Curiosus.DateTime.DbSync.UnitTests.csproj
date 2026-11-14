@@ -21,6 +21,8 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\..\..\src\Misc\Curiosus.DateTime.DbSync\Curiosus.DateTime.DbSync.csproj" />
+      <!-- registration order with AddCuriosusTimeProvider -->
+      <ProjectReference Include="..\..\..\..\src\Misc\Curiosus.Tools\Curiosus.Tools.csproj" />
     </ItemGroup>
 
 </Project>

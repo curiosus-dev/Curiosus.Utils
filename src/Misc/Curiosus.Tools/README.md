@@ -19,7 +19,7 @@ using Curiosus.Tools.AppInitializer;
 using Curiosus.Tools.TempFiles;
 
 // startup: DI registrations
-services.AddLocalDateTimeService();                       // IDateTimeService over the local clock
+services.AddCuriosusTimeProvider();                       // TimeProvider.System unless one is registered
 services.AddTempFileServices(new TempFileOptions());      // ITempFileStreamFactory in ./.tmp
 services.AddAppInitializer<WarmUpCacheInitializer>();     // IAppInitializer, run on start by Curiosus.Hosting
 
@@ -43,8 +43,8 @@ Main areas:
 
 - **App lifecycle** — `IAppInitializer` + `AddAppInitializer`, `FireAndForget`, `ApplicationHelper`, `EnvironmentHelper`.
 - **Ids and hashing** — `UniqueIdGenerator`, `PublicId`, `UniqueKeyGenerator`, `XXHasher`.
-- **Date and time** — `IDateTimeService`, `DateTimePeriod`, `NullableDateTimePeriod`, `DateTimeHelper`,
-  `TimeZoneHelper` (NodaTime).
+- **Date and time** — `AddCuriosusTimeProvider` (`System.TimeProvider`), `DateTimePeriod`, `NullableDateTimePeriod`,
+  `DateTimeHelper`, `TimeZoneHelper` (NodaTime).
 - **Models** — `Response`/`Response<T>`, `Error`, `Page`, `PaginationResponse`.
 - **Text** — string/`StringBuilder` extensions, `PhoneHelper`, `Transliteration`, `WebAddressValidator`,
   `SensitiveDataProtector`, file size humanization.

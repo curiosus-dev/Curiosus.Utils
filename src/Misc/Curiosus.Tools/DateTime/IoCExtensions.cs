@@ -4,16 +4,20 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Curiosus.Tools
 {
+    /// <summary>
+    /// Registration of the clock.
+    /// </summary>
     public static class IoCExtensions
     {
         /// <summary>
-        /// Adds to IoC date and time service that uses local machine time system.
+        /// Registers <see cref="TimeProvider.System"/> as <see cref="TimeProvider"/> unless a provider is already
+        /// registered, so a <c>DbSyncTimeProvider</c> or a <c>FakeTimeProvider</c> registered earlier wins.
         /// </summary>
-        public static IServiceCollection AddLocalDateTimeService(this IServiceCollection services)
+        public static IServiceCollection AddCuriosusTimeProvider(this IServiceCollection services)
         {
-            if (services == null) throw new ArgumentNullException(nameof(services));
-            
-            services.TryAddSingleton<IDateTimeService, LocalDateTimeService>();
+            ArgumentNullException.ThrowIfNull(services);
+
+            services.TryAddSingleton(TimeProvider.System);
 
             return services;
         }
