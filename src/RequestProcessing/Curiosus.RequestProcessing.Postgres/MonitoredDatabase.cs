@@ -1,4 +1,5 @@
 using System;
+using Npgsql;
 
 namespace Curiosus.RequestProcessing.Postgres
 {
@@ -60,10 +61,20 @@ namespace Curiosus.RequestProcessing.Postgres
             return !Equals(left, right);
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Returns <c>Host:Port/Database</c>: the connection string is never shown, it may contain a password.
+        /// </summary>
         public override string ToString()
         {
-            return $"\"{ConnectionString}\"";
+            try
+            {
+                var builder = new NpgsqlConnectionStringBuilder(ConnectionString);
+                return $"{builder.Host}:{builder.Port}/{builder.Database}";
+            }
+            catch (ArgumentException)
+            {
+                return "(invalid connection string)";
+            }
         }
     }
 }

@@ -40,4 +40,9 @@
         <PackageReference Include="Npgsql" />
     </ItemGroup>
     
+    <ItemGroup>
+      <InternalsVisibleTo Include="Curiosus.RequestProcessing.Postgres.UnitTests" />
+      <InternalsVisibleTo Include="Curiosus.RequestProcessing.Postgres.IntegrationTests" />
+    </ItemGroup>
+
 </Project>
