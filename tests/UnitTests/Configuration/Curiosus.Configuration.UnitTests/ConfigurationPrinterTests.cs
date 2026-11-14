@@ -74,6 +74,64 @@ public class ConfigurationPrinterTests
         log.Should().MatchRegex(@"Password: null");
     }
 
+    [Fact]
+    public void GetLog_SecretAttribute_MaskedWhateverTheName()
+    {
+        var options = new AttributedOptions();
+
+        var log = _printer.GetLog(options);
+
+        log.Should().Contain("Endpoint: ***").And.NotContain("https://user:s3cr3t@example.com");
+    }
+
+    [Fact]
+    public void GetLog_NotSecretAttribute_PrintedAsIs()
+    {
+        var options = new AttributedOptions();
+
+        var log = _printer.GetLog(options);
+
+        log.Should().Contain("SiteKey: public-site-key");
+    }
+
+    [Fact]
+    public void GetLog_BothAttributes_SecretWins()
+    {
+        var options = new AttributedOptions();
+
+        var log = _printer.GetLog(options);
+
+        log.Should().Contain("Confusing: ***").And.NotContain("confusing-value");
+    }
+
+    [Fact]
+    public void GetLog_SecretAttributeOnBaseProperty_InheritedByOverride()
+    {
+        var options = new DerivedAttributedOptions();
+
+        var log = _printer.GetLog(options);
+
+        log.Should().Contain("Endpoint: ***").And.NotContain(Secret);
+    }
+
+    private class AttributedOptions : ILoggableOptions
+    {
+        [Secret]
+        public virtual string Endpoint { get; set; } = $"https://user:{Secret}@example.com";
+
+        [NotSecret]
+        public string SiteKey { get; set; } = "public-site-key";
+
+        [Secret]
+        [NotSecret]
+        public string Confusing { get; set; } = "confusing-value";
+    }
+
+    private class DerivedAttributedOptions : AttributedOptions
+    {
+        public override string Endpoint { get; set; } = $"https://user:{Secret}@example.org";
+    }
+
     private class SecretOptions : ILoggableOptions
     {
         public string Host { get; set; } = "smtp.example.com";

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 
 namespace Curiosus.Configuration
@@ -42,7 +43,7 @@ namespace Curiosus.Configuration
                 var currentOffset = (offset + defaultWidth);
                 var propName = $"{{{0}, {currentOffset}}}";
                 var pro = String.Format(propName, propertyInfo.Name);
-                builder.AppendLine($"{pro}: {NamedValueToString(propertyInfo.Name, propValue, currentOffset, 15)}");
+                builder.AppendLine($"{pro}: {PropertyValueToString(propertyInfo, propValue, currentOffset, 15)}");
             }
 
             // removed new line symbol - it's more beaty
@@ -52,6 +53,15 @@ namespace Curiosus.Configuration
             }
 
             return builder.ToString();
+        }
+
+        private string PropertyValueToString(PropertyInfo propertyInfo, object? value, int offset, int defaultWidth)
+        {
+            if (value == null) return ModelNullText;
+            if (Attribute.IsDefined(propertyInfo, typeof(SecretAttribute))) return SecretMasker.Mask;
+            if (Attribute.IsDefined(propertyInfo, typeof(NotSecretAttribute))) return ValueToString(value, offset, defaultWidth);
+
+            return NamedValueToString(propertyInfo.Name, value, offset, defaultWidth);
         }
 
         private string NamedValueToString(string name, object? value, int offset, int defaultWidth)

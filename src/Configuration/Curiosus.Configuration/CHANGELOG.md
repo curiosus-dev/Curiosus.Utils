@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Added
+
+- `[Secret]` and `[NotSecret]` attributes on option properties override the name-based masking of
+  `ConfigurationPrinter`: `[Secret]` masks a property whatever its name, `[NotSecret]` prints the value of a property
+  whose name only looks secret (a public site key). `[Secret]` wins when both are set; overrides inherit them.
+  ([#39](https://github.com/curiosus-dev/Curiosus.Utils/issues/39))
+
 ### Security
 
 - `ConfigurationPrinter` masks secrets: the value of every property or dictionary key whose name contains `password`,
