@@ -100,6 +100,12 @@ public class SecretMaskerTests
     [InlineData("https://hooks.slack.com/services/T000/B000/s3cr3t")]
     [InlineData("https://discord.com/api/webhooks/123/s3cr3t")]
     [InlineData("https://api.telegram.org/bot123456:s3cr3t/sendMessage")]
+    [InlineData("Host=db;Database=app;Password=s3cr3t")]
+    [InlineData("Server=db;User Id=app; Pwd = s3cr3t")]
+    [InlineData("cache:6379,password=s3cr3t,ssl=true")]
+    [InlineData("Password=\"s3cr3t;x\"")]
+    [InlineData("AccountName=acc;AccountKey=s3cr3t")]
+    [InlineData("Endpoint=sb://x/;SharedAccessKey=s3cr3t")]
     public void HasSecretInValue_SecretInValue_True(string value)
     {
         SecretMasker.HasSecretInValue(value).Should().BeTrue();
@@ -111,6 +117,9 @@ public class SecretMaskerTests
     [InlineData("admin@example.com")]
     [InlineData("https://example.com/search?q=token&page=2")]
     [InlineData("https://example.com/?keyword=x")]
+    [InlineData("Host=db;Port=5432;Database=app;Username=app")]
+    [InlineData("Host=db;Password=")]
+    [InlineData("tokenizer=simple;secretary=x")]
     public void HasSecretInValue_NoSecret_False(string value)
     {
         SecretMasker.HasSecretInValue(value).Should().BeFalse();
@@ -130,5 +139,13 @@ public class SecretMaskerTests
             .Should().BeTrue();
         SecretMasker.HasSecretInValue((object)42).Should().BeFalse();
         SecretMasker.HasSecretInValue((object?)null).Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData("Db:Dsn")]
+    [InlineData("Cache:Configuration")]
+    public void MaskValue_KeyValueSecretUnderNonSecretName_Masked(string path)
+    {
+        SecretMasker.MaskValue(path, "cache:6379,password=s3cr3t").Should().Be(SecretMasker.Mask);
     }
 }

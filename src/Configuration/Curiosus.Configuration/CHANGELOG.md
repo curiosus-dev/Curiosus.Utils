@@ -36,8 +36,9 @@ The startup configuration dump and validation errors look different: see the [mi
 - `ConfigurationPrinter` masks secrets: the value of every property or dictionary key whose name contains `password`,
   `pwd`, `passphrase`, `secret`, `token`, `credential`, `apikey`, `privatekey` (not `privatekeypath`), `signature`,
   `salt` or ends with `key` or `keys` (case-insensitive), and every value that carries a secret itself (a URI with user
-  info `amqp://user:pass@host`, a URL with `?token=`/`?sig=`/`?key=`/`?code=`, a Slack, Discord, Teams or Telegram
-  bot webhook URL), is printed as `***`; for names containing `connectionstring` only the values of well-known
+  info `amqp://user:pass@host`, a URL with `?token=`/`?sig=`/`?key=`/`?code=`, a connection
+  string pair such as `Password=`, `Pwd=`, `AccountKey=` or `SharedAccessKey=` under any key name (`Server=x;Password=y`,
+  `host:6379,password=y`), a Slack, Discord, Teams or Telegram bot webhook URL), is printed as `***`; for names containing `connectionstring` only the values of well-known
   non-secret keys (host, port, database, user, timeouts, ...) are printed, all other values are masked, and a value that
   can't be parsed or contains a URI is masked entirely. Earlier versions printed them in clear text, so credentials of
   options printed at startup reached every log target: rotate them, see the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-configuration/2.1).
