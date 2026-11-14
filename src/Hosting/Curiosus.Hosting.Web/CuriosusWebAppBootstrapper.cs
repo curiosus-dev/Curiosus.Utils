@@ -147,11 +147,5 @@ namespace Curiosus.Hosting.Web
 
             return hostBuilder.Build();
         }
-
-        /// <inheritdoc />
-        protected override void SetupLoggingExtensions(ISetupExtensionsBuilder extensions)
-        {
-            extensions.RegisterNLogWeb();
-        }
     }
 }

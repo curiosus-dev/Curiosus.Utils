@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using Curiosus.Hosting;
 using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;

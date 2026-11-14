@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using NLog;
 using NLog.Config;
@@ -21,8 +22,7 @@ namespace Curiosus.Hosting
             CuriosusLoggingOptions options,
             string appName,
             string basePath,
-            IConfiguration configuration,
-            Action<ISetupExtensionsBuilder>? setupExtensions)
+            IConfiguration configuration)
         {
             var configurationPath = Path.GetFullPath(options.LogConfigurationPath, basePath);
             var outputDirectory = Path.GetFullPath(options.LogOutputDirectory, basePath);
@@ -31,7 +31,7 @@ namespace Curiosus.Hosting
                 .SetupExtensions(extensions =>
                 {
                     extensions.RegisterConfigSettings(configuration);
-                    setupExtensions?.Invoke(extensions);
+                    RegisterNLogWeb(extensions);
                 })
                 .LoadConfigurationFromFile(configurationPath, optional: false)
                 .LogFactory;
@@ -41,6 +41,21 @@ namespace Curiosus.Hosting
             variables[AppNameVariable] = appName;
 
             factory.ReconfigExistingLoggers();
+        }
+
+        /// <summary>
+        /// Registers the NLog.Web <c>${aspnet-*}</c> renderers when <c>NLog.Web.AspNetCore</c> is available, which it is
+        /// in web apps. Hosting has no dependency on ASP.NET Core, so it is looked up by name.
+        /// </summary>
+        private static void RegisterNLogWeb(ISetupExtensionsBuilder extensions)
+        {
+            try
+            {
+                extensions.RegisterAssembly(Assembly.Load("NLog.Web.AspNetCore"));
+            }
+            catch (FileNotFoundException)
+            {
+            }
         }
     }
 }

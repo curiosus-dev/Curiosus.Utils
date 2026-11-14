@@ -62,8 +62,7 @@ namespace Curiosus.Hosting
                 configuration.Log,
                 configuration.AppName,
                 Directory.GetCurrentDirectory(),
-                configurationProvider.GetRawConfiguration(),
-                SetupLoggingExtensions);
+                configurationProvider.GetRawConfiguration());
 
             var logger = LogManager.GetCurrentClassLogger();
             logger.Info($"Using configurations from directory \"{configurationProvider.PathToConfigurationFiles}\"'");
@@ -123,14 +122,6 @@ namespace Curiosus.Hosting
             }
         }
         
-        /// <summary>
-        /// Registers NLog extensions, for example layout renderers, before NLog.config is loaded.
-        /// </summary>
-        /// <param name="extensions">NLog extensions builder.</param>
-        protected virtual void SetupLoggingExtensions(ISetupExtensionsBuilder extensions)
-        {
-        }
-
         /// <summary>
         /// Transform configuration before validation.
         /// </summary>

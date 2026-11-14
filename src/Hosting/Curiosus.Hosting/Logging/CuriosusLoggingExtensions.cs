@@ -1,12 +1,11 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using Curiosus.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NLog;
-using NLog.Config;
 using NLog.Extensions.Logging;
 
 namespace Curiosus.Hosting
@@ -37,23 +36,13 @@ namespace Curiosus.Hosting
         /// <returns>Options builder of <see cref="CuriosusLoggingOptions"/>.</returns>
         /// <remarks>
         /// The app name is the <c>AppName</c> configuration key, or <see cref="IHostEnvironment.ApplicationName"/>.
-        /// Paths are relative to the content root. Other values reach NLog.config with
+        /// Paths are relative to the content root. In a web app the NLog.Web <c>${aspnet-*}</c> renderers are registered. Other values reach NLog.config with
         /// <c>${configsetting:item=Section.Key}</c>.
         /// </remarks>
         /// <exception cref="ValidationException">The options are invalid.</exception>
         public static OptionsBuilder<CuriosusLoggingOptions> AddCuriosusLogging(
             this IHostApplicationBuilder builder,
-            Action<CuriosusLoggingOptions>? configure = null) =>
-            AddCuriosusLogging(builder, configure, setupExtensions: null);
-
-        /// <inheritdoc cref="AddCuriosusLogging(IHostApplicationBuilder, Action{CuriosusLoggingOptions}?)"/>
-        /// <param name="builder">Application builder.</param>
-        /// <param name="configure">Overrides the options bound from the <c>Log</c> section.</param>
-        /// <param name="setupExtensions">Registers more NLog extensions, for example layout renderers.</param>
-        public static OptionsBuilder<CuriosusLoggingOptions> AddCuriosusLogging(
-            this IHostApplicationBuilder builder,
-            Action<CuriosusLoggingOptions>? configure,
-            Action<ISetupExtensionsBuilder>? setupExtensions)
+            Action<CuriosusLoggingOptions>? configure = null)
         {
             if (builder == null) throw new ArgumentNullException(nameof(builder));
 
@@ -67,7 +56,7 @@ namespace Curiosus.Hosting
                 : builder.Environment.ApplicationName;
 
             CuriosusLogging.LoadConfiguration(
-                options, appName, builder.Environment.ContentRootPath, builder.Configuration, setupExtensions);
+                options, appName, builder.Environment.ContentRootPath, builder.Configuration);
 
             builder.Logging.ClearProviders();
             builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
@@ -80,11 +69,8 @@ namespace Curiosus.Hosting
                     provider.GetRequiredService<ILoggerFactory>()));
 
             return builder.Services
-                .AddOptions<CuriosusLoggingOptions>()
-                .BindConfiguration(CuriosusLoggingOptions.SectionName)
-                .Configure(o => configure?.Invoke(o))
-                .ValidateDataAnnotations()
-                .ValidateOnStart();
+                .AddCuriosusOptions<CuriosusLoggingOptions>(CuriosusLoggingOptions.SectionName)
+                .Configure(o => configure?.Invoke(o));
         }
     }
 }
