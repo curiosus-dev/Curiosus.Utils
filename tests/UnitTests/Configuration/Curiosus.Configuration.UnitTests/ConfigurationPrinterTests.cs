@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using FluentAssertions;
 using Xunit;
@@ -165,6 +166,10 @@ public class ConfigurationPrinterTests
             [$"amqp://app:{Secret}@rabbit-1/vhost", "https://public.example.com", $"amqp://app:{Secret}@rabbit-2/vhost"];
 
         public List<string> Mirrors { get; set; } = [$"https://user:{Secret}@mirror.example.com"];
+
+        public Uri Broker { get; set; } = new($"amqp://app:{Secret}@rabbit/vhost");
+
+        public Uri[] Brokers { get; set; } = [new($"amqp://app:{Secret}@rabbit/vhost"), new("https://public.example.com")];
     }
 
     private class ParentOptions : ILoggableOptions

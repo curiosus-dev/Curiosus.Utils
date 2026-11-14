@@ -105,4 +105,13 @@ public class SecretMaskerTests
     {
         SecretMasker.HasUriCredentials(value).Should().BeFalse();
     }
+
+    [Fact]
+    public void HasUriCredentials_UriObjects()
+    {
+        SecretMasker.HasUriCredentials((object)new System.Uri("amqp://app:s3cr3t@rabbit/vhost")).Should().BeTrue();
+        SecretMasker.HasUriCredentials((object)new System.Uri("https://public.example.com")).Should().BeFalse();
+        SecretMasker.HasUriCredentials((object)42).Should().BeFalse();
+        SecretMasker.HasUriCredentials((object?)null).Should().BeFalse();
+    }
 }

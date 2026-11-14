@@ -46,6 +46,17 @@ namespace Curiosus.Configuration
         public static bool HasUriCredentials(string value) => UriCredentialsRegex.IsMatch(value);
 
         /// <summary>
+        /// Returns <c>true</c> when the value is a string or a <see cref="Uri"/> with user info.
+        /// </summary>
+        public static bool HasUriCredentials(object? value) => value switch
+        {
+            string text => HasUriCredentials(text),
+            Uri { IsAbsoluteUri: true } uri => !String.IsNullOrEmpty(uri.UserInfo),
+            Uri uri => HasUriCredentials(uri.OriginalString),
+            _ => false,
+        };
+
+        /// <summary>
         /// Returns <c>true</c> when a property or key with this name holds a secret.
         /// </summary>
         public static bool IsSecretName(string name) => SecretNameRegex.IsMatch(name);
