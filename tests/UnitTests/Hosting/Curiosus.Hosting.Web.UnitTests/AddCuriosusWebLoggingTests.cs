@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NLog;
+using NLog.Web;
 using NLog.Targets;
 using Xunit;
 
@@ -36,7 +37,7 @@ namespace Curiosus.Hosting.Web.UnitTests
                 """);
             var builder = WebApplication.CreateBuilder(new WebApplicationOptions { ContentRootPath = _contentRoot });
 
-            builder.AddCuriosusLogging();
+            builder.AddCuriosusLogging(configureNLogExtensions: extensions => extensions.RegisterNLogWeb());
             using var app = builder.Build();
             app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("test").LogInformation("hello");
 

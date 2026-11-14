@@ -33,7 +33,10 @@ namespace Curiosus.Hosting.Web
         where TStartup : class
     {
         /// <inheritdoc />
-        protected override bool IsWebApp => true;
+        protected override void SetupLoggingExtensions(ISetupExtensionsBuilder extensions)
+        {
+            extensions.RegisterNLogWeb();
+        }
 
         /// <inheritdoc />
         protected override async Task<int> RunInternalAsync(

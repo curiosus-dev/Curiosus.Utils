@@ -24,9 +24,12 @@ namespace Curiosus.Hosting
         protected bool IsConfigFileOptional { get; set; } = false;
 
         /// <summary>
-        /// Whether the app is a web app: its NLog.config can then use the NLog.Web <c>${aspnet-*}</c> renderers.
+        /// Registers NLog extensions, for example layout renderers, before NLog.config is loaded.
         /// </summary>
-        protected virtual bool IsWebApp => false;
+        /// <param name="extensions">NLog extensions builder.</param>
+        protected virtual void SetupLoggingExtensions(ISetupExtensionsBuilder extensions)
+        {
+        }
         
         /// <summary>
         /// Runs application.
@@ -67,8 +70,8 @@ namespace Curiosus.Hosting
                 configuration.Log,
                 configuration.AppName,
                 Directory.GetCurrentDirectory(),
-                configuration: null,
-                registerNLogWeb: IsWebApp);
+                configurationProvider.GetRawConfiguration(),
+                SetupLoggingExtensions);
 
             var logger = LogManager.GetCurrentClassLogger();
             logger.Info($"Using configurations from directory \"{configurationProvider.PathToConfigurationFiles}\"'");

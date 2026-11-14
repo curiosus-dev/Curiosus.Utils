@@ -4,8 +4,7 @@
 
 ### Changed
 
-- **Breaking:** the logging types of `Curiosus.Hosting` are replaced, and `AddCuriosusLogging` of `Curiosus.Hosting`
-  registers the `${aspnet-*}` renderers of this package: see the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting/4.0#logging-curiosusnlogconfigurator--addcuriosuslogging).
+- **Breaking:** the logging types of `Curiosus.Hosting` are replaced: see the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting/4.0#logging-curiosusnlogconfigurator--addcuriosuslogging).
   ([#43](https://github.com/curiosus-dev/Curiosus.Utils/issues/43))
 
 ### Security

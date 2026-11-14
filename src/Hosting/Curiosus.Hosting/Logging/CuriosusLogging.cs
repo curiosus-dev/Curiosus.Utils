@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using NLog;
 using NLog.Config;
@@ -22,8 +21,8 @@ namespace Curiosus.Hosting
             CuriosusLoggingOptions options,
             string appName,
             string basePath,
-            IConfiguration? configuration,
-            bool registerNLogWeb)
+            IConfiguration configuration,
+            Action<ISetupExtensionsBuilder>? configureNLogExtensions)
         {
             var configurationPath = Path.GetFullPath(options.LogConfigurationPath, basePath);
             var outputDirectory = Path.GetFullPath(options.LogOutputDirectory, basePath);
@@ -31,8 +30,8 @@ namespace Curiosus.Hosting
             var factory = LogManager.Setup()
                 .SetupExtensions(extensions =>
                 {
-                    if (configuration != null) extensions.RegisterConfigSettings(configuration);
-                    if (registerNLogWeb) RegisterNLogWeb(extensions);
+                    extensions.RegisterConfigSettings(configuration);
+                    configureNLogExtensions?.Invoke(extensions);
                 })
                 .LoadConfigurationFromFile(configurationPath, optional: false)
                 .LogFactory;
@@ -42,21 +41,6 @@ namespace Curiosus.Hosting
             variables[AppNameVariable] = appName;
 
             factory.ReconfigExistingLoggers();
-        }
-
-        /// <summary>
-        /// Registers the NLog.Web <c>${aspnet-*}</c> renderers of a web app. Hosting has no dependency on ASP.NET Core,
-        /// so <c>NLog.Web.AspNetCore</c> is looked up by name: a web app that doesn't reference it gets no renderers.
-        /// </summary>
-        private static void RegisterNLogWeb(ISetupExtensionsBuilder extensions)
-        {
-            try
-            {
-                extensions.RegisterAssembly(Assembly.Load("NLog.Web.AspNetCore"));
-            }
-            catch (FileNotFoundException)
-            {
-            }
         }
     }
 }

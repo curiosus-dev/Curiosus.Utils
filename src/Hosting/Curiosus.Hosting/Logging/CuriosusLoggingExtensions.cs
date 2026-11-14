@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using NLog.Config;
 using NLog.Extensions.Logging;
 
 namespace Curiosus.Hosting
@@ -14,8 +15,6 @@ namespace Curiosus.Hosting
     /// </summary>
     public static class CuriosusLoggingExtensions
     {
-        private const string WebApplicationBuilderTypeName = "Microsoft.AspNetCore.Builder.WebApplicationBuilder";
-
         /// <summary>
         /// Name of the logger that gets "{AppName} is started".
         /// </summary>
@@ -34,16 +33,19 @@ namespace Curiosus.Hosting
         /// </summary>
         /// <param name="builder">Application builder.</param>
         /// <param name="configure">Overrides the options bound from the <c>Log</c> section.</param>
+        /// <param name="configureNLogExtensions">Registers more NLog extensions before NLog.config is loaded. A web app
+        /// passes <c>extensions =&gt; extensions.RegisterNLogWeb()</c> (NLog.Web.AspNetCore) to use the
+        /// <c>${aspnet-*}</c> layout renderers.</param>
         /// <returns>Options builder of <see cref="CuriosusLoggingOptions"/>.</returns>
         /// <remarks>
         /// The app name is the <c>AppName</c> configuration key, or <see cref="IHostEnvironment.ApplicationName"/>.
-        /// Paths are relative to the content root. In a web app the NLog.Web <c>${aspnet-*}</c> renderers are
-        /// registered. Other values reach NLog.config with <c>${configsetting:item=Section.Key}</c>.
+        /// Paths are relative to the content root. Other values reach NLog.config with <c>${configsetting:item=Section.Key}</c>.
         /// </remarks>
         /// <exception cref="OptionsValidationException">The options are invalid.</exception>
         public static OptionsBuilder<CuriosusLoggingOptions> AddCuriosusLogging(
             this IHostApplicationBuilder builder,
-            Action<CuriosusLoggingOptions>? configure = null)
+            Action<CuriosusLoggingOptions>? configure = null,
+            Action<ISetupExtensionsBuilder>? configureNLogExtensions = null)
         {
             if (builder == null) throw new ArgumentNullException(nameof(builder));
 
@@ -58,7 +60,7 @@ namespace Curiosus.Hosting
                 appName,
                 builder.Environment.ContentRootPath,
                 builder.Configuration,
-                registerNLogWeb: builder.GetType().FullName == WebApplicationBuilderTypeName);
+                configureNLogExtensions);
 
             builder.Logging.ClearProviders();
             builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
