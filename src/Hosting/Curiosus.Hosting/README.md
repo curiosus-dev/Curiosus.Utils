@@ -61,12 +61,14 @@ Other helpers:
 - `CuriosusWatchdog` — base `BackgroundService` that calls `ProcessAsync` periodically and survives exceptions.
 - `AddThreadPoolTuning(ThreadPoolOptions)` — sets minimum thread pool size, logs its state and can auto-tune it.
 - `AddTempDirCleaner(TempFileOptions)` — hosted service that deletes stale temp files.
-- `IConfigurationWithMailLogger` — implement it in your config to pass SMTP settings (`LoggerMail`) to the mail
-  target variables of your `NLog.config`.
+- `builder.AddCuriosusLogging()` — NLog from the `Log` section: sets `${var:outputdir}` and `${var:appname}`, reads
+  `${configsetting:item=Section.Key}` from the app configuration and logs `{AppName} is started` and `{AppName} is stopped` to
+  `appStartEmailLog` / `appStopEmailLog`.
 
 ## See also
 
 - [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
+- [Curiosus.Hosting 4.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting/4.0)
 - [Curiosus.Hosting.Web](https://www.nuget.org/packages/Curiosus.Hosting.Web) — bootstrapper for ASP.NET Core apps
 - [Curiosus.Configuration.YML](https://www.nuget.org/packages/Curiosus.Configuration.YML) — YAML configuration provider
 - [Curiosus.Tools](https://www.nuget.org/packages/Curiosus.Tools) — `IAppInitializer` and other basic helpers

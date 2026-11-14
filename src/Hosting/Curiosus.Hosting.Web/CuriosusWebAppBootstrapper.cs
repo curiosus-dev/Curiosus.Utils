@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NLog;
+using NLog.Config;
 using NLog.Web;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
@@ -147,9 +148,10 @@ namespace Curiosus.Hosting.Web
             return hostBuilder.Build();
         }
 
-        protected override void LoadLoggingConfiguration(string path)
+        /// <inheritdoc />
+        protected override void SetupLoggingExtensions(ISetupExtensionsBuilder extensions)
         {
-            LogManager.Setup().RegisterNLogWeb().LoadConfigurationFromFile(path, optional: false);
+            extensions.RegisterNLogWeb();
         }
     }
 }

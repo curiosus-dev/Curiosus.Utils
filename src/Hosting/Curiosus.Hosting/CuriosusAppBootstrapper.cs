@@ -7,6 +7,8 @@ using EntryPoint;
 using Curiosus.Configuration;
 using Curiosus.Tools;
 using NLog;
+using NLog.Config;
+using NLog.Extensions.Logging;
 
 namespace Curiosus.Hosting
 {
@@ -56,16 +58,12 @@ namespace Curiosus.Hosting
             ApplicationHelper.SetDefaultCulture(configuration.Culture);
 
             // configure logs
-            var loggingConfiguration = new CuriosusNLogConfigurator(configuration.Log.LogConfigurationPath, LoadLoggingConfiguration);
-            loggingConfiguration.WithLogOutputDirectory(configuration.Log.LogOutputDirectory);
-
-            loggingConfiguration.WithAppName(configuration.AppName);
-            // ReSharper disable once SuspiciousTypeConversion.Global
-            if (configuration is IConfigurationWithMailLogger configurationWithMailLogger)
-            {
-                loggingConfiguration.WithMail(configurationWithMailLogger.LoggerMail);
-            }
-            loggingConfiguration.Configure();
+            CuriosusLogging.LoadConfiguration(
+                configuration.Log,
+                configuration.AppName,
+                Directory.GetCurrentDirectory(),
+                configurationProvider.GetRawConfiguration(),
+                SetupLoggingExtensions);
 
             var logger = LogManager.GetCurrentClassLogger();
             logger.Info($"Using configurations from directory \"{configurationProvider.PathToConfigurationFiles}\"'");
@@ -126,12 +124,11 @@ namespace Curiosus.Hosting
         }
         
         /// <summary>
-        /// Loads configuration for NLog.
+        /// Registers NLog extensions, for example layout renderers, before NLog.config is loaded.
         /// </summary>
-        /// <param name="path">Path for config file.</param>
-        protected virtual void LoadLoggingConfiguration(string path)
+        /// <param name="extensions">NLog extensions builder.</param>
+        protected virtual void SetupLoggingExtensions(ISetupExtensionsBuilder extensions)
         {
-            LogManager.Setup().LoadConfigurationFromFile(path, optional: false);
         }
 
         /// <summary>
