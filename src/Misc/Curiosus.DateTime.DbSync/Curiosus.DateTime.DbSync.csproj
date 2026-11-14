@@ -5,8 +5,8 @@
 
         <PackageId>Curiosus.DateTime.DbSync</PackageId>
         <Title>Curiosus.DateTime.DbSync</Title>
-        <Description>Service for syncrhonizing DateTime via database.</Description>
-        <Summary>Service for syncrhonizing DateTime via database.</Summary>
+        <Description>TimeProvider whose clock is synchronized with the database clock.</Description>
+        <Summary>TimeProvider whose clock is synchronized with the database clock.</Summary>
         <PackageTags>Curiosus; date time tools; tools; database</PackageTags>
         <Language>English</Language>
 
@@ -29,13 +29,13 @@
       <DocumentationFile>bin\Release\Curiosus.DateTime.DbSync.xml</DocumentationFile>
     </PropertyGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\..\DAL\Curiosus.DAL\Curiosus.DAL.csproj" />
-      <ProjectReference Include="..\Curiosus.Tools\Curiosus.Tools.csproj" />
-    </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <InternalsVisibleTo Include="Curiosus.DateTime.DbSync.UnitTests" />
     </ItemGroup>
 
 </Project>

@@ -51,7 +51,7 @@ issues that will add the page. Removed packages get a page too: it tells what re
 | `Curiosity.DAL.EF.Polly` | [Curiosus.DAL.EF.Polly](../packages/dal/curiosus-dal-ef-polly.md) | removed in favour of `EnableRetryOnFailure` and Polly v8, planned in [#72](https://github.com/curiosus-dev/Curiosus.Utils/issues/72) |
 | `Curiosity.DAL.NpgSQL` | [Curiosus.DAL.NpgSQL](../packages/dal/curiosus-dal-npgsql.md) | 3.0, planned in [#70](https://github.com/curiosus-dev/Curiosus.Utils/issues/70) |
 | `Curiosity.DataAnnotations` | [Curiosus.DataAnnotations](../packages/misc/curiosus-dataannotations.md) | removed, helpers move to `Curiosus.Tools`, planned in [#57](https://github.com/curiosus-dev/Curiosus.Utils/issues/57) |
-| `Curiosity.DateTime.DbSync` | [Curiosus.DateTime.DbSync](../packages/misc/curiosus-datetime-dbsync.md) | 3.0, planned in [#69](https://github.com/curiosus-dev/Curiosus.Utils/issues/69) |
+| `Curiosity.DateTime.DbSync` | [Curiosus.DateTime.DbSync](../packages/misc/curiosus-datetime-dbsync.md) | [3.0](./curiosus-datetime-dbsync/3.0.md) |
 | `Curiosity.EMail` | [Curiosus.EMail](../packages/email/curiosus-email.md) | 3.0, planned in [#80](https://github.com/curiosus-dev/Curiosus.Utils/issues/80), [#81](https://github.com/curiosus-dev/Curiosus.Utils/issues/81) |
 | `Curiosity.EMail.Mailgun` | [Curiosus.EMail.Mailgun](../packages/email/curiosus-email-mailgun.md) | removed, planned in [#106](https://github.com/curiosus-dev/Curiosus.Utils/issues/106) |
 | `Curiosity.EMail.SMTP` | [Curiosus.EMail.SMTP](../packages/email/curiosus-email-smtp.md) | 3.0, planned in [#85](https://github.com/curiosus-dev/Curiosus.Utils/issues/85), [#86](https://github.com/curiosus-dev/Curiosus.Utils/issues/86) |
