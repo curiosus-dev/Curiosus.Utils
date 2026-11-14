@@ -101,5 +101,6 @@ see [Curiosus.Configuration.YML](https://www.nuget.org/packages/Curiosus.Configu
 
 - [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.Configuration 2.1 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-configuration/2.1)
+- [Curiosus.Configuration 3.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-configuration/3.0)
 - [Curiosus.Configuration.YML](https://www.nuget.org/packages/Curiosus.Configuration.YML) — YAML configuration provider
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages
