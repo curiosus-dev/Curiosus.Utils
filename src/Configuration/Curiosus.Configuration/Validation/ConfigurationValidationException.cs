@@ -16,6 +16,7 @@ namespace Curiosus.Configuration
 
         /// <inheritdoc />
         public ConfigurationValidationException(string message, IEnumerable<ConfigurationValidationError>? errors = null)
+            : base(message)
         {
             if (String.IsNullOrWhiteSpace(message)) throw new ArgumentNullException(nameof(message));
             
