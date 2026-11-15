@@ -90,7 +90,8 @@ and the [sample tool](https://github.com/curiosus-dev/Curiosus.Utils/blob/main/s
 
 Other helpers:
 
-- `CuriosusWatchdog` — base `BackgroundService` that calls `ProcessAsync` periodically and survives exceptions.
+- `CuriosusWatchdog` — base `BackgroundService` that runs `ProcessAsync` at a fixed rate on a `PeriodicTimer`, pauses
+  after an exception and takes a `TimeProvider` for tests.
 - `AddThreadPoolTuning(ThreadPoolOptions)` — sets minimum thread pool size, logs its state and can auto-tune it.
 - `AddTempDirCleaner(TempFileOptions)` — hosted service that deletes stale temp files.
 
