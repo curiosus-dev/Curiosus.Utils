@@ -1,4 +1,5 @@
 using Curiosus.Configuration;
+using MailKit.Security;
 
 namespace Curiosus.EMail.Smtp
 {
@@ -46,5 +47,20 @@ namespace Curiosus.EMail.Smtp
         /// Should sender send email if incorrect extra params were passed (eg. with another type)?
         /// </summary>
         bool IgnoreIncorrectExtraParamsType { get; }
+
+        /// <summary>
+        /// How the connection is secured. <c>null</c>: <see cref="SecureSocketOptions.SslOnConnect"/> on port 465,
+        /// <see cref="SecureSocketOptions.StartTls"/> otherwise (the connection fails if the server doesn't offer it).
+        /// <see cref="SecureSocketOptions.None"/> only for a local relay; <see cref="SecureSocketOptions.Auto"/> and
+        /// <see cref="SecureSocketOptions.StartTlsWhenAvailable"/> are rejected because they allow a downgrade to plain text.
+        /// </summary>
+        SecureSocketOptions? Security { get; }
+
+        /// <summary>
+        /// Accepts any server certificate: for development and test relays only. Fails validation in <c>Production</c>
+        /// (<c>DOTNET_ENVIRONMENT</c>, then <c>ASPNETCORE_ENVIRONMENT</c>, <c>Production</c> when unset) and together with
+        /// <see cref="SecureSocketOptions.None"/>.
+        /// </summary>
+        bool AllowInvalidServerCertificate { get; }
     }
 }
