@@ -1,96 +1,137 @@
-﻿using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Curiosus.Hosting
 {
     /// <summary>
-    /// A base class for services that perform some function on a timer.
+    /// A base class for services that run <see cref="ProcessAsync"/> periodically and survive its exceptions.
     /// </summary>
+    /// <remarks>
+    /// Runs start every period (fixed rate): the first one at start, the next one a period after the previous one started.
+    /// Runs never overlap: a run longer than the period is followed by the next one immediately, and the ticks missed
+    /// meanwhile collapse into that run.
+    /// After an exception the watchdog waits <see cref="ExceptionDelay"/>, runs again and counts the next period from
+    /// that run. Stopping the host ends the loop without a warning.
+    /// </remarks>
     public abstract class CuriosusWatchdog : BackgroundService
     {
+        /// <summary>
+        /// Logger of the watchdog.
+        /// </summary>
         protected ILogger Logger { get; }
 
         /// <summary>
-        /// Interval between task executions
+        /// Interval between the starts of <see cref="ProcessAsync"/>.
         /// </summary>
         protected TimeSpan WatchdogPeriod { get; }
 
         /// <summary>
-        /// Restart interval when an error occurs, default is 10 minutes
+        /// Pause after an exception before the next run, 10 minutes by default.
         /// </summary>
-        protected TimeSpan ExceptionDelay { get; } = TimeSpan.FromMinutes(10);
+        protected TimeSpan ExceptionDelay { get; }
 
         /// <summary>
-        /// A base class for services that perform some function on a timer.
+        /// Clock of the timer and the pause after an exception, <see cref="TimeProvider.System"/> by default.
         /// </summary>
-        /// <param name="logger">Logger</param>
-        /// <param name="watchdogPeriod">Interval between task executions <see cref="ProcessAsync"/></param>
-        /// <param name="exceptionDelay">Restart interval when an error occurs, default is 10 minutes</param>
-        public CuriosusWatchdog(ILogger logger, TimeSpan watchdogPeriod, TimeSpan? exceptionDelay = null)
+        protected TimeProvider TimeProvider { get; }
+
+        /// <summary>
+        /// <inheritdoc cref="CuriosusWatchdog"/>
+        /// </summary>
+        /// <param name="logger">Logger, preferably <c>ILogger&lt;TWatchdog&gt;</c>.</param>
+        /// <param name="watchdogPeriod">Interval between the starts of <see cref="ProcessAsync"/>.</param>
+        /// <param name="exceptionDelay">Pause after an exception, 10 minutes by default.</param>
+        /// <param name="timeProvider">Clock, <see cref="TimeProvider.System"/> by default; <c>FakeTimeProvider</c> in tests.</param>
+        protected CuriosusWatchdog(
+            ILogger logger,
+            TimeSpan watchdogPeriod,
+            TimeSpan? exceptionDelay = null,
+            TimeProvider? timeProvider = null)
         {
+            if (watchdogPeriod <= TimeSpan.Zero)
+                throw new ArgumentOutOfRangeException(nameof(watchdogPeriod), watchdogPeriod, "The period must be positive.");
+
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
             WatchdogPeriod = watchdogPeriod;
-
-            if (exceptionDelay.HasValue)
-                ExceptionDelay = exceptionDelay.Value;
+            ExceptionDelay = exceptionDelay ?? TimeSpan.FromMinutes(10);
+            TimeProvider = timeProvider ?? TimeProvider.System;
         }
 
         /// <summary>
-        /// It is performed cyclically with a set interval <see cref="WatchdogPeriod"/>.
+        /// Returns the period before the next run; read after every run, so an override can take it from
+        /// <c>IOptionsMonitor&lt;T&gt;</c> to change it at runtime. A changed period counts from the end of that run.
+        /// Returns <see cref="WatchdogPeriod"/> by default.
+        /// </summary>
+        protected virtual TimeSpan GetPeriod() => WatchdogPeriod;
+
+        /// <summary>
+        /// The periodic work.
         /// </summary>
         protected abstract Task ProcessAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Handles the exception with the set interval <see cref="ExceptionDelay"/>.
+        /// Handles an exception of <see cref="ProcessAsync"/>: logs it and waits <see cref="ExceptionDelay"/>.
         /// </summary>
-        protected virtual async Task HandleExceptionAsync(Exception e, CancellationToken stoppingToken = default)
+        protected virtual async Task HandleExceptionAsync(Exception exception, CancellationToken stoppingToken = default)
         {
-            Logger.LogError(e, $"Critical error in {GetType().Name}");
-            // So that it doesn't throw 500 exceptions per second, but also doesn't die forever
-            Logger.LogInformation($"{GetType().Name} is waiting for 10 minutes and then is going to try again.");
-            await Task.Delay(ExceptionDelay, stoppingToken);
-            Logger.LogInformation($"{GetType().Name} try to execute again.");
+            Logger.LogError(exception, "{Watchdog} failed, retrying in {Delay}", GetType().Name, ExceptionDelay);
+            await Task.Delay(ExceptionDelay, TimeProvider, stoppingToken);
         }
 
-        /// <summary>
-        /// Safely catches the exception and restarts the set interval <see cref="ExceptionDelay"/>.
-        /// </summary>
-        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
+        /// <inheritdoc />
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            await Task.Yield();
-            while (!cancellationToken.IsCancellationRequested)
+            var timer = new PeriodicTimer(GetPeriod(), TimeProvider);
+            try
             {
-                try
+                while (!stoppingToken.IsCancellationRequested)
                 {
-                    await ProcessAsync(cancellationToken);
-                    await Task.Delay(WatchdogPeriod, cancellationToken);
+                    try
+                    {
+                        await ProcessAsync(stoppingToken);
+                    }
+                    catch (Exception e) when (!stoppingToken.IsCancellationRequested)
+                    {
+                        await HandleExceptionAsync(e, stoppingToken);
+
+                        // the pause was the wait: run again at once, and count the next period from that run
+                        timer.Dispose();
+                        timer = new PeriodicTimer(GetPeriod(), TimeProvider);
+                        continue;
+                    }
+
+                    // setting Period restarts the timer, so only a changed period may do it
+                    var period = GetPeriod();
+                    if (period != timer.Period) timer.Period = period;
+
+                    await timer.WaitForNextTickAsync(stoppingToken);
                 }
-                catch (Exception e) when (cancellationToken.IsCancellationRequested)
-                {
-                    Logger.LogWarning(e, $"Stopping {GetType().Name}");
-                }
-                catch (Exception e)
-                {
-                    await HandleExceptionAsync(e, cancellationToken);
-                }
+            }
+            catch (Exception) when (stoppingToken.IsCancellationRequested)
+            {
+                Logger.LogDebug("{Watchdog} stopped", GetType().Name);
+            }
+            finally
+            {
+                timer.Dispose();
             }
         }
 
+        /// <inheritdoc />
         public override async Task StartAsync(CancellationToken cancellationToken)
         {
-            Logger.LogInformation($"Starting {GetType().Name}...");
+            Logger.LogInformation("Starting {Watchdog}", GetType().Name);
             await base.StartAsync(cancellationToken);
-            Logger.LogInformation($"Starting {GetType().Name} completed.");
         }
 
+        /// <inheritdoc />
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
-            Logger.LogInformation($"Stopping {GetType().Name}...");
+            Logger.LogInformation("Stopping {Watchdog}", GetType().Name);
             await base.StopAsync(cancellationToken);
-            Logger.LogInformation($"Stopping {GetType().Name} completed.");
         }
     }
 }
