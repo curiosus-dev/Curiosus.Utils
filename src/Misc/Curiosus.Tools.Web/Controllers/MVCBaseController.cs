@@ -20,14 +20,6 @@ namespace Curiosus.Tools.Web.Controllers
     /// </summary>
     public abstract class MVCBaseController : Controller
     {
-        private ILogger? _logger;
-
-        /// <summary>
-        /// Logger with the category of the actual controller (<c>HomeController</c>, not <c>MVCBaseController</c>).
-        /// </summary>
-        protected ILogger Logger =>
-            _logger ??= HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(GetType());
-
         /// <summary>
         /// Редирект по указанному адресу либо на домашнюю страницу
         /// </summary>
@@ -69,6 +61,9 @@ namespace Curiosus.Tools.Web.Controllers
         [AllowAnonymous]
         public ActionResult ErrorView(string? errorText = null)
         {
+            // the category of the actual controller (HomeController), not of this base class
+            var logger = HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(GetType());
+
             var message = String.IsNullOrWhiteSpace(errorText)
                 ? LNG.UnexpectedError
                 : errorText;
@@ -82,21 +77,21 @@ namespace Curiosus.Tools.Web.Controllers
                 {
                     case BadHttpRequestException _:
                         message = ex.Message;
-                        Logger.LogWarning(ex, "Connection was closed by the client while sending response: {Error}", ex.Message);
+                        logger.LogWarning(ex, "Connection was closed by the client while sending response: {Error}", ex.Message);
                         break;
                     case TaskCanceledException _:
                     case OperationCanceledException _:
                         message = ex.Message;
-                        Logger.LogWarning(ex, "Request was canceled by user");
+                        logger.LogWarning(ex, "Request was canceled by user");
                         break;
                     default:
-                        Logger.LogError(ex, "Unhandled error: {Error}", ex.Message);
+                        logger.LogError(ex, "Unhandled error: {Error}", ex.Message);
                         break;
                 }
             }
             else
             {
-                Logger.LogWarning("{ErrorText}", message);
+                logger.LogWarning("{ErrorText}", message);
             }
 
             ViewBag.ErrorText = message;

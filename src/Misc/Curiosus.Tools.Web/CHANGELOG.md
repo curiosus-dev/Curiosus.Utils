@@ -11,8 +11,8 @@
 ### Changed
 
 - **Breaking:** the error actions of `MVCBaseController` (`ErrorView`, `ErrorViewWithCode`, `ErrorViewParams`) no
-  longer take a `[FromServices] ILogger` parameter, which failed to resolve with Curiosus.Hosting 4.0: they log through
-  the new protected `Logger`, whose category is the actual controller (`HomeController`) instead of `main`. Drop the
+  longer take a `[FromServices] ILogger` parameter, which failed to resolve with Curiosus.Hosting 4.0: they create
+  their logger from `ILoggerFactory` with the actual controller as the category (`HomeController`) instead of `main`. Drop the
   logger argument where a subclass calls them. See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools-web/4.0).
   ([#41](https://github.com/curiosus-dev/Curiosus.Utils/issues/41))
 
