@@ -6,7 +6,8 @@
 
 - `CuriosusHost.CreateBuilder(args)`, `AddCuriosusDefaults()` and `CuriosusApp.RunAsync(host)` /
   `RunAsync(host, command)`: the startup of workers and tools on `HostApplicationBuilder`. Environment from
-  `DOTNET_ENVIRONMENT`, then `ASPNETCORE_ENVIRONMENT`; content root at the binaries under systemd / Windows services;
+  `DOTNET_ENVIRONMENT`, then `ASPNETCORE_ENVIRONMENT`; content root at the binaries directory
+  (`CuriosusWebHost`: under systemd / Windows services);
   `-c` as `--config`; `-v` / `--version` prints the app version and exits with 0. The defaults add the YAML configuration, the configuration logged on start, `TimeProvider.System`,
   `PerformanceMeasurer`, localization, the `Culture` section and `UniqueIdGenerator` applied and every
   `IAppInitializer` run before hosted services start, `{AppName} is started` / `is stopped` messages and systemd /

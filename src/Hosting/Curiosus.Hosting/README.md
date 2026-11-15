@@ -45,8 +45,10 @@ Web apps use [Curiosus.Hosting.Web](https://www.nuget.org/packages/Curiosus.Host
 and, outside `Production`, `config.{Environment}.{UserName}.yml` (+ `.secret`). User secrets, environment variables
 and command line arguments still override the files. `-c` can also name a single file, which is then loaded alone.
 
-The environment comes from `DOTNET_ENVIRONMENT`, then `ASPNETCORE_ENVIRONMENT`, then `Production`. An app running as a
-systemd unit or a Windows service gets its binaries directory as the content root.
+The environment comes from `DOTNET_ENVIRONMENT`, then `ASPNETCORE_ENVIRONMENT`, then `Production`. The content root
+is the binaries directory, wherever the app is started from (`--contentRoot` overrides it): `config.yml` without `-c`,
+`NLog.config` and other relative paths are found next to the dll. A relative `-c` is
+relative to the current directory, as usual on the command line.
 
 ```yaml
 AppName: Sample Worker      # used in the start/stop messages and as ${var:appname} of NLog

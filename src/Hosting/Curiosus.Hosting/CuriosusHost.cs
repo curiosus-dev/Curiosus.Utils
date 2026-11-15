@@ -12,7 +12,7 @@ namespace Curiosus.Hosting
 {
     /// <summary>
     /// Creates host builders with the Curiosus conventions: environment from <c>DOTNET_ENVIRONMENT</c> or
-    /// <c>ASPNETCORE_ENVIRONMENT</c>, content root of a service app at its binaries, <c>-c</c> as <c>--config</c> and
+    /// <c>ASPNETCORE_ENVIRONMENT</c>, content root at the binaries (of a web app: when it runs as a service), <c>-c</c> as <c>--config</c> and
     /// <c>-v</c> / <c>--version</c> printing the app version.
     /// </summary>
     public static class CuriosusHost
@@ -28,6 +28,8 @@ namespace Curiosus.Hosting
         /// </summary>
         /// <param name="args">Command line arguments.</param>
         /// <remarks>
+        /// The content root is the binaries directory (<see cref="AppContext.BaseDirectory"/>), wherever the app is
+        /// started from; <c>--contentRoot</c> and <c>DOTNET_CONTENTROOT</c> override it.
         /// With <c>-v</c> / <c>--version</c> it prints the app version and exits the process with code 0, before any
         /// configuration is read, so it works whatever the app does next.
         /// </remarks>
@@ -40,7 +42,8 @@ namespace Curiosus.Hosting
             var configuration = new ConfigurationManager();
             var fallbacks = new Dictionary<string, string?>();
             if (GetFallbackEnvironmentName() is { } environment) fallbacks[HostDefaults.EnvironmentKey] = environment;
-            if (GetServiceContentRootPath() is { } contentRoot) fallbacks[HostDefaults.ContentRootKey] = contentRoot;
+            // the binaries directory, so NLog.config and config.yml next to the dll are found from any current directory
+            fallbacks[HostDefaults.ContentRootKey] = AppContext.BaseDirectory;
             configuration.AddInMemoryCollection(fallbacks);
 
             return Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
