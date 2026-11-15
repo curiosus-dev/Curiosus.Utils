@@ -18,8 +18,9 @@
 
 ### Changed
 
-- **Breaking:** `MVCBaseController.RedirectInternal` redirects only to local URLs (`Url.IsLocalUrl`), anything else
-  goes to Home/Index; the routable error endpoint is `HandleError` under the action name `ErrorView`, binds no parameters
+- **Breaking:** `MVCBaseController.RedirectInternal` redirects only to local URLs (`Url.IsLocalUrl`) and to `http(s)`
+  URLs on the hosts of the new `RedirectAllowListOptions` (public domains, the front-end), anything else goes to
+  Home/Index; the routable error endpoint is `HandleError` under the action name `ErrorView`, binds no parameters
   and accepts any HTTP method; `ErrorView(errorText)`, `ErrorViewWithCode`, `ErrorViewParams`, `AjaxGridErrorResponse`,
   `AjaxError` and `AjaxSuccess` are `[NonAction]` helpers; error pages show the app's text or the generic message, never
   the exception message; `AjaxError.cshtml` HTML-encodes the text. See the

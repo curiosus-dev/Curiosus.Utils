@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Curiosus.Tools.Web.Controllers
 {
@@ -20,18 +21,26 @@ namespace Curiosus.Tools.Web.Controllers
     public abstract class MVCBaseController : Controller
     {
         /// <summary>
-        /// Redirects to <paramref name="returnUrl"/> when it is a local URL of this app, otherwise to Home/Index.
+        /// Redirects to <paramref name="returnUrl"/> when it is a local URL of this app or an <c>http</c>/<c>https</c> URL to a
+        /// host of <see cref="RedirectAllowListOptions"/>, otherwise to Home/Index.
         /// </summary>
         /// <param name="returnUrl">Where to go back, usually from the query or a form: never trusted.</param>
         /// <remarks>
         /// <c>https://evil.example</c>, <c>//evil.example</c>, <c>/\evil.example</c> or <c>javascript:</c> go to Home/Index:
-        /// a redirect to them after a login would be an open redirect. Redirect to an external site explicitly with
-        /// <see cref="Redirect"/> and your own allow-list.
+        /// a redirect to them after a login would be an open redirect. Allow the public domains and the front-end address
+        /// with <c>services.Configure&lt;RedirectAllowListOptions&gt;(...)</c>.
         /// </remarks>
         protected ActionResult RedirectInternal(string? returnUrl = null)
         {
-            if (!String.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-                return LocalRedirect(UrlCharacterEncoder.EncodeIllegalCharacters(returnUrl));
+            if (!String.IsNullOrEmpty(returnUrl))
+            {
+                if (Url.IsLocalUrl(returnUrl))
+                    return LocalRedirect(UrlCharacterEncoder.EncodeIllegalCharacters(returnUrl));
+
+                var allowList = HttpContext.RequestServices.GetService<IOptions<RedirectAllowListOptions>>()?.Value;
+                if (allowList != null && allowList.IsAllowed(returnUrl))
+                    return Redirect(returnUrl);
+            }
 
             return RedirectToAction("Index", "Home");
         }

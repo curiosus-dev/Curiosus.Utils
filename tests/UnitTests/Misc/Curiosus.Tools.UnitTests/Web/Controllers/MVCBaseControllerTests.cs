@@ -26,12 +26,17 @@ public sealed class MVCBaseControllerTests
 {
     private readonly FakeLogCollector _collector = new();
 
-    private OrdersTestController CreateController(Exception? error = null, bool ajax = false)
+    private OrdersTestController CreateController(
+        Exception? error = null,
+        bool ajax = false,
+        params string[] allowedHosts)
     {
         // only the standard logging: no non-generic ILogger, as with Curiosus.Hosting 4.0
-        var services = new ServiceCollection()
-            .AddLogging(logging => logging.AddProvider(new FakeLoggerProvider(_collector)))
-            .BuildServiceProvider();
+        var serviceCollection = new ServiceCollection()
+            .AddLogging(logging => logging.AddProvider(new FakeLoggerProvider(_collector)));
+        if (allowedHosts.Length > 0)
+            serviceCollection.Configure<RedirectAllowListOptions>(o => o.AllowedHosts = allowedHosts);
+        var services = serviceCollection.BuildServiceProvider();
 
         var httpContext = new DefaultHttpContext { RequestServices = services };
         if (ajax) httpContext.Request.Headers["X-Requested-With"] = "XMLHttpRequest";
@@ -70,6 +75,29 @@ public sealed class MVCBaseControllerTests
     {
         CreateController().GoBack(returnUrl).Should().BeOfType<LocalRedirectResult>()
             .Which.Url.Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData("https://app.example.com/orders?id=5")]
+    [InlineData("http://APP.example.com/")]
+    [InlineData("https://www.example.com")]
+    public void RedirectInternal_AllowedHost_RedirectsThere(string returnUrl)
+    {
+        CreateController(allowedHosts: ["app.example.com", "www.example.com"]).GoBack(returnUrl)
+            .Should().BeOfType<RedirectResult>().Which.Url.Should().Be(returnUrl);
+    }
+
+    [Theory]
+    [InlineData("https://evil.app.example.com")]
+    [InlineData("https://app.example.com.evil.example")]
+    [InlineData("https://evil.example/?next=app.example.com")]
+    [InlineData("ftp://app.example.com/file")]
+    [InlineData("javascript://app.example.com/%0Aalert(1)")]
+    [InlineData("//app.example.com")]
+    public void RedirectInternal_OtherHostsOrSchemes_GoHome(string returnUrl)
+    {
+        CreateController(allowedHosts: ["app.example.com"]).GoBack(returnUrl)
+            .Should().BeOfType<RedirectToActionResult>().Which.ActionName.Should().Be("Index");
     }
 
     [Theory]
