@@ -18,7 +18,7 @@ namespace Curiosus.Tools.Web.Middleware
 
         public RequestLoggingMiddleware(
             RequestDelegate next, 
-            ILogger logger, 
+            ILogger<RequestLoggingMiddleware> logger,
             IServiceProvider serviceProvider)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));

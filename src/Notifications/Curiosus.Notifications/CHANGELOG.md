@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- `Notificator` takes `ILogger<Notificator>` instead of a non-generic `ILogger`: Curiosus.Hosting 4.0 no longer
+  registers the non-generic logger named `main`, and resolving `INotificator` failed with "Unable to resolve service
+  for type ILogger". Its log entries now have the category `Curiosus.Notifications.Notificator` instead of `main`. Code that creates `Notificator` itself passes an `ILogger<Notificator>`.
+  ([#41](https://github.com/curiosus-dev/Curiosus.Utils/issues/41))
+
 ## [2.0.0] - 2026-09-27
 
 ### Changed

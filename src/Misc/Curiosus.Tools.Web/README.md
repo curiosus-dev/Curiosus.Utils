@@ -61,6 +61,7 @@ services.AddHttpClient(ReCaptchaService.HttpClientName, client => client.Timeout
 ## See also
 
 - [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
+- [Curiosus.Tools.Web 4.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools-web/4.0)
 - [Curiosus.Hosting.Web](https://www.nuget.org/packages/Curiosus.Hosting.Web) — ASP.NET Core app bootstrapper
 - [Curiosus.Tools](https://www.nuget.org/packages/Curiosus.Tools) — non-web helpers
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages
