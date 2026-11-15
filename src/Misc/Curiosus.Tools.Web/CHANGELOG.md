@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Security
+
+- `AddCuriosusDataProtection` with `IsEnabled: false` (also `DisableDataProtection()`) replaced the registered
+  `IDataProtectionProvider` with a stub whose `Protect` returned the input unchanged, whenever `AddDataProtection()` had
+  been called before it, directly or through `AddAuthentication`, antiforgery or Identity. Auth cookies were then only
+  Base64Url-encoded (a user could change their own claims), and TempData and app payloads were readable and forgeable.
+  The stub is removed: data is always protected. Environments that ran it lose their issued cookies once. See the
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools-web/4.0#dataprotection). ([#60](https://github.com/curiosus-dev/Curiosus.Utils/issues/60))
+
 ### Fixed
 
 - `RequestLoggingMiddleware` takes `ILogger<RequestLoggingMiddleware>` instead of a non-generic `ILogger`, which
@@ -10,6 +19,12 @@
 
 ### Changed
 
+- **Breaking:** `AddCuriosusDataProtection(IConfiguration section)` replaces `AddCuriosusDataProtection(DataProtectionOptions)`
+  and returns `IDataProtectionBuilder`: always `AddDataProtection()`, with `ApplicationName`, `KeyRingPath` and
+  `DisableAutomaticKeyGeneration` of `CuriosusDataProtectionOptions` (validated on start). `DataProtectionOptions`,
+  `IsEnabled`, `DisableDataProtection()`, `SecureLessDataProtectionProvider` and `SecureLessDataProtector` are removed,
+  and automatic key generation is no longer disabled unless asked for. See the
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools-web/4.0#dataprotection). ([#60](https://github.com/curiosus-dev/Curiosus.Utils/issues/60))
 - **Breaking:** the error actions of `MVCBaseController` (`ErrorView`, `ErrorViewWithCode`, `ErrorViewParams`) no
   longer take a `[FromServices] ILogger` parameter, which failed to resolve with Curiosus.Hosting 4.0: they create
   their logger from `ILoggerFactory` with the actual controller as the category (`HomeController`) instead of `main`. Drop the
