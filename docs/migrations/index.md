@@ -120,7 +120,8 @@ target framework links here instead of having its own page.
 - Logger names in NLog.config rules: `Curiosity.*` → `Curiosus.*` (loggers named after classes).
 - Loggers that keep their names for now:
   - `appStartEmailLog`, `appStopEmailLog`: unchanged ([#43](https://github.com/curiosus-dev/Curiosus.Utils/issues/43));
-  - `performance`, `stuckcode`: change with [#52](https://github.com/curiosus-dev/Curiosus.Utils/issues/52);
+  - `performance`: unchanged ([#52](https://github.com/curiosus-dev/Curiosus.Utils/issues/52)); `stuckcode` is gone
+    with `StuckCodeManager` in `Curiosus.Tools` 3.0;
   - `performanceWeb`: changes with [#64](https://github.com/curiosus-dev/Curiosus.Utils/issues/64);
   - `worker*` of request processing: change with [#78](https://github.com/curiosus-dev/Curiosus.Utils/issues/78).
 

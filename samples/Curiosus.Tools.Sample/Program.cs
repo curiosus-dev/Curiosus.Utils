@@ -1,6 +1,7 @@
 ﻿using System;
-using System.Threading.Tasks;
+using System.Threading;
 using Curiosus.Tools.Performance;
+using Microsoft.Extensions.Logging;
 
 namespace Curiosus.Tools.Sample
 {
@@ -18,14 +19,11 @@ namespace Curiosus.Tools.Sample
             PhoneHelperSample.Run();
 
 
-            using (PerformanceManager.Measure("Test"))
+            using var loggerFactory = LoggerFactory.Create(logging => logging.AddConsole());
+            var performance = new PerformanceMeasurer(loggerFactory);
+            using (performance.Measure("Test"))
             {
-                Task.Delay(TimeSpan.FromSeconds(1));
-            }
-
-            using (StuckCodeManager.Enter("Stuck code", 1))
-            {
-                Task.Delay(TimeSpan.FromSeconds(2));
+                Thread.Sleep(TimeSpan.FromSeconds(1));
             }
         }
     }

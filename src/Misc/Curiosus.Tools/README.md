@@ -3,7 +3,7 @@
 [![NuGet](https://img.shields.io/nuget/v/Curiosus.Tools)](https://www.nuget.org/packages/Curiosus.Tools) [![Downloads](https://img.shields.io/nuget/dt/Curiosus.Tools)](https://www.nuget.org/packages/Curiosus.Tools) [![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/curiosus-dev/Curiosus.Utils/badges/Curiosus.Tools.json)](https://github.com/curiosus-dev/Curiosus.Utils/actions/workflows/release-packages.yml)
 
 Foundation library of the Curiosus packages: basic helpers, models and small services with few dependencies
-(logging and DI abstractions, Curiosus.Configuration, NodaTime, MemoryPools). Most other Curiosus packages build on it.
+(logging and DI abstractions, Curiosus.Configuration, NodaTime). Most other Curiosus packages build on it.
 
 ## Installation
 
@@ -48,7 +48,7 @@ Main areas:
 - **Text** — string/`StringBuilder` extensions, `PhoneHelper`, `Transliteration`, `WebAddressValidator`,
   `SensitiveDataProtector`, file size humanization.
 - **Collections and threading** — `CircularBuffer`, list/dictionary/hash set extensions, `DynamicSemaphoreSlim`.
-- **Diagnostics** — `PerformanceManager.Measure` and `StuckCodeManager.Enter` (call their `Initialize(logger)` first).
+- **Diagnostics** — `PerformanceMeasurer.Measure` (register with `AddCuriosusPerformanceMeasurer()`).
 - **IO and HTTP** — temp file streams, stream extensions, `IHttpRequestParamsCalculator` for size-based timeouts.
 
 See the [sample app](https://github.com/curiosus-dev/Curiosus.Utils/tree/main/samples/Curiosus.Tools.Sample)

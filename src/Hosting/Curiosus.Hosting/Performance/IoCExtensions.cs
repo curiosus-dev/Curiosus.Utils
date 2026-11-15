@@ -1,4 +1,4 @@
-using Curiosus.Tools.AppInitializer;
+using Curiosus.Tools.Performance;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Curiosus.Hosting.Performance
@@ -6,13 +6,13 @@ namespace Curiosus.Hosting.Performance
     public static class IoCExtensions
     {
         /// <summary>
-        /// Adds to IoC classes for measuring performance and stuck code. 
+        /// Registers <see cref="PerformanceMeasurer"/>.
         /// </summary>
         /// <param name="services"></param>
         /// <returns></returns>
         public static IServiceCollection AddPerformanceMeasures(this IServiceCollection services)
         {
-            services.AddAppInitializer<PerformanceMonitoringInitializer>();
+            services.AddCuriosusPerformanceMeasurer();
             return services;
         }
     }
