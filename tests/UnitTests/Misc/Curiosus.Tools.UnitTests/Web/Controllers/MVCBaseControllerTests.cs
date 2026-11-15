@@ -1,4 +1,3 @@
-using System;
 using Curiosus.Tools.Web.Controllers;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
@@ -41,22 +40,7 @@ public sealed class MVCBaseControllerTests
         record.Message.Should().Be("Something went wrong");
     }
 
-    [Fact]
-    [Obsolete("Tests the obsolete overload")]
-    public void ObsoleteOverloadWithALogger_StillWorks()
-    {
-        var result = CreateController().ErrorView(NullLoggerForTests.Instance, "Old call");
-
-        result.Should().BeOfType<ViewResult>();
-        _collector.LatestRecord.Category.Should().Be(typeof(TestController).FullName!.Replace("+", "."));
-    }
-
     private sealed class TestController : MVCBaseController
     {
-    }
-
-    private static class NullLoggerForTests
-    {
-        public static ILogger Instance { get; } = Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
     }
 }

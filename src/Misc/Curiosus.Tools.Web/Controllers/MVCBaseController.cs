@@ -114,27 +114,6 @@ namespace Curiosus.Tools.Web.Controllers
             return View(errorViewName);
         }
         
-        /// <summary>
-        /// Former overload with an injected logger; the controller logs through <see cref="Logger"/> now.
-        /// </summary>
-        [NonAction]
-        [Obsolete("The logger is not used any more: call ErrorViewWithCode(error).")]
-        public ActionResult ErrorViewWithCode(ILogger logger, SiteError error) => ErrorViewWithCode(error);
-
-        /// <summary>
-        /// Former overload with an injected logger; the controller logs through <see cref="Logger"/> now.
-        /// </summary>
-        [NonAction]
-        [Obsolete("The logger is not used any more: call ErrorViewParams(fmt, args).")]
-        public ActionResult ErrorViewParams(ILogger logger, string fmt, params object[] args) => ErrorViewParams(fmt, args);
-
-        /// <summary>
-        /// Former overload with an injected logger; the controller logs through <see cref="Logger"/> now.
-        /// </summary>
-        [NonAction]
-        [Obsolete("The logger is not used any more: call ErrorView(errorText).")]
-        public ActionResult ErrorView(ILogger logger, string? errorText = null) => ErrorView(errorText);
-
         public ActionResult AjaxGridErrorResponse(SiteError error)
         {
             return AjaxGridErrorResponse(null, error.ToLocalizedString());
