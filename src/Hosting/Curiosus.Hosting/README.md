@@ -92,7 +92,6 @@ Other helpers:
 
 - `CuriosusWatchdog` — base `BackgroundService` that runs `ProcessAsync` at a fixed rate on a `PeriodicTimer`, pauses
   after an exception and takes a `TimeProvider` for tests.
-- `AddThreadPoolTuning(ThreadPoolOptions)` — sets minimum thread pool size, logs its state and can auto-tune it.
 - `AddTempDirCleaner(TempFileOptions)` — hosted service that deletes stale temp files.
 
 ## See also
