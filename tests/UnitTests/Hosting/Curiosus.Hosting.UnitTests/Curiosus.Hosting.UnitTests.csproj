@@ -20,11 +20,5 @@
       <ProjectReference Include="..\..\..\..\src\Hosting\Curiosus.Hosting\Curiosus.Hosting.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <None Include="..\..\..\..\samples\NLog.config">
-        <Link>NLog.config</Link>
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-    </ItemGroup>
 
 </Project>

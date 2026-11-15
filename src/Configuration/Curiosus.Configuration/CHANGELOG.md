@@ -11,6 +11,9 @@
   provider it came from, secrets masked. Without arguments the whole configuration except sectionless environment
   variables (`PATH`, ...); with sections only them; `ExcludedSections` leaves sections out.
   ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+- `IConfiguration.GetCuriosusOptions<T>("Section", configure)`: binds and validates options like `AddCuriosusOptions<T>`
+  for code that needs them while the builder is being set up, before `IOptions` exists.
+  ([#43](https://github.com/curiosus-dev/Curiosus.Utils/issues/43))
 - Dependencies on `Microsoft.Extensions.Hosting.Abstractions`, `Microsoft.Extensions.Options.ConfigurationExtensions`
   and `Microsoft.Extensions.Options.DataAnnotations`.
 

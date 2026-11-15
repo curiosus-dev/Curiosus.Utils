@@ -24,6 +24,6 @@ namespace Curiosus.Hosting
         /// <summary>
         /// Logs configuration options.
         /// </summary>
-        public ILoggingConfigurationOptions Log { get; }
+        public CuriosusNLogOptions Log { get; }
     }
 }

@@ -64,6 +64,7 @@ for `SensitiveDataFieldNames`. Implement `IWebAppConfigurationWithPublicDomain` 
 ## See also
 
 - [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
+- [Curiosus.Hosting 4.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting/4.0)
 - [Curiosus.Hosting](https://www.nuget.org/packages/Curiosus.Hosting) — bootstrappers for console tools and services
 - [Curiosus.Tools.Web](https://www.nuget.org/packages/Curiosus.Tools.Web) — middleware, model binders and web helpers
 - [Sample web app](https://github.com/curiosus-dev/Curiosus.Utils/blob/main/samples/Curiosus.SampleWebApp/Program.cs)

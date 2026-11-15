@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** the logging types of `Curiosus.Hosting` are replaced: see the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting/4.0#logging-curiosusnlogconfigurator--addcuriosusnlog).
+  ([#43](https://github.com/curiosus-dev/Curiosus.Utils/issues/43))
+
 ### Security
 
 - Updated `Curiosus.Configuration` (through `Curiosus.Hosting`) to the version that masks secrets in the configuration

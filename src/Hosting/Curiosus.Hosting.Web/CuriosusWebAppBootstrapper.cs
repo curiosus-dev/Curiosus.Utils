@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NLog;
+using NLog.Config;
 using NLog.Web;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
@@ -31,6 +32,12 @@ namespace Curiosus.Hosting.Web
         where TConfiguration : class, ICuriosusWebAppConfiguration, new()
         where TStartup : class
     {
+        /// <inheritdoc />
+        protected override void SetupLoggingExtensions(ISetupExtensionsBuilder extensions)
+        {
+            extensions.RegisterNLogWeb();
+        }
+
         /// <inheritdoc />
         protected override async Task<int> RunInternalAsync(
             string[] rawArguments,
@@ -145,11 +152,6 @@ namespace Curiosus.Hosting.Web
                 hostBuilder.UseContentRoot(customContentRootDirectory);
 
             return hostBuilder.Build();
-        }
-
-        protected override void LoadLoggingConfiguration(string path)
-        {
-            LogManager.Setup().RegisterNLogWeb().LoadConfigurationFromFile(path, optional: false);
         }
     }
 }
