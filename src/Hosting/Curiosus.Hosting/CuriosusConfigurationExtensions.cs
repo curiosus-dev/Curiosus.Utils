@@ -25,7 +25,8 @@ namespace Curiosus.Hosting
         /// <param name="builder">Application builder.</param>
         /// <param name="path">
         /// Directory with the files or a single file. Default: the <c>config</c> key (<c>-c</c> / <c>--config</c>),
-        /// then the content root. A relative path is relative to the content root.
+        /// then the content root. A relative <paramref name="path"/> is relative to the content root, a relative
+        /// <c>-c</c> to the current directory.
         /// </param>
         /// <param name="optional">Whether <c>config.yml</c> (or the single file) may be missing.</param>
         /// <remarks>
@@ -43,9 +44,13 @@ namespace Curiosus.Hosting
             if (builder == null) throw new ArgumentNullException(nameof(builder));
 
             var contentRoot = builder.Environment.ContentRootPath;
-            var fullPath = Path.GetFullPath(
-                path ?? builder.Configuration[CuriosusHost.ConfigurationPathKey] ?? contentRoot,
-                contentRoot);
+            var switchPath = builder.Configuration[CuriosusHost.ConfigurationPathKey];
+            var fullPath = path != null
+                ? Path.GetFullPath(path, contentRoot)
+                // a path typed on the command line is relative to where the command runs, as usual for CLI arguments
+                : switchPath != null
+                    ? Path.GetFullPath(switchPath, Directory.GetCurrentDirectory())
+                    : contentRoot;
 
             var files = new List<IConfigurationSource>();
             if (File.Exists(fullPath))

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using FluentAssertions;
 using Xunit;
 
@@ -34,6 +35,26 @@ namespace Curiosus.Hosting.UnitTests
             var builder = CuriosusHost.CreateBuilder(["--environment", "Development"]);
 
             builder.Environment.EnvironmentName.Should().Be("Development");
+        }
+
+        [Fact]
+        public void CreateBuilder_ContentRoot_IsTheBinariesDirectory()
+        {
+            var builder = CuriosusHost.CreateBuilder([]);
+
+            Path.TrimEndingDirectorySeparator(builder.Environment.ContentRootPath)
+                .Should().Be(Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory));
+        }
+
+        [Fact]
+        public void CreateBuilder_ContentRootArgument_Wins()
+        {
+            var dir = Path.GetTempPath();
+
+            var builder = CuriosusHost.CreateBuilder(["--contentRoot", dir]);
+
+            Path.TrimEndingDirectorySeparator(builder.Environment.ContentRootPath)
+                .Should().Be(Path.TrimEndingDirectorySeparator(dir));
         }
 
         [Fact]
