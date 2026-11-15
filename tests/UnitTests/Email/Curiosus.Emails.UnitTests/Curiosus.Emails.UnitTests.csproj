@@ -7,6 +7,7 @@
 
     <ItemGroup>
         <PackageReference Include="FluentAssertions" />
+        <PackageReference Include="Microsoft.Extensions.Diagnostics.Testing" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" />
         <PackageReference Include="xunit" />
         <PackageReference Include="xunit.runner.visualstudio">
@@ -19,6 +20,7 @@
       <ProjectReference Include="..\..\..\..\src\Email\Curiosus.EMail\Curiosus.EMail.csproj" />
       <ProjectReference Include="..\..\..\..\src\Email\Curiosus.Email.UnisenderGo\Curiosus.Email.UnisenderGo.csproj" />
       <ProjectReference Include="..\..\..\..\src\Email\Curiosus.EMail.Mailgun\Curiosus.EMail.Mailgun.csproj" />
+      <ProjectReference Include="..\..\..\..\src\Email\Curiosus.EMail.Smtp\Curiosus.EMail.Smtp.csproj" />
     </ItemGroup>
 
     <ItemGroup>

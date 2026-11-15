@@ -40,4 +40,7 @@
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     </ItemGroup>
 
+    <ItemGroup>
+      <InternalsVisibleTo Include="Curiosus.Emails.UnitTests" />
+    </ItemGroup>
 </Project>
