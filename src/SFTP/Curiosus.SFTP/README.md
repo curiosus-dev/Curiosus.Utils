@@ -55,11 +55,14 @@ public class ReportUploader
 | `SshPrivateKeyPath`, `SshPrivateKeyPassphrase` | Private key authentication (used when no password is set). |
 | `RetryCount`, `RetryTimeoutSec` | Retries on socket and SSH errors (default 3 retries, 5 seconds apart). |
 | `CheckOnStart` | Check the connection on application start (default `true`). |
+| `HostKeyFingerprintsSha256` | SHA-256 fingerprints of the server host key (`ssh-keyscan -p <port> <host> \| ssh-keygen -lf -`); the connection fails with `SftpHostKeyVerificationException` on any other key. |
+| `AllowAnyHostKey` | Skip the host key check: local development only. |
 
-Either `SshPassword` or `SshPrivateKeyPath` must be specified.
+Either `SshPassword` or `SshPrivateKeyPath` must be specified, and either `HostKeyFingerprintsSha256` or `AllowAnyHostKey`.
 
 ## See also
 
 - [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
+- [Curiosus.SFTP 3.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-sftp/3.0)
 - [Curiosus.SFTP.SSH.NET](https://www.nuget.org/packages/Curiosus.SFTP.SSH.NET) — implementation based on SSH.NET
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

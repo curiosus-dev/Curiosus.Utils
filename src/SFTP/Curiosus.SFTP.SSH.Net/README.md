@@ -21,6 +21,8 @@ Sftp:
   SshPort: 22
   SshLogin: user
   SshPrivateKeyPath: /secrets/id_rsa
+  HostKeyFingerprintsSha256:        # required: ssh-keyscan -p <port> <host> | ssh-keygen -lf -
+    - SHA256:nThbg6kXUpJWGl7E1IGOCspRomTxdCARLviKw6E5SY8
   RetryCount: 3
   RetryTimeoutSec: 5
   CheckOnStart: true
@@ -52,6 +54,8 @@ by Curiosus.Hosting on start) that checks the connection when `CheckOnStart` is 
 Notes:
 
 - `SshPort` has no default value, set it explicitly (usually `22`).
+- The server host key must match one of `HostKeyFingerprintsSha256`, otherwise the connection fails with
+  `SftpHostKeyVerificationException` (not retried). `AllowAnyHostKey: true` skips the check for local development.
 - If both a password and a private key are configured, password authentication is used.
 - Missing parent directories are created on upload. If a file with the same size already exists, the upload is
   skipped; if the size differs, it is replaced only when `overwrite` is `true`, otherwise an exception is thrown.
@@ -60,6 +64,7 @@ Notes:
 ## See also
 
 - [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
+- [Curiosus.SFTP 3.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-sftp/3.0)
 - [Curiosus.SFTP](https://www.nuget.org/packages/Curiosus.SFTP) — SFTP abstractions and options
 - [Curiosus.Tools](https://www.nuget.org/packages/Curiosus.Tools) — temp files and app initializers
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

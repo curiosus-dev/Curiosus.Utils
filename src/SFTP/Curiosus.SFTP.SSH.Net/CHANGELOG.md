@@ -1,5 +1,20 @@
 # Changelog
 
+## [Unreleased]
+
+### Security
+
+- The client accepted any SSH host key (nobody handled `HostKeyReceived`), so anyone who could redirect the traffic
+  could impersonate the server, capture the credentials and read or swap files. It now compares the SHA-256 fingerprint
+  with `HostKeyFingerprintsSha256` and refuses the connection otherwise. Rotate the SFTP credentials if the server was
+  reached over an untrusted network. See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-sftp/3.0). ([#97](https://github.com/curiosus-dev/Curiosus.Utils/issues/97))
+
+### Changed
+
+- **Breaking:** a host key that isn't configured fails every connection, including the start-up check, with
+  `SftpHostKeyVerificationException`, which the retry policy does not retry; `AllowAnyHostKey` logs a warning on every
+  connection. See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-sftp/3.0). ([#97](https://github.com/curiosus-dev/Curiosus.Utils/issues/97))
+
 ## [2.1.0] - 2026-10-03
 
 ### Changed
