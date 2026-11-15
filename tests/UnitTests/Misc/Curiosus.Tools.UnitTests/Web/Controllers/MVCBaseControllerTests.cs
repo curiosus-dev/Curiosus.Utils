@@ -78,13 +78,13 @@ public sealed class MVCBaseControllerTests
     }
 
     [Theory]
-    [InlineData("https://app.example.com/orders?id=5")]
-    [InlineData("http://APP.example.com/")]
-    [InlineData("https://www.example.com")]
-    public void RedirectInternal_AllowedHost_RedirectsThere(string returnUrl)
+    [InlineData("https://app.example.com/orders?id=5", "https://app.example.com/orders?id=5")]
+    [InlineData("http://APP.example.com/", "http://app.example.com/")]
+    [InlineData("https://www.example.com", "https://www.example.com/")]
+    public void RedirectInternal_AllowedHost_RedirectsToTheCanonicalUrl(string returnUrl, string expected)
     {
         CreateController(allowedHosts: ["app.example.com", "www.example.com"]).GoBack(returnUrl)
-            .Should().BeOfType<RedirectResult>().Which.Url.Should().Be(returnUrl);
+            .Should().BeOfType<RedirectResult>().Which.Url.Should().Be(expected);
     }
 
     [Theory]
@@ -94,6 +94,13 @@ public sealed class MVCBaseControllerTests
     [InlineData("ftp://app.example.com/file")]
     [InlineData("javascript://app.example.com/%0Aalert(1)")]
     [InlineData("//app.example.com")]
+    [InlineData("https://app.example.com\\@evil.example")]
+    [InlineData("https://app.example.com\\.evil.example")]
+    [InlineData("https://app.example.com\t.evil.example")]
+    [InlineData("https://app.example.com\n@evil.example")]
+    [InlineData(" https://app.example.com")]
+    [InlineData("https://user:pass@app.example.com")]
+    [InlineData("https://app.example.com@evil.example")]
     public void RedirectInternal_OtherHostsOrSchemes_GoHome(string returnUrl)
     {
         CreateController(allowedHosts: ["app.example.com"]).GoBack(returnUrl)
