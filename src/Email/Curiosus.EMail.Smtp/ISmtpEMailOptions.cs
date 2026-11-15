@@ -57,8 +57,8 @@ namespace Curiosus.EMail.Smtp
         SecureSocketOptions? Security { get; }
 
         /// <summary>
-        /// Accepts any server certificate: for development and test relays only. Fails validation in <c>Production</c>
-        /// (<c>DOTNET_ENVIRONMENT</c>, then <c>ASPNETCORE_ENVIRONMENT</c>, <c>Production</c> when unset) and together with
+        /// Accepts any server certificate, which lets anyone on the network path read the credentials and messages. Meant
+        /// for development and test relays; the sender logs a warning whenever it is set. Fails validation together with
         /// <see cref="SecureSocketOptions.None"/>.
         /// </summary>
         bool AllowInvalidServerCertificate { get; }
