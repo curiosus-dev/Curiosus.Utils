@@ -1,3 +1,4 @@
+using System.Linq;
 #nullable enable
 
 using System.Net;
@@ -25,9 +26,11 @@ namespace Curiosus.SMS.UnitTests
             _httpClientFactory = new FakeHttpClientFactory(_handler);
         }
 
+        private readonly Microsoft.Extensions.Logging.Testing.FakeLogger<SmscSender> _logger = new();
+
         private SmscSender CreateSender(string? senderName = "SIIS") =>
             new(
-                NullLogger<SmscSender>.Instance,
+                _logger,
                 new SmscOptions { SmscLogin = "login", SmscPassword = "secret", SmscSender = senderName },
                 _httpClientFactory);
 
@@ -213,6 +216,22 @@ namespace Curiosus.SMS.UnitTests
             // assert
             response.IsSuccess.Should().BeFalse();
             response.Errors.Should().ContainSingle().Which.Code.Should().Be((int)SmsError.Unknown);
+        }
+
+        [Theory]
+        [InlineData("{\"id\":1,\"cnt\":1,\"cost\":\"1.5\"}")]
+        [InlineData("{\"error\":\"no money\",\"error_code\":3}")]
+        public async Task Logs_ContainNoCredentialsAndOnlyAMaskedPhone(string content)
+        {
+            _handler.Respond(HttpStatusCode.OK, content);
+
+            await CreateSender().SendSmsAsync("79001234567", "text");
+
+            var records = _logger.Collector.GetSnapshot()
+                .Where(r => r.Level >= Microsoft.Extensions.Logging.LogLevel.Information).ToList();
+            records.Should().NotBeEmpty();
+            records.Should().OnlyContain(r => !r.Message.Contains("secret") && !r.Message.Contains("79001234567"));
+            records.Should().Contain(r => r.Message.Contains("79*****4567"));
         }
     }
 }

@@ -1,5 +1,22 @@
 # Changelog
 
+## [Unreleased]
+
+### Security
+
+- The login and the password were sent in the URL query (`GET …/messages/v2/send?login=…&password=…`), where outbound
+  proxies, egress gateways, TLS-inspecting firewalls, APM agents and the provider's access logs record them; phone numbers
+  and texts leaked the same way, and the full phone number was logged at `Information`. The sender now posts JSON to
+  `https://api.iqsms.ru/messages/v2/send.json` with everything in the body, and logs phone numbers masked
+  (`+7******4567`). **Rotate the iqsms password** if such logs were kept. ([#84](https://github.com/curiosus-dev/Curiosus.Utils/issues/84))
+
+### Changed
+
+- The response of the JSON API is parsed: message status `accepted` → success; `not enough balance`/`not enough credits`
+  → `NoMoney`; `invalid mobile phone` → `DeliveryError`; a package-level error about authorization or HTTP 401 → `Auth`;
+  non-2xx, network errors and timeouts → `Communication`; anything else → `Unknown`. `SmsSentResult.ResponseJson` holds
+  the raw JSON. Log messages are templates in English. ([#84](https://github.com/curiosus-dev/Curiosus.Utils/issues/84))
+
 ## [3.0.0] - 2026-10-03
 
 ### Changed

@@ -1,6 +1,19 @@
 # Changelog
 
+## [Unreleased]
+
+### Security
+
+- Phone numbers are masked in the log messages of `SmscSender` (`79*****4567`) and in the error descriptions it
+  returns; they were written in full at `Information` and `Warning`. Log messages are templates now. ([#84](https://github.com/curiosus-dev/Curiosus.Utils/issues/84))
+
 ## [3.0.0] - 2026-10-03
+
+### Security
+
+- Parameters, including the login and the password, are sent in the form body of the POST request instead of the URL
+  query, where proxies, gateways and the provider's access logs recorded them. **Rotate the SMSC password** if such logs
+  were kept ([#84](https://github.com/curiosus-dev/Curiosus.Utils/issues/84)).
 
 ### Changed
 
@@ -12,7 +25,6 @@
   The package no longer depends on `RestSharp`: reference it directly if your code used it through this package ([#82](https://github.com/curiosus-dev/Curiosus.Utils/issues/82)).
 - **Breaking:** when `cancellationToken` is cancelled, `SendSmsAsync` throws `OperationCanceledException` instead of returning
   a failed response. Network failures and `HttpClient` timeouts are still returned as a failed response ([#82](https://github.com/curiosus-dev/Curiosus.Utils/issues/82)).
-- Parameters, including login and password, are sent in the form body of the POST request instead of the URL query ([#84](https://github.com/curiosus-dev/Curiosus.Utils/issues/84)).
 - HTTP errors are reported as `"<status code>, <reason phrase>"` in the error description and `SmsSentResult.ResponseJson`
   (previously the RestSharp error message).
 

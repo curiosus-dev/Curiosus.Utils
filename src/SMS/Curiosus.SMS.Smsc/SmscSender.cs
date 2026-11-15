@@ -82,7 +82,8 @@ namespace Curiosus.SMS.Smsc
             // without it SMSC reads the message and writes the response in windows-1251
             form.Add(new("charset", "utf-8"));
 
-            _logger.LogInformation("Отправляем sms на номер {PhoneNumber}...", phoneNumber);
+            var maskedPhone = PhoneNumberMask.Mask(phoneNumber);
+            _logger.LogInformation("Отправляем sms на номер {PhoneNumber}...", maskedPhone);
 
             // execute
             var response = await ExecuteAsync(form, cancellationToken);
@@ -103,12 +104,12 @@ namespace Curiosus.SMS.Smsc
                     // because SMSC can block SMS to Megafon and Tele2 with specified sender name when there is sender name is not agreed
                     if (errorCode == 6 && retriesCount == 0)
                     {
-                        _logger.LogWarning("Отправка SMS на номер {PhoneNumber} заблокирована. Попробуем повторно отправить без указания имени отправтиеля (текущее имя отправителя = \"{SenderName}\")", phoneNumber, senderName);
+                        _logger.LogWarning("Отправка SMS на номер {PhoneNumber} заблокирована. Попробуем повторно отправить без указания имени отправтиеля (текущее имя отправителя = \"{SenderName}\")", maskedPhone, senderName);
                         return await SendSmsAsync(phoneNumber, message, smscLogin, smscPassword, null, 1, cancellationToken);
                     }
 
-                    var errorMessage = $"Ошибка при отправке sms на номер {phoneNumber} (error_code = {errorCode}, error = \"{error}\")";
-                    _logger.LogWarning($"Ошибка при отправке sms на номер {phoneNumber} (error_code = {errorCode}, error = \"{error}\")");
+                    var errorMessage = $"Ошибка при отправке sms на номер {maskedPhone} (error_code = {errorCode}, error = \"{error}\")";
+                    _logger.LogWarning("Ошибка при отправке sms на номер {PhoneNumber} (error_code = {ErrorCode}, error = \"{Error}\")", maskedPhone, errorCode, error);
 
                     // check error code
                     switch (errorCode)
@@ -146,7 +147,7 @@ namespace Curiosus.SMS.Smsc
                 resultJson = JsonSerializer.Serialize(data, ResultJsonOptions);
 
                 _logger.LogWarning(
-                    $"Ошибка при отправке sms на номер {phoneNumber} (error = \"{data.Error}\")");
+                    "Ошибка при отправке sms на номер {PhoneNumber} (error = \"{Error}\")", maskedPhone, data.Error);
 
                 return Response.Failed(new Error((int)SmsError.Unknown, data.Error), new SmsSentResult(null, null, resultJson));
             }
@@ -155,7 +156,7 @@ namespace Curiosus.SMS.Smsc
             if (response.Data?.Cost != null)
                 messageCost = response.Data.Cost;
 
-            _logger.LogInformation($"Успешно отправили sms на номер {phoneNumber}");
+            _logger.LogInformation("Успешно отправили sms на номер {PhoneNumber}", maskedPhone);
             
             int? sentSmsCount = null;
             if (response.IsSuccessful && response.Data != null! && response.Data.Count > 0)
