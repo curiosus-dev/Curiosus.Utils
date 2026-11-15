@@ -4,19 +4,20 @@
 
 ### Added
 
-- `AddCuriosusLogging` for `IHostApplicationBuilder` and `CuriosusLoggingOptions` (the `Log` section): loads NLog.config
+- `AddCuriosusNLog` for `IHostApplicationBuilder` and `CuriosusNLogOptions` (the `Log` section): loads NLog.config
   relative to the content root, sets the `outputdir` (absolute path) and `appname` variables, makes `${configsetting}`
-  read the app configuration, replaces the logging providers with NLog and writes `{AppName} is started` / `is stopped`
-  to `appStartEmailLog` / `appStopEmailLog`. Variables that NLog.config doesn't declare are not an error.
+  read the app configuration and replaces the logging providers with NLog; `configureNLogExtensions` registers more
+  NLog extensions (`RegisterNLogWeb()` in web apps). Variables that NLog.config doesn't declare are not an error. The
+  app calls it itself, so it can drop NLog later without touching the rest of its setup.
   ([#43](https://github.com/curiosus-dev/Curiosus.Utils/issues/43))
 
 ### Changed
 
 - **Breaking:** `CuriosusNLogConfigurator`, `ILoggingConfigurationOptions` / `LoggingConfigurationOptions`,
   `ILoggerMailOptions` / `LoggerMailOptions`, `IConfigurationWithMailLogger` and the mail variables are removed, and
-  `ICuriosusAppConfiguration.Log` is a `CuriosusLoggingOptions`. Read the SMTP settings of a mail target with
+  `ICuriosusAppConfiguration.Log` is a `CuriosusNLogOptions`. Read the SMTP settings of a mail target with
   `${configsetting}` instead. `CuriosusAppBootstrapper.LoadLoggingConfiguration` is replaced by `SetupLoggingExtensions`. Relative `Log` paths
-  resolve against the content root. See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting/4.0#logging-curiosusnlogconfigurator--addcuriosuslogging).
+  resolve against the content root. See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting/4.0#logging-curiosusnlogconfigurator--addcuriosusnlog).
   ([#43](https://github.com/curiosus-dev/Curiosus.Utils/issues/43))
 
 ### Security

@@ -14,7 +14,7 @@ using Xunit;
 namespace Curiosus.Hosting.UnitTests
 {
     [Collection(NLogCollection.Name)]
-    public sealed class AddCuriosusLoggingTests : IDisposable
+    public sealed class AddCuriosusNLogTests : IDisposable
     {
         private const string MemoryConfig = """
             <nlog throwExceptions="true">
@@ -30,7 +30,7 @@ namespace Curiosus.Hosting.UnitTests
         private readonly string _contentRoot =
             Path.Combine(Path.GetTempPath(), "curiosus-logging-" + Guid.NewGuid().ToString("N"));
 
-        public AddCuriosusLoggingTests()
+        public AddCuriosusNLogTests()
         {
             Directory.CreateDirectory(_contentRoot);
         }
@@ -41,7 +41,7 @@ namespace Curiosus.Hosting.UnitTests
             File.WriteAllText(Path.Combine(_contentRoot, "NLog.config"), MemoryConfig);
             var builder = CreateBuilder();
 
-            builder.AddCuriosusLogging();
+            builder.AddCuriosusNLog();
             using var host = builder.Build();
             host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("test").LogInformation("hello");
 
@@ -54,7 +54,7 @@ namespace Curiosus.Hosting.UnitTests
             File.WriteAllText(Path.Combine(_contentRoot, "custom.config"), MemoryConfig);
             var builder = CreateBuilder(("Log:LogConfigurationPath", "custom.config"));
 
-            builder.AddCuriosusLogging();
+            builder.AddCuriosusNLog();
             using var host = builder.Build();
             host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("test").LogInformation("hello");
 
@@ -67,7 +67,7 @@ namespace Curiosus.Hosting.UnitTests
             File.WriteAllText(Path.Combine(_contentRoot, "NLog.config"), MemoryConfig);
             var builder = CreateBuilder(("AppName", "my-app"), ("Log:LogOutputDirectory", "logs/out"));
 
-            builder.AddCuriosusLogging();
+            builder.AddCuriosusNLog();
             using var host = builder.Build();
             host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("test").LogInformation("hello");
 
@@ -81,7 +81,7 @@ namespace Curiosus.Hosting.UnitTests
             File.WriteAllText(Path.Combine(_contentRoot, "NLog.config"), MemoryConfig);
             var builder = CreateBuilder();
 
-            builder.AddCuriosusLogging();
+            builder.AddCuriosusNLog();
             using var host = builder.Build();
             host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("test").LogInformation("hello");
 
@@ -96,7 +96,7 @@ namespace Curiosus.Hosting.UnitTests
                 MemoryConfig.Replace("|${var:outputdir}|${var:appname}", string.Empty));
             var builder = CreateBuilder();
 
-            var act = () => builder.AddCuriosusLogging();
+            var act = () => builder.AddCuriosusNLog();
 
             act.Should().NotThrow();
         }
@@ -118,7 +118,7 @@ namespace Curiosus.Hosting.UnitTests
                 builder.Configuration.AddYamlFile(Path.Combine(_contentRoot, "config.yml"));
                 builder.Configuration.AddEnvironmentVariables();
 
-                builder.AddCuriosusLogging();
+                builder.AddCuriosusNLog();
                 using var host = builder.Build();
                 host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("test").LogInformation("hello");
 
@@ -131,12 +131,27 @@ namespace Curiosus.Hosting.UnitTests
         }
 
         [Fact]
-        public async Task WritesStartAndStopMessagesToTheLifecycleLoggers()
+        public async Task DoesNotWriteStartAndStopMessages()
         {
             File.WriteAllText(Path.Combine(_contentRoot, "NLog.config"), MemoryConfig);
             var builder = CreateBuilder(("AppName", "my-app"));
 
-            builder.AddCuriosusLogging();
+            builder.AddCuriosusNLog();
+            using var host = builder.Build();
+            await host.StartAsync();
+            await host.StopAsync();
+
+            Logs().Should().NotContain(l => l.StartsWith("app"));
+        }
+
+        [Fact]
+        public async Task AppLifecycleLogging_WritesStartAndStopMessagesToTheLifecycleLoggers()
+        {
+            File.WriteAllText(Path.Combine(_contentRoot, "NLog.config"), MemoryConfig);
+            var builder = CreateBuilder(("AppName", "my-app"));
+
+            builder.AddCuriosusNLog();
+            builder.Services.AddCuriosusAppLifecycleLogging();
             using var host = builder.Build();
             await host.StartAsync();
             await host.StopAsync();
@@ -152,7 +167,7 @@ namespace Curiosus.Hosting.UnitTests
         {
             var builder = CreateBuilder();
 
-            var act = () => builder.AddCuriosusLogging();
+            var act = () => builder.AddCuriosusNLog();
 
             act.Should().Throw<Exception>();
         }
@@ -162,7 +177,7 @@ namespace Curiosus.Hosting.UnitTests
         {
             var builder = CreateBuilder(("Log:LogConfigurationPath", ""));
 
-            var act = () => builder.AddCuriosusLogging();
+            var act = () => builder.AddCuriosusNLog();
 
             act.Should().Throw<Microsoft.Extensions.Options.OptionsValidationException>();
         }
@@ -173,7 +188,7 @@ namespace Curiosus.Hosting.UnitTests
             File.WriteAllText(Path.Combine(_contentRoot, "other.config"), MemoryConfig);
             var builder = CreateBuilder(("Log:LogConfigurationPath", "missing.config"));
 
-            builder.AddCuriosusLogging(o => o.LogConfigurationPath = "other.config");
+            builder.AddCuriosusNLog(o => o.LogConfigurationPath = "other.config");
             using var host = builder.Build();
             host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("test").LogInformation("hello");
 

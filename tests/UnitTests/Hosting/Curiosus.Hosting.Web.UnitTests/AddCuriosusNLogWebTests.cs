@@ -14,7 +14,7 @@ using Xunit;
 namespace Curiosus.Hosting.Web.UnitTests
 {
     [Collection(NLogCollection.Name)]
-    public sealed class AddCuriosusWebLoggingTests : IDisposable
+    public sealed class AddCuriosusNLogWebTests : IDisposable
     {
         private readonly string _contentRoot =
             Path.Combine(Path.GetTempPath(), "curiosus-web-logging-" + Guid.NewGuid().ToString("N"));
@@ -37,7 +37,7 @@ namespace Curiosus.Hosting.Web.UnitTests
                 """);
             var builder = WebApplication.CreateBuilder(new WebApplicationOptions { ContentRootPath = _contentRoot });
 
-            builder.AddCuriosusLogging(configureNLogExtensions: extensions => extensions.RegisterNLogWeb());
+            builder.AddCuriosusNLog(configureNLogExtensions: extensions => extensions.RegisterNLogWeb());
             using var app = builder.Build();
             app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("test").LogInformation("hello");
 

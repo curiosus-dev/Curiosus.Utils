@@ -5,7 +5,7 @@ namespace Curiosus.Hosting
     /// <summary>
     /// Logging options, bound from the <c>Log</c> section.
     /// </summary>
-    public class CuriosusLoggingOptions
+    public class CuriosusNLogOptions
     {
         /// <summary>
         /// Name of the configuration section the options are bound from.

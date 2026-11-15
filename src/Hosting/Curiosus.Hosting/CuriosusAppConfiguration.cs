@@ -14,7 +14,7 @@ namespace Curiosus.Hosting
         public CultureOptions Culture { get; set; } = new CultureOptions();
         
         /// <inheritdoc />
-        public CuriosusLoggingOptions Log { get; set; } = new CuriosusLoggingOptions();
+        public CuriosusNLogOptions Log { get; set; } = new CuriosusNLogOptions();
 
         /// <inheritdoc />
         public virtual IReadOnlyCollection<ConfigurationValidationError> Validate(string? prefix = null)

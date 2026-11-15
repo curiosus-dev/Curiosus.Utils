@@ -66,7 +66,7 @@ namespace Curiosus.Hosting
             ApplicationHelper.SetDefaultCulture(configuration.Culture);
 
             // configure logs
-            CuriosusLogging.LoadConfiguration(
+            CuriosusNLog.LoadConfiguration(
                 configuration.Log,
                 configuration.AppName,
                 Directory.GetCurrentDirectory(),

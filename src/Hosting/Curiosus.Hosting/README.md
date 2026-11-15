@@ -61,9 +61,8 @@ Other helpers:
 - `CuriosusWatchdog` — base `BackgroundService` that calls `ProcessAsync` periodically and survives exceptions.
 - `AddThreadPoolTuning(ThreadPoolOptions)` — sets minimum thread pool size, logs its state and can auto-tune it.
 - `AddTempDirCleaner(TempFileOptions)` — hosted service that deletes stale temp files.
-- `builder.AddCuriosusLogging()` — NLog from the `Log` section: sets `${var:outputdir}` and `${var:appname}`, reads
-  `${configsetting:item=Section.Key}` from the app configuration, and logs `{AppName} is started` and `{AppName} is stopped` to
-  `appStartEmailLog` / `appStopEmailLog`.
+- `builder.AddCuriosusNLog()` — NLog from the `Log` section: sets `${var:outputdir}` and `${var:appname}` and reads
+  `${configsetting:item=Section.Key}` from the app configuration. The app calls it itself, so it can drop NLog later.
 
 ## See also
 

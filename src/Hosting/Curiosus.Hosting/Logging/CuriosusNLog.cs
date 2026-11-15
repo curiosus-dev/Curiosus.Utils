@@ -7,18 +7,17 @@ using NLog.Extensions.Logging;
 
 namespace Curiosus.Hosting
 {
-    internal static class CuriosusLogging
+    internal static class CuriosusNLog
     {
         public const string OutputDirectoryVariable = "outputdir";
         public const string AppNameVariable = "appname";
-        public const string AppNameConfigurationKey = "AppName";
 
         /// <summary>
         /// Loads the NLog configuration file and sets the <c>outputdir</c> and <c>appname</c> variables.
         /// Variables that the file doesn't declare are added, so the file is free to ignore them.
         /// </summary>
         public static void LoadConfiguration(
-            CuriosusLoggingOptions options,
+            CuriosusNLogOptions options,
             string appName,
             string basePath,
             IConfiguration configuration,
