@@ -1,5 +1,8 @@
 ﻿using System.Net;
 using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Curiosus.Configuration;
 using Curiosus.Tools;
 using Microsoft.Extensions.Logging;
@@ -15,7 +18,7 @@ public class IqsmsSender : IIqsmsSender
     /// </summary>
     public const string HttpClientName = "Curiosus.SMS.Iqsms";
 
-    private const string SendUrl = "https://api.iqsms.ru/messages/v2/send";
+    private const string SendUrl = "https://api.iqsms.ru/messages/v2/send.json";
 
     private readonly ILogger<IqsmsSender> _logger;
     private readonly IqsmsOptions         _options;
@@ -74,104 +77,101 @@ public class IqsmsSender : IIqsmsSender
                 _   => phoneNumber,
             };
         }
-        
-        var query = new List<KeyValuePair<string, string>>
+
+        var maskedPhone = phoneNumber.MaskForLog();
+
+        // credentials, phone and text go in the JSON body: proxies, gateways and access logs record URLs
+        var request = new IqsmsSendRequest(
+            login,
+            password,
+            [new IqsmsSendMessage(ClientId: "1", Phone: phoneNumber, Text: message, Sender: String.IsNullOrWhiteSpace(senderName) ? null : senderName)]);
+
+        _logger.LogInformation("Sending SMS to {PhoneNumber}", maskedPhone);
+
+        var response = await ExecuteAsync(request, cancellationToken);
+        var content = response.Content ?? "empty content";
+
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+            return Fail(SmsError.Auth, "Authorization failed", content, maskedPhone);
+
+        if (response.ErrorMessage != null)
+            return Fail(SmsError.Communication, response.ErrorMessage, content, maskedPhone);
+
+        IqsmsSendResponse? parsed;
+        try
         {
-            new("login", login),
-            new("password", password),
-            new("phone", phoneNumber),
-            new("text", message)
-        };
-
-        if(!String.IsNullOrWhiteSpace(senderName))
-            query.Add(new("sender", senderName));
-
-        _logger.LogInformation($"Отправляем sms на номер {phoneNumber}...");
-
-        // execute
-        var response = await ExecuteAsync(SendUrl + "?" + ToQueryString(query), cancellationToken);
-        
-        // HTTP code
-        switch (response.StatusCode)
+            parsed = JsonSerializer.Deserialize<IqsmsSendResponse>(content, JsonOptions);
+        }
+        catch (JsonException)
         {
-            case HttpStatusCode.OK:
-                break;
-            
-            case HttpStatusCode.Unauthorized:
-                _logger.LogWarning($"Ошибка при отправке sms на номер {phoneNumber} (error = \"Ошибка авторизации\", Content = \"{response.Content}\")");
-                return Response.Failed(
-                    new Error((int)SmsError.Auth, "Ошибка авторизации"),
-                    new SmsSentResult(null, null, response.Content      ?? "empty content"));
-            
-            default:
-                _logger.LogWarning($"Ошибка при отправке sms на номер {phoneNumber} (error = \"{response.ErrorMessage}\", Content = \"{response.Content}\")");
-                return Response.Failed(
-                    new Error((int)SmsError.Communication, response.ErrorMessage ?? "empty error message"),
-                    new SmsSentResult(null, null, response.Content               ?? "empty content"));
+            parsed = null;
         }
 
-        // unknown content
-        var content = response.Content?.Split(";");
-        if (content == null || content.Length < 1)
-        {
-            _logger.LogWarning($"Ошибка при отправке sms на номер {phoneNumber} (error = \"Неожиданый контент в ответе\", Content = \"{response.Content}\")");
+        if (parsed == null)
+            return Fail(SmsError.Unknown, "Unexpected response content", content, maskedPhone);
 
-            return Response.Failed(
-                new Error((int)SmsError.Unknown, "Неожиданый контент в ответе"),
-                new SmsSentResult(null, null, response.Content ?? "empty content"));
+        if (!String.Equals(parsed.Status, "ok", StringComparison.OrdinalIgnoreCase))
+        {
+            var description = parsed.Description ?? parsed.Status ?? "error";
+            var error = description.Contains("auth", StringComparison.OrdinalIgnoreCase) ? SmsError.Auth : SmsError.Unknown;
+            return Fail(error, description, content, maskedPhone);
         }
 
-        // bad request
-        var resultText = content[0].Trim().ToLower();
-        if (resultText != "accepted")
+        var messageStatus = parsed.Messages?.FirstOrDefault()?.Status?.Trim();
+        if (!String.Equals(messageStatus, "accepted", StringComparison.OrdinalIgnoreCase))
         {
-            _logger.LogWarning($"Ошибка при отправке sms на номер {phoneNumber} (Сервер вернул: \"{resultText}\", Content = \"{response.Content}\")");
-
-            string? errorMessage = null;
-            if (content.Length > 1)
-                errorMessage = content[1];
-
-            switch (errorMessage?.Trim().ToLower())
+            var error = messageStatus?.ToLowerInvariant() switch
             {
-                case "not enough balance":
-                    return Response.Failed(new Error((int)SmsError.NoMoney, response.Content!), new SmsSentResult(null, null, response.Content!));
-                
-                case "invalid mobile phone":
-                    return Response.Failed(new Error((int)SmsError.DeliveryError, response.Content!), new SmsSentResult(null, null, response.Content!));
-
-                default:
-                    return Response.Failed(new Error((int)SmsError.Unknown, response.Content!), new SmsSentResult(null, null, response.Content!));
-            }
+                "not enough balance" or "not enough credits" => SmsError.NoMoney,
+                "invalid mobile phone" => SmsError.DeliveryError,
+                _ => SmsError.Unknown,
+            };
+            return Fail(error, messageStatus ?? "no message status", content, maskedPhone);
         }
-        
-        // success
-        _logger.LogInformation($"Успешно отправили sms на номер {phoneNumber}. Ответ сервера: \"{response.Content}\"");
 
-        var result = new SmsSentResult(null, null, response.Content!);
-        return Response.Successful(result);
+        _logger.LogInformation("SMS to {PhoneNumber} was accepted", maskedPhone);
+        return Response.Successful(new SmsSentResult(null, null, content));
     }
+
+    private Response<SmsSentResult> Fail(SmsError error, string description, string content, string maskedPhone)
+    {
+        _logger.LogWarning(
+            "Sending SMS to {PhoneNumber} failed: {Error} ({Description})", maskedPhone, error, description);
+        return Response.Failed(new Error((int)error, description), new SmsSentResult(null, null, content));
+    }
+
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    };
+
+    private sealed record IqsmsSendRequest(string Login, string Password, IReadOnlyList<IqsmsSendMessage> Messages);
+
+    private sealed record IqsmsSendMessage(string ClientId, string Phone, string Text, string? Sender);
+
+    private sealed record IqsmsSendResponse(string? Status, string? Description, IReadOnlyList<IqsmsMessageStatus>? Messages);
+
+    private sealed record IqsmsMessageStatus(string? ClientId, string? SmscId, string? Status);
 
     private sealed record IqsmsHttpResponse(HttpStatusCode StatusCode, string? Content, string? ErrorMessage);
 
-    private async Task<IqsmsHttpResponse> ExecuteAsync(string requestUri, CancellationToken cancellationToken)
+    private async Task<IqsmsHttpResponse> ExecuteAsync(IqsmsSendRequest request, CancellationToken cancellationToken)
     {
         var httpClient = _httpClientFactory.CreateClient(HttpClientName);
         try
         {
-            using var response = await httpClient.GetAsync(requestUri, cancellationToken);
-            var content = await response.Content.ReadAsStringOrUtf8Async(cancellationToken);
+            using var content = JsonContent.Create(request, options: JsonOptions);
+            using var response = await httpClient.PostAsync(SendUrl, content, cancellationToken);
+            var body = await response.Content.ReadAsStringOrUtf8Async(cancellationToken);
             var errorMessage = response.IsSuccessStatusCode
                 ? null
                 : $"Request failed with status code {(int)response.StatusCode} ({response.ReasonPhrase})";
 
-            return new IqsmsHttpResponse(response.StatusCode, content, errorMessage);
+            return new IqsmsHttpResponse(response.StatusCode, body, errorMessage);
         }
         catch (Exception e) when (HttpFailure.IsCommunicationFailure(e, cancellationToken))
         {
             return new IqsmsHttpResponse(0, null, e.Message);
         }
     }
-
-    private static string ToQueryString(IEnumerable<KeyValuePair<string, string>> parameters) =>
-        String.Join("&", parameters.Select(p => $"{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}"));
 }

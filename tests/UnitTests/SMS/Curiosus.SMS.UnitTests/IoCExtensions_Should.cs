@@ -36,7 +36,8 @@ namespace Curiosus.SMS.UnitTests
         public async Task AddIqsmsSender_SendsThroughNamedHttpClient()
         {
             // arrange
-            var handler = new FakeHttpMessageHandler().Respond(HttpStatusCode.OK, "accepted;A1", "text/plain");
+            var handler = new FakeHttpMessageHandler().Respond(
+                HttpStatusCode.OK, "{\"status\":\"ok\",\"messages\":[{\"clientId\":\"1\",\"status\":\"accepted\"}]}");
             var services = new ServiceCollection().AddLogging();
             services.AddIqsmsSender(new IqsmsOptions { Login = "login", Password = "secret" });
             services.AddHttpClient(IqsmsSender.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => handler);

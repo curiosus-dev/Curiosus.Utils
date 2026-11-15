@@ -10,6 +10,20 @@ namespace Curiosus.Tools
     public static class PhoneHelper
     {
         /// <summary>
+        /// Masks a phone number for logs, keeping the first two and the last four characters:
+        /// <c>+79001234567</c> → <c>+7******4567</c>. Numbers shorter than seven characters keep only the last two.
+        /// </summary>
+        public static string MaskForLog(this string? phone)
+        {
+            if (String.IsNullOrEmpty(phone)) return String.Empty;
+
+            if (phone.Length < 7)
+                return new string('*', phone.Length - Math.Min(2, phone.Length)) + phone.Substring(Math.Max(0, phone.Length - 2));
+
+            return phone.Substring(0, 2) + new string('*', phone.Length - 6) + phone.Substring(phone.Length - 4);
+        }
+
+        /// <summary>
         /// Removes all non-numeric characters.
         /// </summary>
         public static string CleanupPhone(this string? phone)
