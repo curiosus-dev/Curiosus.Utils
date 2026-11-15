@@ -46,8 +46,9 @@ What else is inside:
   `ConfigureCookiesForOldBrowsers()` (SameSite fixes).
 - **MVC** — `MVCBaseController` (error views, AJAX responses, redirects), `SiteError`,
   `ModelStateExtensions.AddModelErrorIf`, `Page<T>`/`Paginator`, `InvariantDecimalTagHelper`.
-- **Extensions** — `HttpContext`/`HttpRequest` (`IsAjaxRequest`, `GetAbsoluteUrl`, ...), `ISession` JSON objects,
-  `HtmlSanitizerHelper`.
+- **Extensions** — `HttpContext`/`HttpRequest` (`IsAjaxRequest`, `GetAbsoluteUrl`, ...), `ISession` JSON objects.
+- **HTML sanitizer** — `AddCuriosusHtmlSanitizer()` registers `Ganss.Xss.IHtmlSanitizer` for user rich text rendered
+  with `Html.Raw` (no `id`/`class`, `audio`/`video`, `mailto:`/`tel:` links); render its output as is, never decoded.
 
 `TrimStringNewtonsoftConverter` is obsolete and will be removed with the `Newtonsoft.Json` dependency.
 
