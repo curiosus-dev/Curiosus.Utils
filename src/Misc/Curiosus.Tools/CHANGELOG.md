@@ -4,6 +4,7 @@
 
 ### Added
 
+- `PhoneHelper.MaskForLog` masks phone numbers for logs (`+79001234567` → `+7******4567`). ([#84](https://github.com/curiosus-dev/Curiosus.Utils/issues/84))
 - `PerformanceMeasurer` (registered with `services.AddCuriosusPerformanceMeasurer()`) and `MeasureScope`:
   `using var scope = measurer.Measure("Import");` logs `{MeasurerName} -> {MeasurerSpentTime} ms` to the `performance`
   logger, as before, with the elapsed time as whole milliseconds; `scope.ReplaceName(...)` renames it inside the block

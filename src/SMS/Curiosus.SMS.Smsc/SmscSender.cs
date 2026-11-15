@@ -82,7 +82,7 @@ namespace Curiosus.SMS.Smsc
             // without it SMSC reads the message and writes the response in windows-1251
             form.Add(new("charset", "utf-8"));
 
-            var maskedPhone = PhoneNumberMask.Mask(phoneNumber);
+            var maskedPhone = phoneNumber.MaskForLog();
             _logger.LogInformation("Отправляем sms на номер {PhoneNumber}...", maskedPhone);
 
             // execute

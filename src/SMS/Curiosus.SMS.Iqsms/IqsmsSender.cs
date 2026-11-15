@@ -78,7 +78,7 @@ public class IqsmsSender : IIqsmsSender
             };
         }
 
-        var maskedPhone = PhoneNumberMask.Mask(phoneNumber);
+        var maskedPhone = phoneNumber.MaskForLog();
 
         // credentials, phone and text go in the JSON body: proxies, gateways and access logs record URLs
         var request = new IqsmsSendRequest(

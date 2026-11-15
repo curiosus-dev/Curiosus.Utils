@@ -1,11 +1,5 @@
 # Changelog
 
-## [Unreleased]
-
-### Added
-
-- `PhoneNumberMask.Mask` masks phone numbers for logs (`+79001234567` → `+7******4567`). ([#84](https://github.com/curiosus-dev/Curiosus.Utils/issues/84))
-
 ## [2.0.0] - 2026-09-27
 
 ### Changed
