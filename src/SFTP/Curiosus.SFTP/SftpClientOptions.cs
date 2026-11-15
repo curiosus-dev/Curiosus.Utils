@@ -56,6 +56,19 @@ namespace Curiosus.SFTP
         /// </summary>
         public bool CheckOnStart { get; set; } = true;
 
+        /// <summary>
+        /// SHA-256 fingerprints of the server host key as printed by <c>ssh-keygen -l</c> (the <c>SHA256:</c> prefix is
+        /// optional). Get them with <c>ssh-keyscan -p &lt;port&gt; &lt;host&gt; | ssh-keygen -lf -</c>; list several to
+        /// rotate keys or accept several key types. Required unless <see cref="AllowAnyHostKey"/> is set.
+        /// </summary>
+        public IReadOnlyList<string> HostKeyFingerprintsSha256 { get; set; } = [];
+
+        /// <summary>
+        /// Accepts any server host key: local development and tests only, anyone on the network path could impersonate
+        /// the server.
+        /// </summary>
+        public bool AllowAnyHostKey { get; set; }
+
         /// <inheritdoc cref="IValidatableOptions" />
         public virtual IReadOnlyCollection<ConfigurationValidationError> Validate(string? prefix = null)
         {
@@ -67,6 +80,23 @@ namespace Curiosus.SFTP
             errors.AddErrorIf(String.IsNullOrWhiteSpace(SshPassword) && String.IsNullOrWhiteSpace(SshPrivateKeyPath), "No auth method", $"specify {nameof(SshPassword)} or {nameof(SshPrivateKeyPath)}");
             errors.AddErrorIf(RetryCount < 0, nameof(RetryCount), ShouldBeGreaterOrEqualZeroErrorMessage);
             errors.AddErrorIf(RetryTimeoutSec < 0, nameof(RetryTimeoutSec), ShouldBeGreaterOrEqualZeroErrorMessage);
+
+            var fingerprints = HostKeyFingerprintsSha256 ?? [];
+            errors.AddErrorIf(
+                fingerprints.Count == 0 && !AllowAnyHostKey,
+                nameof(HostKeyFingerprintsSha256),
+                "specify the SHA-256 fingerprints of the server host key (ssh-keyscan -p <port> <host> | ssh-keygen -lf -)");
+            errors.AddErrorIf(
+                fingerprints.Count > 0 && AllowAnyHostKey,
+                nameof(AllowAnyHostKey),
+                $"can't be set together with {nameof(HostKeyFingerprintsSha256)}");
+            for (var i = 0; i < fingerprints.Count; i++)
+            {
+                errors.AddErrorIf(
+                    !SftpHostKeyFingerprint.IsValid(fingerprints[i]),
+                    $"{nameof(HostKeyFingerprintsSha256)}:{i}",
+                    "is not a SHA-256 fingerprint (base64 of 32 bytes, as printed by ssh-keygen -l)");
+            }
 
             return errors;
         }

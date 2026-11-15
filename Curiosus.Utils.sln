@@ -202,12 +202,24 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Curiosus.DateTime.DbSync.In
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Curiosus.DateTime.DbSync.LegacyTimestamp.IntegrationTests", "tests\IntegrationTests\Misc\Curiosus.DateTime.DbSync.LegacyTimestamp.IntegrationTests\Curiosus.DateTime.DbSync.LegacyTimestamp.IntegrationTests.csproj", "{2ED71313-1DD2-4119-B149-E67A86BB9BAC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Curiosus.SFTP.UnitTests", "tests\UnitTests\SFTP\Curiosus.SFTP.UnitTests\Curiosus.SFTP.UnitTests.csproj", "{CEE8E890-CFD6-4CB5-98E5-88F1ED5022A5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Curiosus.SFTP.IntegrationTests", "tests\IntegrationTests\SFTP\Curiosus.SFTP.IntegrationTests\Curiosus.SFTP.IntegrationTests.csproj", "{01FD9B0F-C027-4668-88DC-742ABDC4C785}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{01FD9B0F-C027-4668-88DC-742ABDC4C785}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{01FD9B0F-C027-4668-88DC-742ABDC4C785}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{01FD9B0F-C027-4668-88DC-742ABDC4C785}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{01FD9B0F-C027-4668-88DC-742ABDC4C785}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CEE8E890-CFD6-4CB5-98E5-88F1ED5022A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CEE8E890-CFD6-4CB5-98E5-88F1ED5022A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CEE8E890-CFD6-4CB5-98E5-88F1ED5022A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CEE8E890-CFD6-4CB5-98E5-88F1ED5022A5}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9C3EFD51-4681-4CBC-8CB1-0DD69FA9899A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9C3EFD51-4681-4CBC-8CB1-0DD69FA9899A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C3EFD51-4681-4CBC-8CB1-0DD69FA9899A}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -461,6 +473,8 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{01FD9B0F-C027-4668-88DC-742ABDC4C785} = {A5305CE8-201A-4D2D-85BF-635766E1BCD3}
+		{CEE8E890-CFD6-4CB5-98E5-88F1ED5022A5} = {55CC9AE1-6978-4ECB-9A0A-0DCE1B66D492}
 		{85F432A5-B886-8333-AB7B-7C1DDBFCD444} = {55CC9AE1-6978-4ECB-9A0A-0DCE1B66D492}
 		{0281620E-9D36-4956-93B4-B632584E1F10} = {85F432A5-B886-8333-AB7B-7C1DDBFCD444}
 		{3C7E5A10-6B1D-4E3A-9F52-8D41B7C2A6E1} = {85F432A5-B886-8333-AB7B-7C1DDBFCD444}

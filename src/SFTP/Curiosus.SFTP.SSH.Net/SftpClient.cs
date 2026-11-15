@@ -24,6 +24,9 @@ namespace Curiosus.SFTP.SSH.Net
         private readonly ITempFileStreamFactory _tempFileStreamFactory;
         private readonly ILogger<SftpClient> _logger;
 
+        private readonly SftpClientOptions _options;
+        private string? _rejectedFingerprint;
+
         private readonly AsyncPolicy _retryAsyncPolicy;
         private readonly Policy _retryPolicy;
         
@@ -39,8 +42,7 @@ namespace Curiosus.SFTP.SSH.Net
                 throw new ArgumentNullException(nameof(loggerFactory));
             _logger = loggerFactory.CreateLogger<SftpClient>();
 
-            if (options == null)
-                throw new ArgumentNullException(nameof(options));
+            _options = options ?? throw new ArgumentNullException(nameof(options));
             var timeout = TimeSpan.FromSeconds(options.RetryTimeoutSec);
 
             var policyBase = Policy
@@ -78,13 +80,62 @@ namespace Curiosus.SFTP.SSH.Net
                 authenticationMethods: authMethods);
 
             _sftpClient = new Renci.SshNet.SftpClient(connectionInfo);
+            _sftpClient.HostKeyReceived += OnHostKeyReceived;
         }
 
         /// <inheritdoc />
         public void CheckConnection()
         {
-            _sftpClient.Connect();
+            Connect();
             _sftpClient.Disconnect();
+        }
+
+        /// <summary>
+        /// Whether the presented fingerprint (unpadded base64, as SSH.NET reports it) is one of the configured ones.
+        /// </summary>
+        internal static bool IsTrusted(SftpClientOptions options, string fingerprintSha256)
+        {
+            if (options.AllowAnyHostKey) return true;
+
+            var presented = SftpHostKeyFingerprint.Normalize(fingerprintSha256);
+            return (options.HostKeyFingerprintsSha256 ?? [])
+                .Any(f => String.Equals(SftpHostKeyFingerprint.Normalize(f), presented, StringComparison.Ordinal));
+        }
+
+        private void OnHostKeyReceived(object? sender, HostKeyEventArgs e)
+        {
+            if (_options.AllowAnyHostKey)
+            {
+                _logger.LogWarning(
+                    "SFTP host key of {Host}:{Port} is accepted without verification (AllowAnyHostKey): SHA256:{Fingerprint}",
+                    _options.SshServer, _options.SshPort, e.FingerPrintSHA256);
+                e.CanTrust = true;
+                return;
+            }
+
+            e.CanTrust = IsTrusted(_options, e.FingerPrintSHA256);
+            if (!e.CanTrust)
+            {
+                _rejectedFingerprint = e.FingerPrintSHA256;
+                _logger.LogError(
+                    "SFTP host key for {Host}:{Port} rejected: SHA256:{Fingerprint}",
+                    _options.SshServer, _options.SshPort, e.FingerPrintSHA256);
+            }
+        }
+
+        // a rejected host key surfaces as an SshConnectionException, which the retry policy would retry: turn it into
+        // an exception the policy doesn't handle
+        private void Connect()
+        {
+            _rejectedFingerprint = null;
+            try
+            {
+                _sftpClient.Connect();
+            }
+            catch (SshConnectionException e) when (_rejectedFingerprint != null)
+            {
+                throw new SftpHostKeyVerificationException(_options.SshServer, _options.SshPort, _rejectedFingerprint, e);
+            }
         }
 
         /// <inheritdoc />
@@ -350,7 +401,7 @@ namespace Curiosus.SFTP.SSH.Net
         {
             if (!_sftpClient.IsConnected)
             {
-                _sftpClient.Connect();
+                Connect();
             }
         }
         
