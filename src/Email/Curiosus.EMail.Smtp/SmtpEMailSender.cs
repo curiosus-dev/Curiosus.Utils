@@ -26,6 +26,13 @@ namespace Curiosus.EMail.Smtp
             _emailOptions.AssertValid();
             
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+            if (_emailOptions.AllowInvalidServerCertificate)
+            {
+                _logger.LogWarning(
+                    "SMTP server certificates are not validated (AllowInvalidServerCertificate) for {SmtpServer}: use it only for a development relay",
+                    _emailOptions.SmtpServer);
+            }
         }
 
         /// <inheritdoc />

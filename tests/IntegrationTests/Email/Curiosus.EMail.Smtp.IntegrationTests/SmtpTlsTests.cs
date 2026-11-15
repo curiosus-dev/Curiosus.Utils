@@ -58,6 +58,21 @@ namespace Curiosus.EMail.Smtp.IntegrationTests
         [Fact]
         public async Task UntrustedCertificate_IsAcceptedWithTheOptIn()
         {
+            // the opt-in fails validation in Production, which is the default without DOTNET_ENVIRONMENT
+            var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
+            Environment.SetEnvironmentVariable("DOTNET_ENVIRONMENT", "Development");
+            try
+            {
+                await SendWithOptInAsync();
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("DOTNET_ENVIRONMENT", environment);
+            }
+        }
+
+        private async Task SendWithOptInAsync()
+        {
             var response = await CreateSender(allowInvalidCertificate: true)
                 .SendAsync("user@example.com", "subject", "body");
 

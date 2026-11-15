@@ -26,7 +26,7 @@ Smtp:
   ReplyTo: support@example.com   # optional
   IgnoreIncorrectExtraParamsType: false
   Security: StartTls             # default: SslOnConnect on port 465, StartTls otherwise; None only for a local relay
-  AllowInvalidServerCertificate: false  # true only for a development relay; the host doesn't start with it in Production
+  AllowInvalidServerCertificate: false  # true only for a development relay; fails validation in Production
 ```
 
 ```csharp

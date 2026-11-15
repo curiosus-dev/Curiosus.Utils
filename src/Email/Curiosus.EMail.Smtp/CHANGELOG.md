@@ -14,7 +14,8 @@
 - **Breaking:** the connection uses `SslOnConnect` on port 465 and `StartTls` otherwise, failing when the server doesn't
   offer it, and MailKit validates the certificate chain, the host name and revocation. New options `Security`
   (`StartTls`, `SslOnConnect` or `None` for a local relay; `Auto` and `StartTlsWhenAvailable` fail validation) and
-  `AllowInvalidServerCertificate` (development relays only: the host doesn't start with it in `Production`), also on
+  `AllowInvalidServerCertificate` (development relays only: options validation fails with it in `Production`, taken from
+  `DOTNET_ENVIRONMENT`/`ASPNETCORE_ENVIRONMENT`), also on
   `ISmtpEMailOptions`. See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-email-smtp/3.0). ([#86](https://github.com/curiosus-dev/Curiosus.Utils/issues/86))
 
 ## [2.0.0] - 2026-09-27

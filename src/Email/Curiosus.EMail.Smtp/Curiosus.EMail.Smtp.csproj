@@ -37,7 +37,6 @@
     <ItemGroup>
       <PackageReference Include="MailKit" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
-      <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     </ItemGroup>
 

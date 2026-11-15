@@ -1,19 +1,18 @@
 using System;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+using Curiosus.Configuration;
 using Curiosus.EMail.Smtp;
 using FluentAssertions;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using Xunit;
 
 namespace Curiosus.Emails.UnitTests
 {
+    [Collection(EnvironmentVariablesCollection.Name)]
     public class SmtpSecurity_Should
     {
         private static SmtpEMailOptions Options(Action<SmtpEMailOptions>? change = null)
@@ -51,6 +50,7 @@ namespace Curiosus.Emails.UnitTests
         [Fact]
         public void Validation_RejectsInvalidCertificatesWithoutTls()
         {
+            using var _ = new EnvironmentScope("Development", null);
             Options(o =>
                 {
                     o.Security = SecureSocketOptions.None;
@@ -96,51 +96,75 @@ namespace Curiosus.Emails.UnitTests
                 .Should().BeTrue();
         }
 
-        [Fact]
-        public async Task OptIn_FailsTheStartInProduction()
+        [Theory]
+        [InlineData(null, null)]
+        [InlineData("Production", null)]
+        [InlineData(null, "Production")]
+        public void OptIn_FailsValidationInProduction(string? dotnetEnvironment, string? aspNetCoreEnvironment)
         {
-            using var host = BuildHost(Environments.Production, allowInvalid: true, out _);
+            using var _ = new EnvironmentScope(dotnetEnvironment, aspNetCoreEnvironment);
 
-            var act = () => host.StartAsync();
+            Options(o => o.AllowInvalidServerCertificate = true).Validate()
+                .Should().ContainSingle(e => e.FieldName == "AllowInvalidServerCertificate");
+            var register = () => new ServiceCollection().AddSmtpEMailSender(Options(o => o.AllowInvalidServerCertificate = true));
+            register.Should().Throw<ConfigurationValidationException>();
+        }
 
-            await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("*AllowInvalidServerCertificate*");
+        [Theory]
+        [InlineData("Development", null)]
+        [InlineData(null, "Staging")]
+        [InlineData("Development", "Production")]
+        public void OptIn_IsValidOutsideProduction(string? dotnetEnvironment, string? aspNetCoreEnvironment)
+        {
+            using var _ = new EnvironmentScope(dotnetEnvironment, aspNetCoreEnvironment);
+
+            Options(o => o.AllowInvalidServerCertificate = true).Validate().Should().BeEmpty();
         }
 
         [Fact]
-        public async Task OptIn_WarnsOutsideProduction()
+        public void OptIn_LogsAWarning()
         {
-            using var host = BuildHost(Environments.Development, allowInvalid: true, out var collector);
+            using var _ = new EnvironmentScope("Development", null);
+            var logger = new FakeLogger<SmtpEMailSender>();
 
-            await host.StartAsync();
-            await host.StopAsync();
+            new SmtpEMailSender(Options(o => o.AllowInvalidServerCertificate = true), logger);
 
-            collector.GetSnapshot().Should().ContainSingle(r =>
+            logger.Collector.GetSnapshot().Should().ContainSingle(r =>
                 r.Level == LogLevel.Warning && r.Message.Contains("AllowInvalidServerCertificate"));
         }
 
         [Fact]
-        public async Task DefaultOptions_StartInProduction()
+        public void DefaultOptions_LogNoWarning()
         {
-            using var host = BuildHost(Environments.Production, allowInvalid: false, out var collector);
+            var logger = new FakeLogger<SmtpEMailSender>();
 
-            await host.StartAsync();
-            await host.StopAsync();
+            new SmtpEMailSender(Options(), logger);
 
-            collector.GetSnapshot().Should().NotContain(r => r.Level >= LogLevel.Warning);
+            logger.Collector.Count.Should().Be(0);
         }
 
-        private static IHost BuildHost(string environment, bool allowInvalid, out FakeLogCollector collector)
+        private sealed class EnvironmentScope : IDisposable
         {
-            var logs = new FakeLogCollector();
-            collector = logs;
-            var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
+            private readonly string? _dotnet = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
+            private readonly string? _aspNetCore = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+
+            public EnvironmentScope(string? dotnet, string? aspNetCore)
             {
-                EnvironmentName = environment,
-                DisableDefaults = true,
-            });
-            builder.Logging.AddProvider(new FakeLoggerProvider(logs));
-            builder.Services.AddSmtpEMailSender(Options(o => o.AllowInvalidServerCertificate = allowInvalid));
-            return builder.Build();
+                Environment.SetEnvironmentVariable("DOTNET_ENVIRONMENT", dotnet);
+                Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", aspNetCore);
+            }
+
+            public void Dispose()
+            {
+                Environment.SetEnvironmentVariable("DOTNET_ENVIRONMENT", _dotnet);
+                Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", _aspNetCore);
+            }
         }
+    }
+
+    [CollectionDefinition(Name, DisableParallelization = true)]
+    public sealed class EnvironmentVariablesCollection
+    {
+        public const string Name = "Environment variables";
     }
 }
