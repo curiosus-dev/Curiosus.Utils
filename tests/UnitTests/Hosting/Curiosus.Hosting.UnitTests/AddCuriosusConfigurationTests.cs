@@ -84,19 +84,37 @@ namespace Curiosus.Hosting.UnitTests
         }
 
         [Fact]
-        public void ConfigSwitch_PointsToADirectory()
+        public void RelativeConfigSwitch_IsRelativeToTheCurrentDirectory()
         {
-            _dir.Write("config.yml", "A: base\n");
-            _dir.Write("other/config.yml", "A: other\n");
-
-            var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
+            _dir.Write("config.yml", "A: content-root\n");
+            _dir.Write("cwd/other/config.yml", "A: other\n");
+            var currentDirectory = Directory.GetCurrentDirectory();
+            Directory.SetCurrentDirectory(Path.Combine(_dir.Path, "cwd"));
+            try
             {
-                ContentRootPath = _dir.Path,
-                EnvironmentName = "Production",
-                Args = CuriosusHost.MapShortSwitches(["-c", "other"]),
-            }).AddCuriosusConfiguration();
+                var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
+                {
+                    ContentRootPath = _dir.Path,
+                    EnvironmentName = "Production",
+                    Args = CuriosusHost.MapShortSwitches(["-c", "other"]),
+                }).AddCuriosusConfiguration();
 
-            builder.Configuration["A"].Should().Be("other");
+                builder.Configuration["A"].Should().Be("other");
+            }
+            finally
+            {
+                Directory.SetCurrentDirectory(currentDirectory);
+            }
+        }
+
+        [Fact]
+        public void RelativePathParameter_IsRelativeToTheContentRoot()
+        {
+            _dir.Write("sub/config.yml", "A: sub\n");
+
+            var builder = CreateBuilder("Production").AddCuriosusConfiguration("sub");
+
+            builder.Configuration["A"].Should().Be("sub");
         }
 
         [Fact]
