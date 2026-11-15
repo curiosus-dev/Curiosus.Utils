@@ -80,14 +80,14 @@ namespace Curiosus.EMail.Smtp
 
                 using (var smtpClient = new SmtpClient())
                 {
-                    smtpClient.ServerCertificateValidationCallback = (sender, certificate, chain, errors) => true;
-                    smtpClient.CheckCertificateRevocation = false;
+                    var security = ConfigureClient(smtpClient, _emailOptions);
 
-                    _logger.LogTrace("Connecting to SMTP server (Host={Host}, Port={Port})...", _emailOptions.SmtpServer, _emailOptions.SmtpPort);
+                    _logger.LogTrace("Connecting to SMTP server (Host={Host}, Port={Port}, Security={Security})...",
+                        _emailOptions.SmtpServer, _emailOptions.SmtpPort, security);
                     await smtpClient.ConnectAsync(
                         _emailOptions.SmtpServer,
                         _emailOptions.SmtpPort,
-                        SecureSocketOptions.Auto,
+                        security,
                         cancellationToken);
 
                     _logger.LogTrace("Authenticating to SMTP server (Host={Host}, Port={Port})...", _emailOptions.SmtpServer, _emailOptions.SmtpPort);
@@ -111,6 +111,21 @@ namespace Curiosus.EMail.Smtp
                 //todo analyze exceptions and return more specified EmailError
                 return Response.Failed(new Error((int) EmailError.Unknown, e.Message));
             }
+        }
+
+        /// <summary>
+        /// Applies the TLS options to the client: MailKit validates the certificate chain, the host name and revocation unless
+        /// <see cref="ISmtpEMailOptions.AllowInvalidServerCertificate"/> is set.
+        /// </summary>
+        /// <returns>How to secure the connection.</returns>
+        internal static SecureSocketOptions ConfigureClient(SmtpClient client, ISmtpEMailOptions options)
+        {
+            if (options.AllowInvalidServerCertificate)
+            {
+                client.ServerCertificateValidationCallback = (_, _, _, _) => true;
+            }
+
+            return options.Security ?? (options.SmtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls);
         }
 
         /// <inheritdoc />

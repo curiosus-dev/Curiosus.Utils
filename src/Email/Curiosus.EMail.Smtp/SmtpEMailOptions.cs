@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Curiosus.Configuration;
+using MailKit.Security;
 
 namespace Curiosus.EMail.Smtp
 {
@@ -31,6 +32,12 @@ namespace Curiosus.EMail.Smtp
         /// Should sender send email if incorrect type of extra params was passed?
         /// </summary>
         public bool IgnoreIncorrectExtraParamsType { get; set; } = false;
+
+        /// <inheritdoc />
+        public SecureSocketOptions? Security { get; set; }
+
+        /// <inheritdoc />
+        public bool AllowInvalidServerCertificate { get; set; }
 
         /// <inheritdoc />
         public virtual IReadOnlyCollection<ConfigurationValidationError> Validate(string? prefix = null)

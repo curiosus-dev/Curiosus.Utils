@@ -2,6 +2,7 @@ using System;
 using Curiosus.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 
 namespace Curiosus.EMail.Smtp
 {
@@ -22,6 +23,7 @@ namespace Curiosus.EMail.Smtp
             
             services.TryAddSingleton(options);
             services.TryAddSingleton<ISmtpEMailSender, SmtpEMailSender>();
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, SmtpSecurityStartupCheck>());
 
             if (useAsDefaultSender)
             {

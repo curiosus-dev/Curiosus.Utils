@@ -1,5 +1,22 @@
 # Changelog
 
+## [Unreleased]
+
+### Security
+
+- Server certificates are validated and TLS is required: the sender accepted any certificate and fell back to plain
+  text when the server didn't advertise STARTTLS, so an attacker on the network path could read the SMTP login, the
+  password and the messages. **Rotate the SMTP passwords** used with earlier versions. See the
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-email-smtp/3.0). ([#86](https://github.com/curiosus-dev/Curiosus.Utils/issues/86))
+
+### Changed
+
+- **Breaking:** the connection uses `SslOnConnect` on port 465 and `StartTls` otherwise, failing when the server doesn't
+  offer it, and MailKit validates the certificate chain, the host name and revocation. New options `Security`
+  (`StartTls`, `SslOnConnect` or `None` for a local relay; `Auto` and `StartTlsWhenAvailable` fail validation) and
+  `AllowInvalidServerCertificate` (development relays only: the host doesn't start with it in `Production`), also on
+  `ISmtpEMailOptions`. See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-email-smtp/3.0). ([#86](https://github.com/curiosus-dev/Curiosus.Utils/issues/86))
+
 ## [2.0.0] - 2026-09-27
 
 ### Changed

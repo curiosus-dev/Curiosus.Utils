@@ -25,6 +25,8 @@ Smtp:
   SenderName: Example            # required
   ReplyTo: support@example.com   # optional
   IgnoreIncorrectExtraParamsType: false
+  Security: StartTls             # default: SslOnConnect on port 465, StartTls otherwise; None only for a local relay
+  AllowInvalidServerCertificate: false  # true only for a development relay; the host doesn't start with it in Production
 ```
 
 ```csharp
@@ -43,12 +45,14 @@ await sender.SendAsync("user@example.com", "Hi", "<p>Hi!</p>", true,
 ```
 
 Pass `useAsDefaultSender: false` to register only `ISmtpEMailSender` when another provider is the default `IEMailSender`.
-Each send opens a new connection with `SecureSocketOptions.Auto` and authenticates with the login and password.
-Note: the sender currently accepts any server TLS certificate (certificate validation and revocation checks are disabled).
+Each send opens a new connection, secures it with TLS (implicit on port 465, STARTTLS otherwise; the connection fails
+when the server doesn't offer it) and authenticates with the login and password. The server certificate is validated:
+chain, host name and revocation. `Auto` and `StartTlsWhenAvailable` are rejected because they fall back to plain text.
 
 ## See also
 
 - [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
+- [Curiosus.EMail.SMTP 3.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-email-smtp/3.0)
 - [Curiosus.EMail](https://www.nuget.org/packages/Curiosus.EMail) — `IEMailSender` abstraction
 - [Curiosus.EMail.Mailgun](https://www.nuget.org/packages/Curiosus.EMail.Mailgun), [Curiosus.EMail.UnisenderGo](https://www.nuget.org/packages/Curiosus.EMail.UnisenderGo) — other providers
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages
