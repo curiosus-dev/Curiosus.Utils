@@ -12,8 +12,10 @@ namespace Curiosus.Tools.Web.DataProtection
         public string? ApplicationName { get; set; }
 
         /// <summary>
-        /// Directory of the key ring (<c>PersistKeysToFileSystem</c>); must exist. Share it between the instances of the
-        /// app. Without it the framework default is used.
+        /// Directory of the key ring (<c>PersistKeysToFileSystem</c>). When set, it must exist: a missing directory fails
+        /// the host start, it is not replaced by the default. When not set, the framework default location is used
+        /// (a user profile folder, or keys in memory only, lost on restart, where there is none, such as a container).
+        /// Share it between the instances of the app.
         /// </summary>
         public string? KeyRingPath { get; set; }
 

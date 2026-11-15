@@ -24,11 +24,18 @@ public sealed class AddCuriosusDataProtectionTests : IDisposable
         Directory.CreateDirectory(_keyRing);
     }
 
-    private static IConfiguration Section(params (string Key, string Value)[] values) =>
+    private static IConfiguration Configuration(params (string Key, string Value)[] values) =>
         new ConfigurationBuilder()
             .AddInMemoryCollection(values.Select(v => new KeyValuePair<string, string?>("DataProtection:" + v.Key, v.Value)))
-            .Build()
-            .GetSection("DataProtection");
+            .Build();
+
+    private static ServiceCollection Services(IConfiguration configuration)
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton(configuration);
+        return services;
+    }
 
     public static TheoryData<string, bool> Orders => new()
     {
@@ -42,10 +49,11 @@ public sealed class AddCuriosusDataProtectionTests : IDisposable
     [MemberData(nameof(Orders))]
     public void Data_IsAlwaysProtected_WhateverTheOrderOfRegistrations(string order, bool withSection)
     {
-        var services = new ServiceCollection().AddLogging();
+        var services = Services(
+            withSection ? Configuration(("ApplicationName", "app"), ("KeyRingPath", _keyRing)) : Configuration());
         if (order == "authentication-before") services.AddAuthentication().AddCookie();
         if (order == "mvc-before") services.AddControllersWithViews();
-        services.AddCuriosusDataProtection(withSection ? Section(("ApplicationName", "app"), ("KeyRingPath", _keyRing)) : Section());
+        services.AddCuriosusDataProtection();
         if (order == "authentication-after") services.AddAuthentication().AddCookie();
 
         using var provider = services.BuildServiceProvider();
@@ -58,6 +66,18 @@ public sealed class AddCuriosusDataProtectionTests : IDisposable
         var tampered = protectedPayload.Substring(0, protectedPayload.Length - 4) + "AAAA";
         var act = () => protector.Unprotect(tampered);
         act.Should().Throw<CryptographicException>();
+    }
+
+    [Fact]
+    public void KeysAreWrittenToTheKeyRingPath()
+    {
+        var services = Services(Configuration(("KeyRingPath", _keyRing)));
+        services.AddCuriosusDataProtection();
+        using var provider = services.BuildServiceProvider();
+
+        provider.GetRequiredService<IDataProtectionProvider>().CreateProtector("tests").Protect("x");
+
+        Directory.GetFiles(_keyRing, "key-*.xml").Should().NotBeEmpty();
     }
 
     [Fact]
@@ -74,10 +94,12 @@ public sealed class AddCuriosusDataProtectionTests : IDisposable
         var act = () => other.GetRequiredService<IDataProtectionProvider>().CreateProtector("tests").Unprotect(payload);
         act.Should().Throw<CryptographicException>();
 
-        ServiceProvider Build(string applicationName) => new ServiceCollection()
-            .AddLogging()
-            .AddCuriosusDataProtection(Section(("ApplicationName", applicationName), ("KeyRingPath", _keyRing)))
-            .Services.BuildServiceProvider();
+        ServiceProvider Build(string applicationName)
+        {
+            var services = Services(Configuration(("ApplicationName", applicationName), ("KeyRingPath", _keyRing)));
+            services.AddCuriosusDataProtection();
+            return services.BuildServiceProvider();
+        }
     }
 
     [Theory]
@@ -89,7 +111,8 @@ public sealed class AddCuriosusDataProtectionTests : IDisposable
         var values = new List<(string, string)>();
         if (keyRing != null) values.Add(("KeyRingPath", Path.Combine(_keyRing, keyRing)));
         if (disableGeneration) values.Add(("DisableAutomaticKeyGeneration", "true"));
-        builder.Services.AddCuriosusDataProtection(Section(values.ToArray()));
+        builder.Configuration.AddConfiguration(Configuration(values.ToArray()));
+        builder.Services.AddCuriosusDataProtection();
 
         using var host = builder.Build();
         var act = () => host.StartAsync();

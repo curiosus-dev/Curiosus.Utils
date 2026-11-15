@@ -44,7 +44,8 @@
   their logger from `ILoggerFactory` with the actual controller as the category (`HomeController`) instead of `main`. Drop the
   logger argument where a subclass calls them. See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools-web/4.0).
   ([#41](https://github.com/curiosus-dev/Curiosus.Utils/issues/41))
-- **Breaking:** `AddCuriosusDataProtection(IConfiguration section)` replaces `AddCuriosusDataProtection(DataProtectionOptions)`
+- **Breaking:** `AddCuriosusDataProtection(string configSectionPath = "DataProtection")` replaces
+  `AddCuriosusDataProtection(DataProtectionOptions)`
   and returns `IDataProtectionBuilder`: always `AddDataProtection()`, with `ApplicationName`, `KeyRingPath` and
   `DisableAutomaticKeyGeneration` of `CuriosusDataProtectionOptions` (validated on start). `DataProtectionOptions`,
   `IsEnabled`, `DisableDataProtection()`, `SecureLessDataProtectionProvider` and `SecureLessDataProtector` are removed,
