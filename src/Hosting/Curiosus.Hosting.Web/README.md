@@ -17,7 +17,7 @@ dotnet add package Curiosus.Hosting.Web
 
 ```csharp
 var builder = CuriosusWebHost.CreateBuilder(args).AddCuriosusDefaults();
-builder.AddCuriosusNLog(configureNLogExtensions: extensions => extensions.RegisterNLogWeb()); // optional, ${aspnet-*}
+builder.AddCuriosusNLog();   // optional; ${aspnet-*} renderers are registered by CreateBuilder
 builder.Services.AddCuriosusOptions<SiteOptions>("Site");
 builder.Services.AddControllersWithViews();
 
@@ -28,8 +28,7 @@ return await CuriosusApp.RunAsync(app);
 ```
 
 Kestrel is configured by ASP.NET Core itself: `Urls` (or `ASPNETCORE_URLS`, `--urls`) or the `Kestrel` section of
-`config.yml`, IIS integration comes with `WebApplication`. The package brings `NLog.Web.AspNetCore` for
-`RegisterNLogWeb()`.
+`config.yml`, IIS integration comes with `WebApplication`. `CreateBuilder` registers the `${aspnet-*}` layout renderers of `NLog.Web.AspNetCore` for `AddCuriosusNLog()`.
 
 ## See also
 

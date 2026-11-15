@@ -22,9 +22,10 @@ namespace Curiosus.Hosting
         /// </summary>
         /// <param name="builder">Application builder.</param>
         /// <param name="configure">Overrides the options bound from the <c>Log</c> section.</param>
-        /// <param name="configureNLogExtensions">Registers more NLog extensions before NLog.config is loaded. A web app
-        /// passes <c>extensions =&gt; extensions.RegisterNLogWeb()</c> (NLog.Web.AspNetCore) to use the
-        /// <c>${aspnet-*}</c> layout renderers.</param>
+        /// <param name="configureNLogExtensions">Registers more NLog extensions before NLog.config is loaded.
+        /// <c>CuriosusWebHost.CreateBuilder</c> of Curiosus.Hosting.Web already registers the <c>${aspnet-*}</c> layout
+        /// renderers; a web app on a plain <c>WebApplication.CreateBuilder</c> passes
+        /// <c>extensions =&gt; extensions.RegisterNLogWeb()</c>.</param>
         /// <returns>Options builder of <see cref="CuriosusNLogOptions"/>.</returns>
         /// <remarks>
         /// The app name is the <c>AppName</c> configuration key, or <see cref="IHostEnvironment.ApplicationName"/>.
@@ -54,7 +55,7 @@ namespace Curiosus.Hosting
 
             builder.Logging.ClearProviders();
             builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
-            // the host disposes the provider on exit, which flushes and shuts NLog down
+            // disposing the host (CuriosusApp.RunAsync does) flushes NLog, so no LogManager.Shutdown() in Program.cs
             builder.Logging.AddNLog(new NLogProviderOptions { ShutdownOnDispose = true });
 
             return builder.Services

@@ -5,7 +5,8 @@
 ### Added
 
 - `CuriosusWebHost.CreateBuilder(args)`: a `WebApplicationBuilder` with the conventions of `CuriosusHost` (`-c` as
-  `--config`, `-v` / `--version`, content root of a service app); chain `AddCuriosusDefaults()` of `Curiosus.Hosting`. ([#42](https://github.com/curiosus-dev/Curiosus.Utils/issues/42))
+  `--config`, `-v` / `--version`, content root of a service app) that also registers the NLog.Web `${aspnet-*}`
+  layout renderers for `AddCuriosusNLog()`; chain `AddCuriosusDefaults()` of `Curiosus.Hosting`. ([#42](https://github.com/curiosus-dev/Curiosus.Utils/issues/42))
 
 ### Removed
 

@@ -1,10 +1,9 @@
 using Curiosus.Hosting;
 using Curiosus.Hosting.Web;
 using Curiosus.Tools.Web.Controllers;
-using NLog.Web;
 
 var builder = CuriosusWebHost.CreateBuilder(args).AddCuriosusDefaults();
-builder.AddCuriosusNLog(configureNLogExtensions: extensions => extensions.RegisterNLogWeb());
+builder.AddCuriosusNLog();
 
 var app = builder.Build();
 

@@ -45,6 +45,31 @@ namespace Curiosus.Hosting.Web.UnitTests
                 .Should().Contain("hello||");
         }
 
+        [Fact]
+        public void CuriosusWebHost_RegistersAspNetLayoutRenderers()
+        {
+            Directory.CreateDirectory(_contentRoot);
+            File.WriteAllText(
+                Path.Combine(_contentRoot, "NLog.config"),
+                """
+                <nlog throwExceptions="true" throwConfigExceptions="true">
+                  <targets>
+                    <target name="mem" type="Memory" layout="${message}|${aspnet-TraceIdentifier}" />
+                  </targets>
+                  <rules>
+                    <logger name="*" minlevel="Trace" writeTo="mem" />
+                  </rules>
+                </nlog>
+                """);
+            var builder = CuriosusWebHost.CreateBuilder(["--contentRoot", _contentRoot]);
+
+            builder.AddCuriosusNLog();
+            using var app = builder.Build();
+            app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("test").LogInformation("hello");
+
+            LogManager.Configuration!.FindTargetByName<MemoryTarget>("mem")!.Logs.Should().Contain("hello|");
+        }
+
         public void Dispose()
         {
             LogManager.Shutdown();

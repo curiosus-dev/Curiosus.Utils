@@ -18,7 +18,7 @@
 - `AddCuriosusNLog` for `IHostApplicationBuilder` and `CuriosusNLogOptions` (the `Log` section): loads NLog.config
   relative to the content root, sets the `outputdir` (absolute path) and `appname` variables, makes `${configsetting}`
   read the app configuration and replaces the logging providers with NLog; `configureNLogExtensions` registers more
-  NLog extensions (`RegisterNLogWeb()` in web apps). Variables that NLog.config doesn't declare are not an error. The
+  NLog extensions. Variables that NLog.config doesn't declare are not an error. The
   app calls it itself, so it can drop NLog later without touching the rest of its setup.
   ([#43](https://github.com/curiosus-dev/Curiosus.Utils/issues/43))
 

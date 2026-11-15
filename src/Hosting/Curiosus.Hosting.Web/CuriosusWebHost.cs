@@ -1,5 +1,7 @@
 using System;
 using Microsoft.AspNetCore.Builder;
+using NLog;
+using NLog.Web;
 
 namespace Curiosus.Hosting.Web
 {
@@ -17,12 +19,17 @@ namespace Curiosus.Hosting.Web
         /// <param name="args">Command line arguments.</param>
         /// <remarks>
         /// <c>-v</c> / <c>--version</c> prints the app version and exits, as in <see cref="CuriosusHost.CreateBuilder"/>.
+        /// The NLog.Web <c>${aspnet-*}</c> layout renderers are registered, so <c>AddCuriosusNLog()</c> needs no
+        /// extra setup in a web app.
         /// <see cref="WebApplicationBuilder"/> reads <c>ASPNETCORE_ENVIRONMENT</c> and <c>DOTNET_ENVIRONMENT</c> itself.
         /// </remarks>
         public static WebApplicationBuilder CreateBuilder(string[] args)
         {
             if (args == null) throw new ArgumentNullException(nameof(args));
             CuriosusHost.ExitIfVersionRequested(args);
+
+            // only makes ${aspnet-*} known to NLog for a later AddCuriosusNLog; NLog stays off unless the app calls it
+            LogManager.Setup().SetupExtensions(extensions => extensions.RegisterNLogWeb());
 
             return WebApplication.CreateBuilder(new WebApplicationOptions
             {
