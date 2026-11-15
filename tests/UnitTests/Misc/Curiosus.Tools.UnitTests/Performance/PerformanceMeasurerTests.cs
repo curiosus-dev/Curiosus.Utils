@@ -40,11 +40,25 @@ public sealed class PerformanceMeasurerTests
     }
 
     [Fact]
-    public void DefaultScope_DisposeDoesNothing()
+    public void ReplaceName_ChangesTheLoggedName()
     {
-        default(MeasureScope).Dispose();
+        using (var scope = _measurer.Measure("Import"))
+        {
+            scope.ReplaceName("Import 42");
+        }
 
-        _collector.Count.Should().Be(0);
+        _collector.LatestRecord.Message.Should().StartWith("Import 42 -> ");
+    }
+
+    [Fact]
+    public void SecondDispose_DoesNotLogAgain()
+    {
+        var scope = _measurer.Measure("Import");
+
+        scope.Dispose();
+        scope.Dispose();
+
+        _collector.Count.Should().Be(1);
     }
 
     [Theory]
