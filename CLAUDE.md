@@ -66,5 +66,17 @@ Curiosus.Configuration (base)
   `x64`/`x86` platforms to every project of the solution.
 - The repository is a GitHub fork of `siisltd/Curiosity.Utils`, so `gh pr create` targets the parent by default:
   pass `--repo curiosus-dev/Curiosus.Utils` (or run `gh repo set-default curiosus-dev/Curiosus.Utils` once).
-- On `net10.0` `BackgroundService.StartAsync` runs `ExecuteAsync` on a background task, so timers it creates may not
-  exist yet when a test advances a `FakeTimeProvider` right after `StartAsync`: advance repeatedly until the loop reacts.
+- On `net10.0` `BackgroundService.StartAsync` runs `ExecuteAsync` on a background task, so a test that advances a
+  `FakeTimeProvider` can run ahead of the loop; fixed steps with short real-time pauses are flaky on CI runners. Advance
+  only after the woken loop has blocked again: see `CountingTimeProvider` and the block counter in
+  `tests/UnitTests/Hosting/Curiosus.Hosting.UnitTests/CuriosusWatchdogTests.cs`.
+- Tests that change process-wide state (environment variables, culture, NLog's `LogManager`, the current directory) go
+  into an xUnit `[Collection]` with `DisableParallelization = true` (`ProcessStateCollection`, `NLogCollection` in the
+  Hosting tests).
+- A package's dependency version in the nupkg is the version of the dependency's first released CHANGELOG section
+  (`[Unreleased]` is skipped). A package that uses an unreleased API of another package here must be released in the
+  same release PR or after it, pre-releases included; otherwise it fails at runtime with `MissingMethodException`.
+- Testcontainers on the arm64 sandbox: `axllent/mailpit` (SMTP with STARTTLS, `MP_SMTP_TLS_CERT=sans:localhost`) and
+  `linuxserver/openssh-server` from Docker Hub (SFTP) run; `atmoz/sftp` is amd64-only.
+- Provider packages (EMail, SMS, SFTP) don't depend on Hosting: environment checks (e.g. "not in Production") are
+  options-validation rules that read `DOTNET_ENVIRONMENT`, then `ASPNETCORE_ENVIRONMENT` (owner's review of #141).
