@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Curiosus.Tools;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Hosting.Systemd;
@@ -9,7 +12,8 @@ namespace Curiosus.Hosting
 {
     /// <summary>
     /// Creates host builders with the Curiosus conventions: environment from <c>DOTNET_ENVIRONMENT</c> or
-    /// <c>ASPNETCORE_ENVIRONMENT</c>, content root of a service app at its binaries, <c>-c</c> as <c>--config</c>.
+    /// <c>ASPNETCORE_ENVIRONMENT</c>, content root of a service app at its binaries, <c>-c</c> as <c>--config</c> and
+    /// <c>-v</c> / <c>--version</c> printing the app version.
     /// </summary>
     public static class CuriosusHost
     {
@@ -23,9 +27,14 @@ namespace Curiosus.Hosting
         /// <see cref="CuriosusHostingExtensions.AddCuriosusDefaults{TBuilder}"/> to it.
         /// </summary>
         /// <param name="args">Command line arguments.</param>
+        /// <remarks>
+        /// With <c>-v</c> / <c>--version</c> it prints the app version and exits the process with code 0, before any
+        /// configuration is read, so it works whatever the app does next.
+        /// </remarks>
         public static HostApplicationBuilder CreateBuilder(string[] args)
         {
             if (args == null) throw new ArgumentNullException(nameof(args));
+            ExitIfVersionRequested(args);
 
             // fallbacks go below DOTNET_ variables and arguments, which the builder adds on top of this configuration
             var configuration = new ConfigurationManager();
@@ -55,6 +64,25 @@ namespace Curiosus.Hosting
         }
 
         /// <summary>
+        /// Prints <c>App version: x.y.z.w</c> (the entry assembly version) and exits the process with code 0 when
+        /// <paramref name="args"/> contain <c>-v</c> or <c>--version</c>.
+        /// </summary>
+        public static void ExitIfVersionRequested(string[] args)
+        {
+            if (TryWriteVersion(args, Console.Out))
+                Environment.Exit(CuriosusExitCodes.Success);
+        }
+
+        internal static bool TryWriteVersion(string[] args, TextWriter output)
+        {
+            if (!args.Any(arg => arg is "-v" or "--version")) return false;
+
+            output.WriteLine($"App version: {ApplicationHelper.GetAssemblyVersion()}");
+            output.Flush();
+            return true;
+        }
+
+        /// <summary>
         /// Returns <see cref="AppContext.BaseDirectory"/> when the app runs as a Windows service or a systemd unit,
         /// whose current directory is not the app directory; <c>null</c> keeps the default (the current directory).
         /// <c>--contentRoot</c> and <c>DOTNET_CONTENTROOT</c> still win.
@@ -65,8 +93,8 @@ namespace Curiosus.Hosting
                 : null;
 
         /// <summary>
-        /// Replaces <c>-c</c> with <c>--config</c>: the command line configuration provider ignores short switches that
-        /// it has no mapping for.
+        /// Replaces <c>-c</c> with <c>--config</c>: the command line configuration provider ignores short switches that it
+        /// has no mapping for.
         /// </summary>
         public static string[] MapShortSwitches(string[] args)
         {

@@ -16,11 +16,13 @@ namespace Curiosus.Hosting.Web
         /// </summary>
         /// <param name="args">Command line arguments.</param>
         /// <remarks>
+        /// <c>-v</c> / <c>--version</c> prints the app version and exits, as in <see cref="CuriosusHost.CreateBuilder"/>.
         /// <see cref="WebApplicationBuilder"/> reads <c>ASPNETCORE_ENVIRONMENT</c> and <c>DOTNET_ENVIRONMENT</c> itself.
         /// </remarks>
         public static WebApplicationBuilder CreateBuilder(string[] args)
         {
             if (args == null) throw new ArgumentNullException(nameof(args));
+            CuriosusHost.ExitIfVersionRequested(args);
 
             return WebApplication.CreateBuilder(new WebApplicationOptions
             {

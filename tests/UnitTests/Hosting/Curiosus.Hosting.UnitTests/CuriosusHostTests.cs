@@ -52,6 +52,28 @@ namespace Curiosus.Hosting.UnitTests
                 .Should().Equal("--config", "a", "--config=b", "--config", "c", "-cx");
         }
 
+        [Theory]
+        [InlineData("-v")]
+        [InlineData("--version")]
+        public void VersionSwitch_WritesTheVersion(string arg)
+        {
+            var output = new System.IO.StringWriter();
+
+            CuriosusHost.TryWriteVersion(["-c", "x", arg], output).Should().BeTrue();
+
+            output.ToString().Should().MatchRegex(@"^App version: \d+\.\d+\.\d+\.\d+");
+        }
+
+        [Fact]
+        public void NoVersionSwitch_WritesNothing()
+        {
+            var output = new System.IO.StringWriter();
+
+            CuriosusHost.TryWriteVersion(["-c", "x", "--verbose"], output).Should().BeFalse();
+
+            output.ToString().Should().BeEmpty();
+        }
+
         public void Dispose()
         {
             Environment.SetEnvironmentVariable("DOTNET_ENVIRONMENT", _dotnetEnvironment);

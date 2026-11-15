@@ -77,6 +77,11 @@ It doesn't touch logging providers: `builder.AddCuriosusNLog()` sets NLog up fro
 failed validation on start), `UnhandledException` (2, also when a `BackgroundService` failed and stopped the host),
 `Cancellation` (3, the app was stopped while starting or while the tool's command ran), or the command's own code.
 
+### Command line
+
+Out of the box: `-c` / `--config <directory or file>`, `-v` / `--version` (prints `App version: x.y.z.w` and exits
+with 0 before anything else runs), `--environment`, `--contentRoot` and `--Section:Key value` to override any setting.
+
 Typed command line options and subcommands: parse them with System.CommandLine and build the host inside the command
 action, see the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting/4.0#command-line-arguments)
 and the [sample tool](https://github.com/curiosus-dev/Curiosus.Utils/blob/main/samples/Curiosus.SMS.Iqsms.Sample/Program.cs).

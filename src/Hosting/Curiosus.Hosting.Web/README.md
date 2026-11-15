@@ -4,7 +4,7 @@
 
 The [Curiosus.Hosting](https://www.nuget.org/packages/Curiosus.Hosting) startup for ASP.NET Core apps:
 `CuriosusWebHost.CreateBuilder(args)` creates a `WebApplicationBuilder` with the same conventions (`-c` / `--config`,
-content root of a service app), and `AddCuriosusDefaults()` adds YAML configuration, culture, app initializers and the
+`-v` / `--version`, content root of a service app), and `AddCuriosusDefaults()` adds YAML configuration, culture, app initializers and the
 rest of the Curiosus defaults.
 
 ## Installation
