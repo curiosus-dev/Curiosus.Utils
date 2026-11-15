@@ -40,7 +40,7 @@ namespace Curiosus.Tools.Web.Controllers
         /// <param name="error">Тип ошибки</param>
         [AllowAnonymous]
         public ActionResult ErrorViewWithCode(
-            [FromServices] ILogger logger,
+            [FromServices] ILogger<MVCBaseController> logger,
             SiteError error)
         {
             return ErrorView(logger, error.ToLocalizedString());
@@ -51,7 +51,7 @@ namespace Curiosus.Tools.Web.Controllers
         /// </summary>
         [AllowAnonymous]
         public ActionResult ErrorViewParams(
-            [FromServices] ILogger logger, 
+            [FromServices] ILogger<MVCBaseController> logger, 
             string fmt, 
             params object[] args)
         {
@@ -66,7 +66,7 @@ namespace Curiosus.Tools.Web.Controllers
         /// <param name="errorText">Текст ошибки</param>
         [AllowAnonymous]
         public ActionResult ErrorView(
-            [FromServices] ILogger logger, 
+            [FromServices] ILogger<MVCBaseController> logger, 
             string? errorText = null)
         {
             var message = String.IsNullOrWhiteSpace(errorText)

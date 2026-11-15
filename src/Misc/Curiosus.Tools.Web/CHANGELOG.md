@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- `RequestLoggingMiddleware` and the error actions of `MVCBaseController` (`ErrorView`, `ErrorViewWithCode`,
+  `ErrorViewParams`) take `ILogger<T>` instead of a non-generic `ILogger`, which Curiosus.Hosting 4.0 no longer
+  registers. Their log entries have the class name as the category instead of `main`; a subclass that calls these
+  methods itself passes an `ILogger<MVCBaseController>`. ([#41](https://github.com/curiosus-dev/Curiosus.Utils/issues/41))
+
 ## [3.0.0] - 2026-10-03
 
 ### Changed

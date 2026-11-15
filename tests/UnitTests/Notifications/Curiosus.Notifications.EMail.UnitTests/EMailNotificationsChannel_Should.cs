@@ -58,9 +58,8 @@ namespace Curiosus.Notifications.EMail.UnitTests
             var services = new ServiceCollection();
             services.AddCuriosusEMailChannel();
 
-            // add mocks
-            services.AddSingleton(Mock.Of<ILogger<EmailNotificationChannel>>());
-            services.AddSingleton(Mock.Of<ILogger>());
+            // only the standard logging: no non-generic ILogger is registered, as with Curiosus.Hosting 4.0
+            services.AddLogging();
             services.AddSingleton(senderMock.Object);
             services.AddSingleton<INotificationBuilder, TestBuilder>();
 
