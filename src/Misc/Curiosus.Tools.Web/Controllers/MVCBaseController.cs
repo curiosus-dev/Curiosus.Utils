@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Curiosus.Tools.Web.Controllers
@@ -19,6 +20,14 @@ namespace Curiosus.Tools.Web.Controllers
     /// </summary>
     public abstract class MVCBaseController : Controller
     {
+        private ILogger? _logger;
+
+        /// <summary>
+        /// Logger with the category of the actual controller (<c>HomeController</c>, not <c>MVCBaseController</c>).
+        /// </summary>
+        protected ILogger Logger =>
+            _logger ??= HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(GetType());
+
         /// <summary>
         /// Редирект по указанному адресу либо на домашнюю страницу
         /// </summary>
@@ -36,38 +45,29 @@ namespace Curiosus.Tools.Web.Controllers
         /// <summary>
         /// Страница с сообщением об ошибке.
         /// </summary>
-        /// <param name="logger"></param>
         /// <param name="error">Тип ошибки</param>
         [AllowAnonymous]
-        public ActionResult ErrorViewWithCode(
-            [FromServices] ILogger<MVCBaseController> logger,
-            SiteError error)
+        public ActionResult ErrorViewWithCode(SiteError error)
         {
-            return ErrorView(logger, error.ToLocalizedString());
+            return ErrorView(error.ToLocalizedString());
         }
         
         /// <summary>
         /// Страница с ошибкой
         /// </summary>
         [AllowAnonymous]
-        public ActionResult ErrorViewParams(
-            [FromServices] ILogger<MVCBaseController> logger, 
-            string fmt, 
-            params object[] args)
+        public ActionResult ErrorViewParams(string fmt, params object[] args)
         {
-            return ErrorView(logger, String.Format(fmt, args));
+            return ErrorView(String.Format(fmt, args));
         }
         
         /// <summary>
         /// Страница с сообщением об ошибке.
         /// Возвращает PartialView если ajax запрос.
         /// </summary>
-        /// <param name="logger"></param>
         /// <param name="errorText">Текст ошибки</param>
         [AllowAnonymous]
-        public ActionResult ErrorView(
-            [FromServices] ILogger<MVCBaseController> logger, 
-            string? errorText = null)
+        public ActionResult ErrorView(string? errorText = null)
         {
             var message = String.IsNullOrWhiteSpace(errorText)
                 ? LNG.UnexpectedError
@@ -82,21 +82,21 @@ namespace Curiosus.Tools.Web.Controllers
                 {
                     case BadHttpRequestException _:
                         message = ex.Message;
-                        logger.LogWarning(ex, $"Connection was closed by the client while sending response: {ex.Message}.");
+                        Logger.LogWarning(ex, "Connection was closed by the client while sending response: {Error}", ex.Message);
                         break;
                     case TaskCanceledException _:
                     case OperationCanceledException _:
                         message = ex.Message;
-                        logger.LogWarning(ex, "Request was canceled by user");
+                        Logger.LogWarning(ex, "Request was canceled by user");
                         break;
                     default:
-                        logger.LogError(ex, $"Unhandled error: {ex.Message}");
+                        Logger.LogError(ex, "Unhandled error: {Error}", ex.Message);
                         break;
                 }
             }
             else
             {
-                logger.LogWarning(message);
+                Logger.LogWarning("{ErrorText}", message);
             }
 
             ViewBag.ErrorText = message;
@@ -114,6 +114,27 @@ namespace Curiosus.Tools.Web.Controllers
             return View(errorViewName);
         }
         
+        /// <summary>
+        /// Former overload with an injected logger; the controller logs through <see cref="Logger"/> now.
+        /// </summary>
+        [NonAction]
+        [Obsolete("The logger is not used any more: call ErrorViewWithCode(error).")]
+        public ActionResult ErrorViewWithCode(ILogger logger, SiteError error) => ErrorViewWithCode(error);
+
+        /// <summary>
+        /// Former overload with an injected logger; the controller logs through <see cref="Logger"/> now.
+        /// </summary>
+        [NonAction]
+        [Obsolete("The logger is not used any more: call ErrorViewParams(fmt, args).")]
+        public ActionResult ErrorViewParams(ILogger logger, string fmt, params object[] args) => ErrorViewParams(fmt, args);
+
+        /// <summary>
+        /// Former overload with an injected logger; the controller logs through <see cref="Logger"/> now.
+        /// </summary>
+        [NonAction]
+        [Obsolete("The logger is not used any more: call ErrorView(errorText).")]
+        public ActionResult ErrorView(ILogger logger, string? errorText = null) => ErrorView(errorText);
+
         public ActionResult AjaxGridErrorResponse(SiteError error)
         {
             return AjaxGridErrorResponse(null, error.ToLocalizedString());
