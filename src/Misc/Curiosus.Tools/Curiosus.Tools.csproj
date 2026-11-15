@@ -39,7 +39,4 @@
       <ProjectReference Include="..\..\Configuration\Curiosus.Configuration\Curiosus.Configuration.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <InternalsVisibleTo Include="Curiosus.Tools.UnitTests" />
-    </ItemGroup>
 </Project>

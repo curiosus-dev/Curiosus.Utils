@@ -48,8 +48,7 @@ Main areas:
 - **Text** — string/`StringBuilder` extensions, `PhoneHelper`, `Transliteration`, `WebAddressValidator`,
   `SensitiveDataProtector`, file size humanization.
 - **Collections and threading** — `CircularBuffer`, list/dictionary/hash set extensions, `DynamicSemaphoreSlim`.
-- **Diagnostics** — `PerformanceMeasurer.Measure` (register with `AddCuriosusPerformanceMeasurer()`) and
-  `StuckCodeManager.Enter` (call `StuckCodeManager.Initialize(logger)` first).
+- **Diagnostics** — `PerformanceMeasurer.Measure` (register with `AddCuriosusPerformanceMeasurer()`).
 - **IO and HTTP** — temp file streams, stream extensions, `IHttpRequestParamsCalculator` for size-based timeouts.
 
 See the [sample app](https://github.com/curiosus-dev/Curiosus.Utils/tree/main/samples/Curiosus.Tools.Sample)

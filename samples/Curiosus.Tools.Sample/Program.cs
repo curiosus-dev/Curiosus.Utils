@@ -25,13 +25,6 @@ namespace Curiosus.Tools.Sample
             {
                 Thread.Sleep(TimeSpan.FromSeconds(1));
             }
-
-            StuckCodeManager.Initialize(loggerFactory.CreateLogger("stuckcode"));
-            using (StuckCodeManager.Enter("Stuck code", 1))
-            {
-                Thread.Sleep(TimeSpan.FromSeconds(2));
-            }
-            StuckCodeManager.Shutdown();
         }
     }
 }

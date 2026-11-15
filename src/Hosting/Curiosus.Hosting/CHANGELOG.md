@@ -14,8 +14,8 @@
 ### Changed
 
 - **Breaking:** `AddPerformanceMeasures()` (called by the bootstrappers) registers `PerformanceMeasurer` of
-  `Curiosus.Tools` instead of initializing the removed `PerformanceManager`; `PerformanceMonitoringInitializer` only
-  initializes `StuckCodeManager`. See the
+  `Curiosus.Tools` instead of initializing the removed `PerformanceManager` and `StuckCodeManager`;
+  `PerformanceMonitoringInitializer` is removed. See the
   [Curiosus.Tools 3.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools/3.0#performance-logging-performancemanager--performancemeasurer).
   ([#52](https://github.com/curiosus-dev/Curiosus.Utils/issues/52))
 - **Breaking:** `CuriosusNLogConfigurator`, `ILoggingConfigurationOptions` / `LoggingConfigurationOptions`,
