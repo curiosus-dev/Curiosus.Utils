@@ -109,19 +109,21 @@ namespace Curiosus.Hosting.UnitTests
         // again on fake time whenever the step fired a timer, so every run starts at the exact fake time it is due
         private async Task AdvanceUntilAsync(TestWatchdog watchdog, Func<bool> condition)
         {
-            await WaitForAsync(() => watchdog.Blocked > 0 || condition());
+            int Blocked() => watchdog.Blocked + _clock.Changed;
+
+            await WaitForAsync(() => Blocked() > 0 || condition());
             var steps = 0;
             while (!condition())
             {
                 if (++steps > 100_000) throw new TimeoutException("The watchdog did not reach the expected state.");
 
                 var fired = _clock.Fired;
-                var blocked = watchdog.Blocked;
+                var blocked = Blocked();
                 _time.Advance(Step);
 
                 // a timer that fires while the loop is busy wakes nobody: give up waiting after a short real-time pause
                 if (_clock.Fired != fired)
-                    await WaitForAsync(() => watchdog.Blocked > blocked || condition(), TimeSpan.FromMilliseconds(200));
+                    await WaitForAsync(() => Blocked() > blocked || condition(), TimeSpan.FromMilliseconds(200));
             }
         }
 
@@ -146,6 +148,7 @@ namespace Curiosus.Hosting.UnitTests
             private readonly DateTimeOffset _origin;
             private int _blocked;
             private bool _runCompleted;
+            private TimeSpan _lastPeriod;
             private readonly TimeSpan _runTime;
             private readonly TimeSpan? _firstRunTime;
             private bool _failFirstRun;
@@ -185,9 +188,12 @@ namespace Curiosus.Hosting.UnitTests
                 if (_runCompleted)
                 {
                     _runCompleted = false;
-                    Interlocked.Increment(ref _blocked);
+                    // a changed period is applied by setting PeriodicTimer.Period after this call, and a tick of the old
+                    // period can still fire before that: the clock counts that change instead
+                    if (Period == _lastPeriod) Interlocked.Increment(ref _blocked);
                 }
 
+                _lastPeriod = Period;
                 return Period;
             }
 
@@ -223,13 +229,17 @@ namespace Curiosus.Hosting.UnitTests
         }
 
         /// <summary>
-        /// Delegates to <see cref="FakeTimeProvider"/> and counts timer callbacks, to tell whether a step woke the watchdog.
+        /// Delegates to <see cref="FakeTimeProvider"/> and counts timer callbacks, to tell whether a step woke the watchdog,
+        /// and timer changes, to tell when a changed period is applied.
         /// </summary>
         private sealed class CountingTimeProvider(FakeTimeProvider inner) : TimeProvider
         {
             private int _fired;
+            private int _changed;
 
             public int Fired => Volatile.Read(ref _fired);
+
+            public int Changed => Volatile.Read(ref _changed);
 
             public override DateTimeOffset GetUtcNow() => inner.GetUtcNow();
 
@@ -240,11 +250,25 @@ namespace Curiosus.Hosting.UnitTests
             public override TimeZoneInfo LocalTimeZone => inner.LocalTimeZone;
 
             public override ITimer CreateTimer(TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period) =>
-                inner.CreateTimer(s =>
+                new CountingTimer(this, inner.CreateTimer(s =>
                 {
                     Interlocked.Increment(ref _fired);
                     callback(s);
-                }, state, dueTime, period);
+                }, state, dueTime, period));
+
+            private sealed class CountingTimer(CountingTimeProvider owner, ITimer inner) : ITimer
+            {
+                public bool Change(TimeSpan dueTime, TimeSpan period)
+                {
+                    var changed = inner.Change(dueTime, period);
+                    Interlocked.Increment(ref owner._changed);
+                    return changed;
+                }
+
+                public void Dispose() => inner.Dispose();
+
+                public ValueTask DisposeAsync() => inner.DisposeAsync();
+            }
         }
     }
 }
