@@ -2,9 +2,10 @@
 
 [![NuGet](https://img.shields.io/nuget/v/Curiosus.Hosting.Web)](https://www.nuget.org/packages/Curiosus.Hosting.Web) [![Downloads](https://img.shields.io/nuget/dt/Curiosus.Hosting.Web)](https://www.nuget.org/packages/Curiosus.Hosting.Web) [![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/curiosus-dev/Curiosus.Utils/badges/Curiosus.Hosting.Web.json)](https://github.com/curiosus-dev/Curiosus.Utils/actions/workflows/release-packages.yml)
 
-Bootstrapper for ASP.NET Core apps built on [Curiosus.Hosting](https://www.nuget.org/packages/Curiosus.Hosting):
-YAML config with validation, NLog, Kestrel or IIS setup, thread pool tuning and app initializers, plus
-`ConfigureCuriosusMvc` with the common MVC setup.
+The [Curiosus.Hosting](https://www.nuget.org/packages/Curiosus.Hosting) startup for ASP.NET Core apps:
+`CuriosusWebHost.CreateBuilder(args)` creates a `WebApplicationBuilder` with the same conventions (`-c` / `--config`,
+`-v` / `--version`, content root of a service app), and `AddCuriosusDefaults()` adds YAML configuration, culture, app initializers and the
+rest of the Curiosus defaults.
 
 ## Installation
 
@@ -15,57 +16,26 @@ dotnet add package Curiosus.Hosting.Web
 ## Usage
 
 ```csharp
-public class AppConfiguration : CuriosusWebAppConfiguration
-{
-    public AppConfiguration()
-    {
-        AppName = "Sample Web App";
-    }
-}
+var builder = CuriosusWebHost.CreateBuilder(args).AddCuriosusDefaults();
+builder.AddCuriosusNLog();   // optional; ${aspnet-*} renderers are registered by CreateBuilder
+builder.Services.AddCuriosusOptions<SiteOptions>("Site");
+builder.Services.AddControllersWithViews();
 
-public class Startup
-{
-    public void ConfigureServices(IServiceCollection services)
-    {
-        var configuration = services.BuildServiceProvider().GetRequiredService<AppConfiguration>();
-        services.ConfigureCuriosusMvc(configuration);
-    }
+var app = builder.Build();
+app.MapControllers();
 
-    public void Configure(IApplicationBuilder app)
-    {
-        app.UseRouting();
-        app.UseEndpoints(endpoints => endpoints.MapControllers());
-    }
-}
-
-// Program.cs
-var bootstrapper = new CuriosusWebAppBootstrapper<CuriosusCLIArguments, AppConfiguration, Startup>();
-return await bootstrapper.RunAsync(args);
+return await CuriosusApp.RunAsync(app);
 ```
 
-`config.yml` must set either `Urls` or a `Kestrel` section (not both), unless `UseIISIntegration` is `true`:
-
-```yaml
-Urls: http://127.0.0.1:5000
-Log:
-  LogConfigurationPath: ./NLog.config
-  LogOutputDirectory: ./logs
-ThreadPool:
-  MinWorkerThreads: 64
-SensitiveDataFieldNames:
-  - password
-```
-
-`Kestrel` is passed to Kestrel as is (e.g. `Kestrel:Endpoints:Https:Url` and `Certificate:Path`/`Password`).
-`ConfigureCuriosusMvc` adds MVC with string trimming for bound values, localized model binding messages,
-data annotations localization, Razor runtime compilation, `IMemoryCache` and a `SensitiveDataProtector`
-for `SensitiveDataFieldNames`. Implement `IWebAppConfigurationWithPublicDomain` to require and register `PublicDomain`.
+Kestrel is configured by ASP.NET Core itself: `Urls` (or `ASPNETCORE_URLS`, `--urls`) or the `Kestrel` section of
+`config.yml`, IIS integration comes with `WebApplication`. `CreateBuilder` registers the `${aspnet-*}` layout renderers of `NLog.Web.AspNetCore` for `AddCuriosusNLog()`.
 
 ## See also
 
 - [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
+- [Curiosus.Hosting.Web 4.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting-web/4.0)
 - [Curiosus.Hosting 4.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting/4.0)
-- [Curiosus.Hosting](https://www.nuget.org/packages/Curiosus.Hosting) — bootstrappers for console tools and services
+- [Curiosus.Hosting](https://www.nuget.org/packages/Curiosus.Hosting) — the startup for workers and tools
 - [Curiosus.Tools.Web](https://www.nuget.org/packages/Curiosus.Tools.Web) — middleware, model binders and web helpers
 - [Sample web app](https://github.com/curiosus-dev/Curiosus.Utils/blob/main/samples/Curiosus.SampleWebApp/Program.cs)
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

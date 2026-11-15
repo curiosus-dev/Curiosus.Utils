@@ -14,6 +14,10 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="System.CommandLine" />
+    </ItemGroup>
+
+    <ItemGroup>
       <None Update="config.yml">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>

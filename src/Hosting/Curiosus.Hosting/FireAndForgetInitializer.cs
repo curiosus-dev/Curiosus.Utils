@@ -11,9 +11,9 @@ namespace Curiosus.Hosting
     /// Initializer of <see cref="FireAndForget"/>.
     /// </summary>
     /// <remarks>
-    /// Sets default logger.
+    /// Sets its logger until <c>FireAndForget</c> is replaced (#49).
     /// </remarks>
-    public class FireAndForgetInitializer : IAppInitializer
+    internal sealed class FireAndForgetInitializer : IAppInitializer
     {
         private readonly ILoggerFactory _loggerFactory;
 

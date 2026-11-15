@@ -2,8 +2,9 @@
 
 [![NuGet](https://img.shields.io/nuget/v/Curiosus.Hosting)](https://www.nuget.org/packages/Curiosus.Hosting) [![Downloads](https://img.shields.io/nuget/dt/Curiosus.Hosting)](https://www.nuget.org/packages/Curiosus.Hosting) [![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/curiosus-dev/Curiosus.Utils/badges/Curiosus.Hosting.json)](https://github.com/curiosus-dev/Curiosus.Utils/actions/workflows/release-packages.yml)
 
-App bootstrappers for console tools and background services. They parse CLI arguments, load and validate a YAML config,
-set up NLog and the default culture, run registered `IAppInitializer`s and then start the app.
+Standard startup for Curiosus workers and tools on the .NET generic host: YAML configuration files, the configuration
+logged on start with secrets masked, culture, app initializers, start/stop messages, systemd and Windows service
+support and exit codes.
 
 ## Installation
 
@@ -13,62 +14,89 @@ dotnet add package Curiosus.Hosting
 
 ## Usage
 
-Inherit a configuration from `CuriosusAppConfiguration` and a bootstrapper from `CuriosusServiceAppBootstrapper`
-(generic host with hosted services) or `CuriosusToolAppBootstrapper` (a DI container plus a one-shot `ExecuteAsync`).
+A worker (hosted services run until the app is stopped):
 
 ```csharp
-public class AppConfiguration : CuriosusAppConfiguration
-{
-    public AppConfiguration()
-    {
-        AppName = "Sample Worker";
-    }
-}
+var builder = CuriosusHost.CreateBuilder(args).AddCuriosusDefaults();
+builder.AddCuriosusNLog();                                  // optional: log through NLog
+builder.Services.AddCuriosusOptions<SmtpOptions>("Smtp");   // options per section (Curiosus.Configuration)
+builder.Services.AddHostedService<Worker>();
 
-public class AppBootstrapper : CuriosusServiceAppBootstrapper<CuriosusCLIArguments, AppConfiguration>
-{
-    public AppBootstrapper()
-    {
-        ConfigureServices((context, services, configuration) =>
-        {
-            services.AddHostedService<SampleWorker>();
-        });
-    }
-}
-
-// Program.cs
-return await new AppBootstrapper().RunAsync(args);
+return await CuriosusApp.RunAsync(builder.Build());
 ```
 
-The config is read from `config.yml` in the directory passed with `-c|--config` (the current working directory
-by default). It is overridden by `config.secret.yml`, `config.{ASPNETCORE_ENVIRONMENT}.yml`, environment variables
-and CLI arguments.
+A tool (one command, its result is the exit code):
+
+```csharp
+var builder = CuriosusHost.CreateBuilder(args).AddCuriosusDefaults();
+builder.Services.AddSingleton<Importer>();
+
+return await CuriosusApp.RunAsync(builder.Build(), (services, cancellationToken) =>
+    services.GetRequiredService<Importer>().RunAsync(cancellationToken));
+```
+
+Web apps use [Curiosus.Hosting.Web](https://www.nuget.org/packages/Curiosus.Hosting.Web):
+`CuriosusWebHost.CreateBuilder(args).AddCuriosusDefaults()`.
+
+### Configuration
+
+`AddCuriosusDefaults` (or `AddCuriosusConfiguration` alone) loads, from the content root or the directory passed with
+`-c` / `--config`: `config.yml`, `config.secret.yml`, `config.{Environment}.yml`, `config.{Environment}.secret.yml`
+and, outside `Production`, `config.{Environment}.{UserName}.yml` (+ `.secret`). User secrets, environment variables
+and command line arguments still override the files. `-c` can also name a single file, which is then loaded alone.
+
+The environment comes from `DOTNET_ENVIRONMENT`, then `ASPNETCORE_ENVIRONMENT`, then `Production`. An app running as a
+systemd unit or a Windows service gets its binaries directory as the content root.
 
 ```yaml
-AppName: Sample Worker
+AppName: Sample Worker      # used in the start/stop messages and as ${var:appname} of NLog
 Culture:
-  DefaultCulture: en-US
-Log:
-  LogConfigurationPath: ./NLog.config
-  LogOutputDirectory: ./logs
+  DefaultCulture: en-US     # applied process-wide before hosted services start
+UniqueId:
+  GeneratorId: 1            # initializes UniqueIdGenerator
+Log:                        # AddCuriosusNLog only
+  LogConfigurationPath: NLog.config
+  LogOutputDirectory: logs
 ```
 
-`RunAsync` returns an exit code from `CuriosusExitCodes` (e.g. `IncorrectConfiguration` when validation fails).
-The configuration, the CLI arguments and a non-generic `ILogger` are registered in DI.
+### What AddCuriosusDefaults adds
+
+- the configuration logged on start (`LogConfigurationOnStart` of Curiosus.Configuration), secrets masked;
+- `TimeProvider.System` unless a clock is registered, `PerformanceMeasurer`, localization (`Resources`);
+- before hosted services start: the `Culture` section, `UniqueIdGenerator`, then every `IAppInitializer` in
+  registration order;
+- `{AppName} is started` / `is stopped` written to the `appStartEmailLog` / `appStopEmailLog` loggers;
+- systemd and Windows service lifetimes (no-op otherwise).
+
+It doesn't touch logging providers: `builder.AddCuriosusNLog()` sets NLog up from the `Log` section (`${var:outputdir}`,
+`${var:appname}`, `${configsetting:item=Section.Key}`). An app that moves to centralized log collection drops that call.
+
+### Exit codes
+
+`CuriosusApp.RunAsync` disposes the host and returns `CuriosusExitCodes`: `Success` (0), `InvalidOptions` (1, options
+failed validation on start), `UnhandledException` (2, also when a `BackgroundService` failed and stopped the host),
+`Cancellation` (3, the app was stopped while starting or while the tool's command ran), or the command's own code.
+
+### Command line
+
+Out of the box: `-c` / `--config <directory or file>`, `-v` / `--version` (prints `App version: x.y.z.w` and exits
+with 0 before anything else runs), `--environment`, `--contentRoot` and `--Section:Key value` to override any setting.
+
+Typed command line options and subcommands: parse them with System.CommandLine and build the host inside the command
+action, see the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting/4.0#command-line-arguments)
+and the [sample tool](https://github.com/curiosus-dev/Curiosus.Utils/blob/main/samples/Curiosus.SMS.Iqsms.Sample/Program.cs).
 
 Other helpers:
 
 - `CuriosusWatchdog` — base `BackgroundService` that calls `ProcessAsync` periodically and survives exceptions.
 - `AddThreadPoolTuning(ThreadPoolOptions)` — sets minimum thread pool size, logs its state and can auto-tune it.
 - `AddTempDirCleaner(TempFileOptions)` — hosted service that deletes stale temp files.
-- `builder.AddCuriosusNLog()` — NLog from the `Log` section: sets `${var:outputdir}` and `${var:appname}` and reads
-  `${configsetting:item=Section.Key}` from the app configuration. The app calls it itself, so it can drop NLog later.
 
 ## See also
 
 - [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.Hosting 4.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting/4.0)
-- [Curiosus.Hosting.Web](https://www.nuget.org/packages/Curiosus.Hosting.Web) — bootstrapper for ASP.NET Core apps
-- [Curiosus.Configuration.YML](https://www.nuget.org/packages/Curiosus.Configuration.YML) — YAML configuration provider
+- [Curiosus.Hosting.Web](https://www.nuget.org/packages/Curiosus.Hosting.Web) — the same for ASP.NET Core apps
+- [Curiosus.Configuration](https://www.nuget.org/packages/Curiosus.Configuration) — `AddCuriosusOptions`, `LogConfigurationOnStart`
 - [Curiosus.Tools](https://www.nuget.org/packages/Curiosus.Tools) — `IAppInitializer` and other basic helpers
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

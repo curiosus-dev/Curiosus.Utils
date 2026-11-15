@@ -2,6 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -57,13 +58,13 @@ namespace Curiosus.Hosting
         /// </summary>
         public static IServiceCollection AddCuriosusAppLifecycleLogging(this IServiceCollection services)
         {
-            services.AddHostedService(provider =>
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, AppLifecycleLogger>(provider =>
                 new AppLifecycleLogger(
                     CuriosusAppName.Get(
                         provider.GetRequiredService<IConfiguration>(),
                         provider.GetRequiredService<IHostEnvironment>()),
                     provider.GetRequiredService<IHostApplicationLifetime>(),
-                    provider.GetRequiredService<ILoggerFactory>()));
+                    provider.GetRequiredService<ILoggerFactory>())));
 
             return services;
         }

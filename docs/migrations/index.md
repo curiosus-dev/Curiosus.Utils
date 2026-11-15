@@ -59,8 +59,8 @@ issues that will add the page. Removed packages get a page too: it tells what re
 | `Curiosity.FileDataReaderWriters` | [Curiosus.FileDataReaderWriters](../packages/filedata/curiosus-filedatareaderwriters.md) | 3.0, planned in [#94](https://github.com/curiosus-dev/Curiosus.Utils/issues/94) |
 | `Curiosity.FileDataReaderWriters.Npoi` | [Curiosus.FileDataReaderWriters.Npoi](../packages/filedata/curiosus-filedatareaderwriters-npoi.md) | follows the base package, [#94](https://github.com/curiosus-dev/Curiosus.Utils/issues/94) |
 | `Curiosity.FileDataReaderWriters.SylvanCsv` | [Curiosus.FileDataReaderWriters.SylvanCsv](../packages/filedata/curiosus-filedatareaderwriters-sylvancsv.md) | renamed to `Curiosus.FileDataReaderWriters.Csv`, planned in [#93](https://github.com/curiosus-dev/Curiosus.Utils/issues/93) |
-| `Curiosity.Hosting` | [Curiosus.Hosting](../packages/hosting/curiosus-hosting.md) | [4.0](./curiosus-hosting/4.0.md) (in progress), planned in [#41](https://github.com/curiosus-dev/Curiosus.Utils/issues/41), [#43](https://github.com/curiosus-dev/Curiosus.Utils/issues/43)–[#46](https://github.com/curiosus-dev/Curiosus.Utils/issues/46) |
-| `Curiosity.Hosting.Web` | [Curiosus.Hosting.Web](../packages/hosting/curiosus-hosting-web.md) | removed, web apps move to `Program.cs`, planned in [#42](https://github.com/curiosus-dev/Curiosus.Utils/issues/42) |
+| `Curiosity.Hosting` | [Curiosus.Hosting](../packages/hosting/curiosus-hosting.md) | [4.0](./curiosus-hosting/4.0.md) (in progress), planned in [#45](https://github.com/curiosus-dev/Curiosus.Utils/issues/45), [#46](https://github.com/curiosus-dev/Curiosus.Utils/issues/46) |
+| `Curiosity.Hosting.Web` | [Curiosus.Hosting.Web](../packages/hosting/curiosus-hosting-web.md) | [4.0](./curiosus-hosting-web/4.0.md): `Startup` → `Program.cs`, only `CuriosusWebHost` is left |
 | `Curiosity.Localization` | [Curiosus.Localization](../packages/localization/curiosus-localization.md) | 3.0, planned in [#58](https://github.com/curiosus-dev/Curiosus.Utils/issues/58) |
 | `Curiosity.Localization.MVC` | [Curiosus.Localization.MVC](../packages/localization/curiosus-localization-mvc.md) | 3.0, planned in [#58](https://github.com/curiosus-dev/Curiosus.Utils/issues/58) |
 | `Curiosity.Notifications` | [Curiosus.Notifications](../packages/notifications/curiosus-notifications.md) | 3.0, planned in [#89](https://github.com/curiosus-dev/Curiosus.Utils/issues/89) |
@@ -147,9 +147,9 @@ to move them, see
 
 ### Startup → Program.cs
 
-Web apps move from a `Startup` class to top-level statements in `Program.cs` on `WebApplication` when
-`Curiosus.Hosting.Web` is removed ([#42](https://github.com/curiosus-dev/Curiosus.Utils/issues/42)); its migration page
-will have the recipe.
+Web apps move from a `Startup` class to top-level statements in `Program.cs` on `WebApplication`, created with
+`CuriosusWebHost.CreateBuilder(args)` of `Curiosus.Hosting.Web` 4.0
+([#42](https://github.com/curiosus-dev/Curiosus.Utils/issues/42)): see its [migration page](./curiosus-hosting-web/4.0.md).
 
 ## Writing a migration page
 

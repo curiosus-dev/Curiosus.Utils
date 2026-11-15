@@ -1,85 +1,52 @@
-﻿using Curiosus.Configuration;
+using System.CommandLine;
+using Curiosus.Configuration;
 using Curiosus.Hosting;
 using Curiosus.SMS;
 using Curiosus.SMS.Iqsms;
-using EntryPoint;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-// main
-var bootstrapper = new AppBootstrapper();
-return await bootstrapper.RunAsync(args);
-
-public class CliArgs : CuriosusCLIArguments
+// App that sends a test message via iqsms.ru: a tool on Curiosus.Hosting with typed command line options.
+var phoneOption = new Option<string>("--phone", "-p")
 {
-    [OptionParameter("phone", 'p')]
-    [Help("Phone number you want to send test message")]
-    public string PhoneNumber { get; set; } = null!;
-}
-
-public class Configuration : CuriosusAppConfiguration
+    Description = "Phone number to send the test message to",
+    Required = true,
+};
+var configOption = new Option<string?>("--config", "-c")
 {
-    public Configuration()
-    {
-        AppName ??= "IQSMS sample app";
-    }
-    
-    // must specified login and password
-    public IqsmsOptions IqsmsOptions { get; set; } = new IqsmsOptions();
-    
-    public override IReadOnlyCollection<ConfigurationValidationError> Validate(string? prefix = null)
-    {
-        var errors = new ConfigurationValidationErrorCollection(prefix);
-        
-        errors.AddErrors(base.Validate(prefix));
-        errors.AddErrors(IqsmsOptions.Validate(nameof(IqsmsOptions)));
+    Description = "Directory with config.yml or a single configuration file",
+};
+var rootCommand = new RootCommand("Sends a test SMS via iqsms.ru") { phoneOption, configOption };
 
-        return errors;
-    }
-}
-
-// App that send test message via iqsms.ru
-// shows how to run simple app via Curiosus.
-// Use it for debug iqsms sender.
-public class AppBootstrapper : CuriosusToolAppBootstrapper<CliArgs, Configuration>
+rootCommand.SetAction(async (parseResult, cancellationToken) =>
 {
-    public AppBootstrapper()
-    {
-        ConfigureServices((services, config) =>
-        {
-            // add our test service
-            services.AddIqsmsSender(config.IqsmsOptions);
-        });
-    }
-    
-    // main code
-    protected override async Task<int> ExecuteAsync(
-        IServiceProvider serviceProvider,
-        string[] rawArguments,
-        CliArgs arguments,
-        Configuration configuration,
-        CancellationToken cancellationToken = default)
-    {
-        var logger = serviceProvider.GetRequiredService<ILogger>();
-        var sender = serviceProvider.GetRequiredService<ISmsSender>();
+    var builder = CuriosusHost.CreateBuilder(args).AddCuriosusDefaults();
+    builder.AddCuriosusNLog();
 
-        var phoneNumber = arguments.PhoneNumber ?? throw new InvalidOperationException("Phone number can't be empty!");
+    // IqsmsOptions still uses the old validation model, AddIqsmsSender validates it
+    var iqsmsOptions = builder.Configuration.GetSection("IqsmsOptions").Get<IqsmsOptions>() ?? new IqsmsOptions();
+    builder.Services.AddIqsmsSender(iqsmsOptions);
 
-        // execute
-        var result = await sender.SendSmsAsync(phoneNumber, "Hello iqsms!", cancellationToken);
-        
-        // check result
+    var phoneNumber = parseResult.GetValue(phoneOption)!;
+
+    return await CuriosusApp.RunAsync(builder.Build(), async (services, ct) =>
+    {
+        var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("Curiosus.SMS.Iqsms.Sample");
+        var sender = services.GetRequiredService<ISmsSender>();
+
+        var result = await sender.SendSmsAsync(phoneNumber, "Hello iqsms!", ct);
         if (result.IsSuccess)
         {
             logger.LogInformation("We have successfully sent test message!");
-        }
-        else
-        {
-            logger.LogError("We have some problems with sending test message: \"{Error}\", Content: \"{Content}\"",
-                result.Errors.Select(x => $"code: {x.Code}, description: {x.Description}"),
-                result.Body.ResponseJson);
+            return CuriosusExitCodes.Success;
         }
 
-        return CuriosusExitCodes.Success;
-    }
-}
+        logger.LogError("We have some problems with sending test message: \"{Error}\", Content: \"{Content}\"",
+            result.Errors.Select(x => $"code: {x.Code}, description: {x.Description}"),
+            result.Body.ResponseJson);
+        return 10;
+    }, cancellationToken);
+});
+
+return await rootCommand.Parse(args).InvokeAsync();

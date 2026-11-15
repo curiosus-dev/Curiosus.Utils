@@ -1,9 +1,14 @@
+AppName: RabbitMQ Consumer Sample App
+
+Culture:
+  DefaultCulture: en
+
 # Configures logging
 Log:
   # Path to NLog.config file
-  LogConfigurationPath: ./NLog.config
+  LogConfigurationPath: NLog.config
   # Path to logs out directory
-  LogOutputDirectory: ./logs
+  LogOutputDirectory: logs
   
 # Options for request processing
 RequestProcessor:

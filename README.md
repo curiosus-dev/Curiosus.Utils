@@ -25,8 +25,8 @@ e-mail and SMS, notifications, request processing, file formats, localization an
 
 ## Features
 
-- **Hosting** — bootstrappers for console tools, background services and ASP.NET Core apps: CLI arguments, YAML
-  config with validation, NLog, async app initializers, thread pool tuning, watchdog services.
+- **Hosting** — standard startup for workers, tools and ASP.NET Core apps on the generic host: layered YAML config,
+  culture, app initializers, start/stop messages, systemd/Windows services, exit codes, optional NLog setup.
 - **Configuration** — layered `config*.yml` files (secret, per-environment) with environment variable and CLI
   overrides, strongly typed options validation and startup printing.
 - **Data access** — abstractions over EF Core and Dapper with transaction-completed events, pagination, a Polly

@@ -1,11 +1,6 @@
+AppName: Test App
 Urls: http://127.0.0.1:39122
-UseIISIntegration: true
 
 Log:
-  LogConfigurationPath: ./NLog.config
-  LogOutputDirectory: ./log
-
-# Name collection of the fields the data in which we want to hide
-SensitiveDataFieldNames:
-  - password
-  - passwordConfirmation
+  LogConfigurationPath: NLog.config
+  LogOutputDirectory: log

@@ -4,24 +4,42 @@
 
 ### Added
 
+- `CuriosusHost.CreateBuilder(args)`, `AddCuriosusDefaults()` and `CuriosusApp.RunAsync(host)` /
+  `RunAsync(host, command)`: the startup of workers and tools on `HostApplicationBuilder`. Environment from
+  `DOTNET_ENVIRONMENT`, then `ASPNETCORE_ENVIRONMENT`; content root at the binaries under systemd / Windows services;
+  `-c` as `--config`; `-v` / `--version` prints the app version and exits with 0. The defaults add the YAML configuration, the configuration logged on start, `TimeProvider.System`,
+  `PerformanceMeasurer`, localization, the `Culture` section and `UniqueIdGenerator` applied and every
+  `IAppInitializer` run before hosted services start, `{AppName} is started` / `is stopped` messages and systemd /
+  Windows service lifetimes. `RunAsync` returns `CuriosusExitCodes` or the command's code and disposes the host.
+  ([#41](https://github.com/curiosus-dev/Curiosus.Utils/issues/41))
+- `AddCuriosusConfiguration(path, optional)`: `config[.secret].yml`, `config.{Environment}[.secret].yml` and, outside
+  `Production`, `config.{Environment}.{UserName}[.secret].yml`, with environment variables and command line arguments
+  kept on top; `-c` takes a directory or a single file. ([#41](https://github.com/curiosus-dev/Curiosus.Utils/issues/41))
 - `AddCuriosusNLog` for `IHostApplicationBuilder` and `CuriosusNLogOptions` (the `Log` section): loads NLog.config
   relative to the content root, sets the `outputdir` (absolute path) and `appname` variables, makes `${configsetting}`
   read the app configuration and replaces the logging providers with NLog; `configureNLogExtensions` registers more
-  NLog extensions (`RegisterNLogWeb()` in web apps). Variables that NLog.config doesn't declare are not an error. The
+  NLog extensions. Variables that NLog.config doesn't declare are not an error. The
   app calls it itself, so it can drop NLog later without touching the rest of its setup.
   ([#43](https://github.com/curiosus-dev/Curiosus.Utils/issues/43))
 
 ### Changed
 
-- **Breaking:** `AddPerformanceMeasures()` (called by the bootstrappers) registers `PerformanceMeasurer` of
-  `Curiosus.Tools` instead of initializing the removed `PerformanceManager` and `StuckCodeManager`;
-  `PerformanceMonitoringInitializer` is removed. See the
+- **Breaking:** the bootstrappers (`CuriosusAppBootstrapper`, `CuriosusServiceAppBootstrapper`,
+  `CuriosusToolAppBootstrapper`), `CuriosusCLIArguments`, `ICuriosusAppConfiguration` / `CuriosusAppConfiguration` and
+  its validator, `AddAppInitialization`, `HostExtensions.InitAsync`, `AddPerformanceMeasures`, the public
+  `FireAndForgetInitializer` and the non-generic `ILogger` named `main` are removed in favour of `CuriosusHost`,
+  `AddCuriosusDefaults` and `CuriosusApp`; `CuriosusExitCodes` are constants and `IncorrectConfiguration` is
+  `InvalidOptions`. The `EntryPoint` and `System.ComponentModel.Annotations` dependencies are removed, and
+  `Microsoft.Extensions.Hosting.Systemd` and `Microsoft.Extensions.Hosting.WindowsServices` are added. See the
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting/4.0#bootstrappers--programcs). ([#41](https://github.com/curiosus-dev/Curiosus.Utils/issues/41))
+- **Breaking:** `PerformanceMonitoringInitializer` is removed: `PerformanceManager` and `StuckCodeManager` of
+  `Curiosus.Tools` are gone and `AddCuriosusDefaults` registers `PerformanceMeasurer`. See the
   [Curiosus.Tools 3.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools/3.0#performance-logging-performancemanager--performancemeasurer).
   ([#52](https://github.com/curiosus-dev/Curiosus.Utils/issues/52))
 - **Breaking:** `CuriosusNLogConfigurator`, `ILoggingConfigurationOptions` / `LoggingConfigurationOptions`,
   `ILoggerMailOptions` / `LoggerMailOptions`, `IConfigurationWithMailLogger` and the mail variables are removed, and
   `ICuriosusAppConfiguration.Log` is a `CuriosusNLogOptions`. Read the SMTP settings of a mail target with
-  `${configsetting}` instead. `CuriosusAppBootstrapper.LoadLoggingConfiguration` is replaced by `SetupLoggingExtensions`. Relative `Log` paths
+  `${configsetting}` instead. Relative `Log` paths
   resolve against the content root. See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting/4.0#logging-curiosusnlogconfigurator--addcuriosusnlog).
   ([#43](https://github.com/curiosus-dev/Curiosus.Utils/issues/43))
 
