@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Security
+
+- Stored XSS through `HtmlSanitizerHelper`: it HTML-decoded the sanitizer output, so encoded markup such as
+  `&lt;script&gt;` passed the sanitizer as text and came out as a live `<script>`. Content saved through the helper and
+  rendered with `Html.Raw` must be treated as unsanitized: sanitize it again on output. See the
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools-web/4.0#htmlsanitizerhelper--ihtmlsanitizer). ([#61](https://github.com/curiosus-dev/Curiosus.Utils/issues/61))
+
 ### Fixed
 
 - `RequestLoggingMiddleware` takes `ILogger<RequestLoggingMiddleware>` instead of a non-generic `ILogger`, which
@@ -10,6 +17,10 @@
 
 ### Changed
 
+- **Breaking:** `HtmlSanitizerHelper` is replaced by `services.AddCuriosusHtmlSanitizer(configure)`, which registers a
+  singleton `Ganss.Xss.IHtmlSanitizer`: its output is not decoded, and the default allow-list no longer contains `id`
+  and `class` (DOM clobbering, borrowed page styles); `configure` can add them back. See the
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools-web/4.0#htmlsanitizerhelper--ihtmlsanitizer). ([#61](https://github.com/curiosus-dev/Curiosus.Utils/issues/61))
 - **Breaking:** the error actions of `MVCBaseController` (`ErrorView`, `ErrorViewWithCode`, `ErrorViewParams`) no
   longer take a `[FromServices] ILogger` parameter, which failed to resolve with Curiosus.Hosting 4.0: they create
   their logger from `ILoggerFactory` with the actual controller as the category (`HomeController`) instead of `main`. Drop the
