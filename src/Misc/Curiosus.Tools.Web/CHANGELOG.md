@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Security
+
+- `MVCBaseController`: `RedirectInternal` redirected to any `returnUrl` (open redirect after a login, for example to
+  `//evil.example`), the `AjaxError` view rendered the exception message as raw HTML (XSS through user input in
+  exception messages), error responses showed exception messages (SQL, paths, hosts), the error action took its text from
+  the query string, and every public helper was reachable by URL. See the
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools-web/4.0#mvcbasecontroller-redirects-and-error-pages). ([#62](https://github.com/curiosus-dev/Curiosus.Utils/issues/62))
+
 ### Fixed
 
 - `RequestLoggingMiddleware` takes `ILogger<RequestLoggingMiddleware>` instead of a non-generic `ILogger`, which
@@ -10,6 +18,12 @@
 
 ### Changed
 
+- **Breaking:** `MVCBaseController.RedirectInternal` redirects only to local URLs (`Url.IsLocalUrl`), anything else
+  goes to Home/Index; the routable error endpoint is `HandleError` under the action name `ErrorView`, binds no parameters
+  and accepts any HTTP method; `ErrorView(errorText)`, `ErrorViewWithCode`, `ErrorViewParams`, `AjaxGridErrorResponse`,
+  `AjaxError` and `AjaxSuccess` are `[NonAction]` helpers; error pages show the app's text or the generic message, never
+  the exception message; `AjaxError.cshtml` HTML-encodes the text. See the
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools-web/4.0#mvcbasecontroller-redirects-and-error-pages). ([#62](https://github.com/curiosus-dev/Curiosus.Utils/issues/62))
 - **Breaking:** the error actions of `MVCBaseController` (`ErrorView`, `ErrorViewWithCode`, `ErrorViewParams`) no
   longer take a `[FromServices] ILogger` parameter, which failed to resolve with Curiosus.Hosting 4.0: they create
   their logger from `ILoggerFactory` with the actual controller as the category (`HomeController`) instead of `main`. Drop the
