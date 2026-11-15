@@ -38,9 +38,9 @@ namespace Curiosus.Tools.Web.Controllers
                     return LocalRedirect(UrlCharacterEncoder.EncodeIllegalCharacters(returnUrl));
 
                 var allowList = HttpContext.RequestServices.GetService<IOptions<RedirectAllowListOptions>>()?.Value;
-                // redirect using a local URL derived from the validated URI, not an absolute external URL
+                // redirect to the URL that was validated, in its canonical form, not to the raw string
                 if (allowList != null && allowList.TryGetAllowedUri(returnUrl, out var allowed))
-                    return LocalRedirect(allowed.PathAndQuery + allowed.Fragment);
+                    return Redirect(allowed.AbsoluteUri);
             }
 
             return RedirectToAction("Index", "Home");
