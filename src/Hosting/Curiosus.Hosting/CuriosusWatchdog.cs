@@ -11,7 +11,8 @@ namespace Curiosus.Hosting
     /// </summary>
     /// <remarks>
     /// Runs start every period (fixed rate): the first one at start, the next one a period after the previous one started.
-    /// A run longer than the period is followed by the next one immediately; missed ticks are not queued.
+    /// Runs never overlap: a run longer than the period is followed by the next one immediately, and the ticks missed
+    /// meanwhile collapse into that run.
     /// After an exception the watchdog waits <see cref="ExceptionDelay"/>, runs again and counts the next period from
     /// that run. Stopping the host ends the loop without a warning.
     /// </remarks>
