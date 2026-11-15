@@ -32,27 +32,7 @@ namespace Curiosus.EMail.Smtp
                 options.AllowInvalidServerCertificate && options.Security == SecureSocketOptions.None,
                 nameof(options.AllowInvalidServerCertificate),
                 "has no effect without TLS (Security is None)");
-            errors.AddErrorIf(
-                options.AllowInvalidServerCertificate && IsProductionEnvironment(),
-                nameof(options.AllowInvalidServerCertificate),
-                "is not allowed in Production: the SMTP credentials and messages would go to any server that presents a " +
-                "certificate; fix the server certificate or trust its CA instead");
-            
             return errors;
-        }
-
-        /// <summary>
-        /// The environment the way the .NET host resolves it: <c>DOTNET_ENVIRONMENT</c>, then <c>ASPNETCORE_ENVIRONMENT</c>,
-        /// <c>Production</c> when neither is set.
-        /// </summary>
-        internal static bool IsProductionEnvironment()
-        {
-            var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
-            if (String.IsNullOrWhiteSpace(environment))
-                environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-
-            return String.IsNullOrWhiteSpace(environment) ||
-                   String.Equals(environment, "Production", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

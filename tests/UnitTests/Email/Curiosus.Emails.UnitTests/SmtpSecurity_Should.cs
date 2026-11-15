@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using Curiosus.Configuration;
 using Curiosus.EMail.Smtp;
 using FluentAssertions;
 using MailKit.Net.Smtp;
@@ -12,7 +11,6 @@ using Xunit;
 
 namespace Curiosus.Emails.UnitTests
 {
-    [Collection(EnvironmentVariablesCollection.Name)]
     public class SmtpSecurity_Should
     {
         private static SmtpEMailOptions Options(Action<SmtpEMailOptions>? change = null)
@@ -50,7 +48,6 @@ namespace Curiosus.Emails.UnitTests
         [Fact]
         public void Validation_RejectsInvalidCertificatesWithoutTls()
         {
-            using var _ = new EnvironmentScope("Development", null);
             Options(o =>
                 {
                     o.Security = SecureSocketOptions.None;
@@ -96,35 +93,16 @@ namespace Curiosus.Emails.UnitTests
                 .Should().BeTrue();
         }
 
-        [Theory]
-        [InlineData(null, null)]
-        [InlineData("Production", null)]
-        [InlineData(null, "Production")]
-        public void OptIn_FailsValidationInProduction(string? dotnetEnvironment, string? aspNetCoreEnvironment)
+        [Fact]
+        public void OptIn_IsValid_InAnyEnvironment()
         {
-            using var _ = new EnvironmentScope(dotnetEnvironment, aspNetCoreEnvironment);
-
-            Options(o => o.AllowInvalidServerCertificate = true).Validate()
-                .Should().ContainSingle(e => e.FieldName == "AllowInvalidServerCertificate");
-            var register = () => new ServiceCollection().AddSmtpEMailSender(Options(o => o.AllowInvalidServerCertificate = true));
-            register.Should().Throw<ConfigurationValidationException>();
-        }
-
-        [Theory]
-        [InlineData("Development", null)]
-        [InlineData(null, "Staging")]
-        [InlineData("Development", "Production")]
-        public void OptIn_IsValidOutsideProduction(string? dotnetEnvironment, string? aspNetCoreEnvironment)
-        {
-            using var _ = new EnvironmentScope(dotnetEnvironment, aspNetCoreEnvironment);
-
+            // the owner decides: allowed in Production too, only warned about
             Options(o => o.AllowInvalidServerCertificate = true).Validate().Should().BeEmpty();
         }
 
         [Fact]
         public void OptIn_LogsAWarning()
         {
-            using var _ = new EnvironmentScope("Development", null);
             var logger = new FakeLogger<SmtpEMailSender>();
 
             new SmtpEMailSender(Options(o => o.AllowInvalidServerCertificate = true), logger);
@@ -142,29 +120,5 @@ namespace Curiosus.Emails.UnitTests
 
             logger.Collector.Count.Should().Be(0);
         }
-
-        private sealed class EnvironmentScope : IDisposable
-        {
-            private readonly string? _dotnet = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
-            private readonly string? _aspNetCore = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-
-            public EnvironmentScope(string? dotnet, string? aspNetCore)
-            {
-                Environment.SetEnvironmentVariable("DOTNET_ENVIRONMENT", dotnet);
-                Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", aspNetCore);
-            }
-
-            public void Dispose()
-            {
-                Environment.SetEnvironmentVariable("DOTNET_ENVIRONMENT", _dotnet);
-                Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", _aspNetCore);
-            }
-        }
-    }
-
-    [CollectionDefinition(Name, DisableParallelization = true)]
-    public sealed class EnvironmentVariablesCollection
-    {
-        public const string Name = "Environment variables";
     }
 }
