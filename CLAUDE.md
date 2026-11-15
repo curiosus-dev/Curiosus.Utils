@@ -78,5 +78,6 @@ Curiosus.Configuration (base)
   same release PR or after it, pre-releases included; otherwise it fails at runtime with `MissingMethodException`.
 - Testcontainers on the arm64 sandbox: `axllent/mailpit` (SMTP with STARTTLS, `MP_SMTP_TLS_CERT=sans:localhost`) and
   `linuxserver/openssh-server` from Docker Hub (SFTP) run; `atmoz/sftp` is amd64-only.
-- Provider packages (EMail, SMS, SFTP) don't depend on Hosting: environment checks (e.g. "not in Production") are
-  options-validation rules that read `DOTNET_ENVIRONMENT`, then `ASPNETCORE_ENVIRONMENT` (owner's review of #141).
+- Provider packages (EMail, SMS, SFTP) don't depend on Hosting (owner's review of #141); their options are checked by
+  options validation. Insecure opt-ins such as `AllowInvalidServerCertificate` are not blocked per environment, only
+  logged as a warning: the user decides.
