@@ -30,7 +30,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="MemoryPools" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
       <PackageReference Include="NodaTime" />
@@ -40,4 +39,7 @@
       <ProjectReference Include="..\..\Configuration\Curiosus.Configuration\Curiosus.Configuration.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <InternalsVisibleTo Include="Curiosus.Tools.UnitTests" />
+    </ItemGroup>
 </Project>

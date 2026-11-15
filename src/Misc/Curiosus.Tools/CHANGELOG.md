@@ -2,7 +2,25 @@
 
 ## [Unreleased]
 
+### Added
+
+- `PerformanceMeasurer` (registered with `services.AddCuriosusPerformanceMeasurer()`) and `MeasureScope`:
+  `using var _ = measurer.Measure("Import");` logs `{MeasurerName} -> {MeasurerSpentTime} ms` to the `performance`
+  logger, as before, with the elapsed time as whole milliseconds and no allocation per measurement. ([#52](https://github.com/curiosus-dev/Curiosus.Utils/issues/52))
+
+### Fixed
+
+- `StuckCodeManager`: two code sections entered with the same label in the same tick are tracked separately (the key
+  was a hash code, so one of them was silently dropped or removed by the other), elapsed time no longer jumps with
+  daylight saving or clock changes, and the log shows the enter time in UTC as ISO 8601 (`2026-11-15T10:00:00.0000000Z`)
+  instead of local time in the `ru-RU` format. ([#52](https://github.com/curiosus-dev/Curiosus.Utils/issues/52))
+
 ### Removed
+
+- **Breaking:** `PerformanceManager`, the pooled `PerformanceMeasurer` class, `ReplaceName` and
+  `Measure(name, params object[])` are removed in favour of the injected `PerformanceMeasurer`; the log template, its
+  property names and the `performance` logger are unchanged. The `MemoryPools` dependency is removed. See the
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools/3.0#performance-logging-performancemanager--performancemeasurer). ([#52](https://github.com/curiosus-dev/Curiosus.Utils/issues/52))
 
 - **Breaking:** `IDateTimeService`, `LocalDateTimeService` and `AddLocalDateTimeService()` are removed in favour of
   `System.TimeProvider`: inject `TimeProvider`, call `GetUtcNow().UtcDateTime` instead of `GetCurrentTimeUtc()` and

@@ -1,4 +1,5 @@
 using Curiosus.Tools.AppInitializer;
+using Curiosus.Tools.Performance;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Curiosus.Hosting.Performance
@@ -12,6 +13,7 @@ namespace Curiosus.Hosting.Performance
         /// <returns></returns>
         public static IServiceCollection AddPerformanceMeasures(this IServiceCollection services)
         {
+            services.AddCuriosusPerformanceMeasurer();
             services.AddAppInitializer<PerformanceMonitoringInitializer>();
             return services;
         }

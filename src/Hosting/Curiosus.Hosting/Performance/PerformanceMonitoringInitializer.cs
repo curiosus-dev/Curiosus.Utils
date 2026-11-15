@@ -13,7 +13,6 @@ namespace Curiosus.Hosting.Performance
     /// </summary>
     public class PerformanceMonitoringInitializer : IAppInitializer
     {
-        private const string PerformanceLogName = "performance";
         private const string StuckCodeLogName = "stuckcode";
 
         private readonly ILoggerFactory _loggerFactory;
@@ -31,13 +30,6 @@ namespace Curiosus.Hosting.Performance
         public Task InitializeAsync(CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("Initialization of performance monitoring service started...");
-            
-            _logger.LogInformation($"Initialization of {nameof(PerformanceManager)} started (using log with name {PerformanceLogName})...");
-            
-            var performanceLog = _loggerFactory.CreateLogger(PerformanceLogName);
-            PerformanceManager.Initialize(performanceLog);
-            
-            _logger.LogInformation($"Initialization of {nameof(StuckCodeManager)} completed.");
             
             _logger.LogInformation($"Initialization of {nameof(StuckCodeManager)} started (using log with name {StuckCodeLogName})...");
             var stuckCodeLog = _loggerFactory.CreateLogger(StuckCodeLogName);
