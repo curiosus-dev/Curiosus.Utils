@@ -25,6 +25,19 @@
 
 ### Changed
 
+- **Breaking:** `CuriosusWatchdog` runs on a `PeriodicTimer` at a **fixed rate**: the next run starts a period after
+  the previous one started, not a period after it ended, and a run longer than the period is followed by the next one
+  at once, without a backlog. It takes an optional `TimeProvider` (`FakeTimeProvider` in tests), reads the period from
+  the new virtual `GetPeriod()` after every run (a period from `IOptionsMonitor`), runs again right after
+  `ExceptionDelay` and counts the next period from that run, and no longer logs a warning when the host stops. Log
+  messages are templates now; the one after an exception shows the real delay instead of "10 minutes". The constructor
+  is protected and source-compatible. See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting/4.0#curiosuswatchdog). ([#46](https://github.com/curiosus-dev/Curiosus.Utils/issues/46))
+- **Breaking:** the thread pool tuning is removed (`AddThreadPoolTuning`, `ThreadPoolOptions`, the `ThreadPool` section,
+  `ThreadPoolInitializer`, `ThreadPoolMonitoringService`): .NET injects threads itself when work items block, and the
+  `System.Runtime` meter publishes the pool metrics. The removed code had two bugs: its timers used `Environment.TickCount`,
+  which wraps after ~24.9 days of uptime, so the state log then ran in a tight loop (or stopped), and auto-tuning never
+  changed the I/O minimum while logging that it did. Set a static minimum with `<ThreadPoolMinThreads>` in the app
+  project if load tests show starvation. See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting/4.0#thread-pool). ([#45](https://github.com/curiosus-dev/Curiosus.Utils/issues/45))
 - **Breaking:** the bootstrappers (`CuriosusAppBootstrapper`, `CuriosusServiceAppBootstrapper`,
   `CuriosusToolAppBootstrapper`), `CuriosusCLIArguments`, `ICuriosusAppConfiguration` / `CuriosusAppConfiguration` and
   its validator, `AddAppInitialization`, `HostExtensions.InitAsync`, `AddPerformanceMeasures`, the public
