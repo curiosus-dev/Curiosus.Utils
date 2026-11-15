@@ -5,8 +5,8 @@
         
         <PackageId>Curiosus.Hosting.Web</PackageId>
         <Title>Curiosus.Hosting.Web</Title>
-        <Description>Hosting tools for Web applications.</Description>
-        <Summary>Hosting tools for Web applications.</Summary>
+        <Description>Web application builder with the Curiosus.Hosting conventions.</Description>
+        <Summary>Web application builder with the Curiosus.Hosting conventions.</Summary>
         <PackageTags>Curiosus; Hosting; Boostrapping; Web; WebAPI</PackageTags>
         <Language>English</Language>
 
@@ -32,16 +32,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Misc\Curiosus.Tools.Web\Curiosus.Tools.Web.csproj" />
       <ProjectReference Include="..\Curiosus.Hosting\Curiosus.Hosting.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="MailKit" />
-      <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" />
-      <PackageReference Include="NLog.MailKit" />
       <PackageReference Include="NLog.Web.AspNetCore" />
-      <PackageReference Include="System.ComponentModel.Annotations" />
     </ItemGroup>
 
 </Project>

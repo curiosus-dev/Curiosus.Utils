@@ -54,7 +54,8 @@ namespace Curiosus.Hosting
 
             builder.Logging.ClearProviders();
             builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
-            builder.Logging.AddNLog();
+            // the host disposes the provider on exit, which flushes and shuts NLog down
+            builder.Logging.AddNLog(new NLogProviderOptions { ShutdownOnDispose = true });
 
             return builder.Services
                 .AddCuriosusOptions<CuriosusNLogOptions>(CuriosusNLogOptions.SectionName)

@@ -1,6 +1,8 @@
+AppName: IQSMS sample app
+
 Log:
-  LogConfigurationPath: ./NLog.config
-  LogOutputDirectory: ./logs
+  LogConfigurationPath: NLog.config
+  LogOutputDirectory: logs
   
 # must specified login and password
 IqsmsOptions:

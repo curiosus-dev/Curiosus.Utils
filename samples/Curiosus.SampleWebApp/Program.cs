@@ -1,40 +1,20 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Curiosus.Configuration;
 using Curiosus.Hosting;
 using Curiosus.Hosting.Web;
+using Curiosus.Tools.Web.Controllers;
+using NLog.Web;
 
-namespace Curiosus.SampleWebApp
+var builder = CuriosusWebHost.CreateBuilder(args).AddCuriosusDefaults();
+builder.AddCuriosusNLog(configureNLogExtensions: extensions => extensions.RegisterNLogWeb());
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
 {
-    public class Configuration : CuriosusWebAppConfiguration
-    {
-        public Configuration()
-        {
-            AppName = "Test App";
-        }
-
-        public override IReadOnlyCollection<ConfigurationValidationError> Validate(string? prefix = null)
-        {
-            Console.WriteLine("demo");
-            return base.Validate(prefix);
-        }
-    }
-
-    public class Program
-    {
-        public class CliArgs : CuriosusCLIArguments
-        {
-            public CliArgs() : base("test")
-            {
-            }
-        }
-
-        public static Task<int> Main(string[] args)
-        {
-            var bootstrapper = new CuriosusWebAppBootstrapper<CliArgs, Configuration, Startup>();
-
-            return bootstrapper.RunAsync(args);
-        }
-    }
+    app.UseDeveloperExceptionPage();
 }
+
+app.MapGet("/", () => "Hello World!");
+
+Console.WriteLine(SiteError.Unauthorized.ToLocalizedString());
+
+return await CuriosusApp.RunAsync(app);

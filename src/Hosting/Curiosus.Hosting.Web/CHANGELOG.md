@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### Added
+
+- `CuriosusWebHost.CreateBuilder(args)`: a `WebApplicationBuilder` with the conventions of `CuriosusHost` (`-c` as
+  `--config`, content root of a service app); chain `AddCuriosusDefaults()` of `Curiosus.Hosting`. ([#42](https://github.com/curiosus-dev/Curiosus.Utils/issues/42))
+
+### Removed
+
+- **Breaking:** `CuriosusWebAppBootstrapper`, `ICuriosusWebAppConfiguration` / `CuriosusWebAppConfiguration` and its
+  validator, `KestrelOptions` / `EndpointOptions` / `EndpointCertificate`, `StartupHelper.ConfigureCuriosusMvc`, the
+  `ModelBinder` resources and `WebSiteResourceKeys`: web apps move from `Startup` to `Program.cs` on `WebApplication`.
+  The references to `Curiosus.Tools.Web`, `MailKit`, `NLog.MailKit`, `Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation`
+  and `System.ComponentModel.Annotations` are removed. See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting-web/4.0). ([#42](https://github.com/curiosus-dev/Curiosus.Utils/issues/42))
+
 ### Changed
 
 - **Breaking:** the logging types of `Curiosus.Hosting` are replaced: see the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting/4.0#logging-curiosusnlogconfigurator--addcuriosusnlog).

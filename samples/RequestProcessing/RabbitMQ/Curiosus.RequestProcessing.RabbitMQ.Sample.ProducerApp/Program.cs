@@ -1,6 +1,17 @@
-﻿// See https://aka.ms/new-console-template for more information
+using Curiosus.Configuration;
+using Curiosus.Hosting;
+using Curiosus.RequestProcessing.RabbitMQ.Sample.ProducerApp.Configuration;
+using Curiosus.RequestProcessing.RabbitMQ.Sample.ProducerApp.Core;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
-using Curiosus.RequestProcessing.RabbitMQ.Sample.ProducerApp.Startup;
+var builder = CuriosusHost.CreateBuilder(args).AddCuriosusDefaults();
+builder.AddCuriosusNLog();
 
-var bootstrapper = new SampleProducerAppBootstrapper();
-return await bootstrapper.RunAsync(args);
+// the options class still uses the old validation model, so it is bound once and registered as is
+var configuration = builder.Configuration.Get<SampleProducerAppConfiguration>() ?? new SampleProducerAppConfiguration();
+configuration.AssertValid();
+builder.Services.AddSingleton(configuration);
+builder.Services.AddHostedService<SampleRequestsProducer>();
+
+return await CuriosusApp.RunAsync(builder.Build());

@@ -1,5 +1,4 @@
 using Curiosus.Configuration;
-using Curiosus.Hosting;
 using Curiosus.RabbitMQ;
 
 namespace Curiosus.RequestProcessing.RabbitMQ.Sample.ProducerApp.Configuration;
@@ -7,7 +6,7 @@ namespace Curiosus.RequestProcessing.RabbitMQ.Sample.ProducerApp.Configuration;
 /// <summary>
 /// Options for sample producer app.
 /// </summary>
-public class SampleProducerAppConfiguration : CuriosusAppConfiguration
+public class SampleProducerAppConfiguration : IValidatableOptions
 {
     /// <summary>
     /// RabbitMQ options.
@@ -25,16 +24,9 @@ public class SampleProducerAppConfiguration : CuriosusAppConfiguration
     public int DelayBetweenSendMs { get; set; } = 10;
 
     /// <inheritdoc />
-    public SampleProducerAppConfiguration()
-    {
-        AppName = "RabbitMQc Consumer Producer App";
-    }
-
-    /// <inheritdoc />
-    public override IReadOnlyCollection<ConfigurationValidationError> Validate(string? prefix = null)
+    public IReadOnlyCollection<ConfigurationValidationError> Validate(string? prefix = null)
     {
         var errors = new ConfigurationValidationErrorCollection(prefix);
-        errors.AddErrors(base.Validate(prefix));
         errors.AddErrorIf(String.IsNullOrWhiteSpace(QueueName), nameof(QueueName), "can't be empty");
         errors.AddErrorIf(DelayBetweenSendMs < 1, nameof(DelayBetweenSendMs), "can't be less than 1");
         errors.AddErrors(RabbitMQ.Validate());
