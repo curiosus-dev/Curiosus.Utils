@@ -1,75 +1,63 @@
 using System;
 using System.IO;
-using System.Linq;
 using Curiosus.Configuration;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
+using Microsoft.AspNetCore.DataProtection.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Curiosus.Tools.Web.DataProtection
 {
     /// <summary>
-    /// Extension methods for <see cref="IServiceCollection"/> to add data protection to web applications
+    /// Extension methods for <see cref="IServiceCollection"/> to set up ASP.NET Core data protection.
     /// </summary>
     public static class DataProtectionServiceCollectionExtensions
     {
-        public static IServiceCollection DisableDataProtection(this IServiceCollection services)
-        {
-            if (services == null) throw new ArgumentNullException(nameof(services));
-
-            return services.AddCuriosusDataProtection(new DataProtectionOptions
-            {
-                IsEnabled = false
-            });
-        }
-        
         /// <summary>
-        /// Adds data protection to web application's form
+        /// Adds ASP.NET Core data protection configured from the <paramref name="configSectionPath"/> section
+        /// (<see cref="CuriosusDataProtectionOptions"/>); an empty or missing section keeps the framework defaults. Data
+        /// is always protected: there is no way to turn protection off.
         /// </summary>
-        /// <param name="services">IoC</param>
-        /// <param name="options">Options</param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentNullException"></exception>
-        public static IServiceCollection AddCuriosusDataProtection(
+        /// <param name="services">Service collection.</param>
+        /// <param name="configSectionPath">Path of the configuration section, <c>DataProtection</c> by default.</param>
+        /// <returns>Data protection builder for <c>ProtectKeysWithCertificate</c>, another key repository, etc.</returns>
+        /// <remarks>
+        /// The options are bound with <c>AddCuriosusOptions</c> and validated when the host starts: <c>KeyRingPath</c>
+        /// must exist, and <c>DisableAutomaticKeyGeneration</c> needs <c>KeyRingPath</c>.
+        /// </remarks>
+        public static IDataProtectionBuilder AddCuriosusDataProtection(
             this IServiceCollection services,
-            DataProtectionOptions? options)
+            string configSectionPath = "DataProtection")
         {
             if (services == null) throw new ArgumentNullException(nameof(services));
-            if (options == null) return services;
-            
-            if (options.IsEnabled)
-            {
-                options.AssertValid();
-                
-               services.AddDataProtection()
-                    .SetApplicationName(options.ApplicationName)
-                    .DisableAutomaticKeyGeneration()
-                    // ReSharper disable once AssignNullToNotNullAttribute
-                    // already checked
-                    .PersistKeysToFileSystem(new DirectoryInfo(options.KeyRingPath));
-            }
-            else
-            {
-                // if we do not need protection, then insert the stub
-                var dataProtectionProviderDescriptor = services.FirstOrDefault(s => s.ServiceType == typeof(IDataProtectionProvider));
-                if (dataProtectionProviderDescriptor != null)
+
+            services.AddCuriosusOptions<CuriosusDataProtectionOptions>(configSectionPath);
+            services.TryAddEnumerable(ServiceDescriptor
+                .Singleton<IValidateOptions<CuriosusDataProtectionOptions>, CuriosusDataProtectionOptionsValidator>());
+
+            // registered after AddDataProtection, whose own setup would overwrite these otherwise. They set what
+            // SetApplicationName, PersistKeysToFileSystem and DisableAutomaticKeyGeneration set, from the bound options
+            var builder = services.AddDataProtection();
+            services.AddOptions<DataProtectionOptions>()
+                .Configure<IOptions<CuriosusDataProtectionOptions>>((target, source) =>
                 {
-                    services.Replace(
-                        ServiceDescriptor.Describe(
-                            dataProtectionProviderDescriptor.ServiceType,
-                            sp =>
-                            {
-                                var innerDataProtectionProvider = (IDataProtectionProvider) dataProtectionProviderDescriptor.ImplementationFactory(sp);
+                    if (!String.IsNullOrWhiteSpace(source.Value.ApplicationName))
+                        target.ApplicationDiscriminator = source.Value.ApplicationName;
+                });
+            services.AddOptions<KeyManagementOptions>()
+                .Configure<IOptions<CuriosusDataProtectionOptions>, ILoggerFactory>((target, source, loggerFactory) =>
+                {
+                    if (!String.IsNullOrWhiteSpace(source.Value.KeyRingPath))
+                        target.XmlRepository = new FileSystemXmlRepository(new DirectoryInfo(source.Value.KeyRingPath), loggerFactory);
 
-                                return new SecureLessDataProtectionProvider(innerDataProtectionProvider, options);
-                            },
-                            dataProtectionProviderDescriptor.Lifetime));
-                }
-            }
-            
-            services.TryAddSingleton(options);
+                    if (source.Value.DisableAutomaticKeyGeneration)
+                        target.AutoGenerateKeys = false;
+                });
 
-            return services;
+            return builder;
         }
     }
 }

@@ -41,7 +41,8 @@ What else is inside:
   `DateTimeModelBinderProvider`, `DelimitedArrayModelBinder`, `TrimStringSystemJsonConverter` for `[FromBody]` strings.
 - **Middleware** — `UseUserTracer` (trace id cookie, needs `UniqueIdGenerator.Initialize`),
   `UseLocalizationSetter` (language cookie), `UsePreviewDetector` (rewrites the path for link-preview bots).
-- **Options-driven services** — `AddCuriosusDataProtection(DataProtectionOptions)` / `DisableDataProtection()`,
+- **Options-driven services** — `AddCuriosusDataProtection()` (section `DataProtection`)
+  (`ApplicationName`, `KeyRingPath`, `DisableAutomaticKeyGeneration`; protection is always on),
   `AddReCaptcha(ReCaptchaOptions)` + `ReCaptchaService`, `AddSiteMap(mvcBuilder)` + `SiteMapBuilder`,
   `ConfigureCookiesForOldBrowsers()` (SameSite fixes).
 - **MVC** — `MVCBaseController` (error views, AJAX responses, redirects), `SiteError`,

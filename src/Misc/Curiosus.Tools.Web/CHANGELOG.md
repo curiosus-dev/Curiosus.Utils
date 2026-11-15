@@ -13,6 +13,12 @@
   exception messages), error responses showed exception messages (SQL, paths, hosts), the error action took its text from
   the query string, and every public helper was reachable by URL. See the
   [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools-web/4.0#mvcbasecontroller-redirects-and-error-pages). ([#62](https://github.com/curiosus-dev/Curiosus.Utils/issues/62))
+- `AddCuriosusDataProtection` with `IsEnabled: false` (also `DisableDataProtection()`) replaced the registered
+  `IDataProtectionProvider` with a stub whose `Protect` returned the input unchanged, whenever `AddDataProtection()` had
+  been called before it, directly or through `AddAuthentication`, antiforgery or Identity. Auth cookies were then only
+  Base64Url-encoded (a user could change their own claims), and TempData and app payloads were readable and forgeable.
+  The stub is removed: data is always protected. Environments that ran it lose their issued cookies once. See the
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools-web/4.0#dataprotection). ([#60](https://github.com/curiosus-dev/Curiosus.Utils/issues/60))
 
 ### Fixed
 
@@ -38,6 +44,13 @@
   their logger from `ILoggerFactory` with the actual controller as the category (`HomeController`) instead of `main`. Drop the
   logger argument where a subclass calls them. See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools-web/4.0).
   ([#41](https://github.com/curiosus-dev/Curiosus.Utils/issues/41))
+- **Breaking:** `AddCuriosusDataProtection(string configSectionPath = "DataProtection")` replaces
+  `AddCuriosusDataProtection(DataProtectionOptions)`
+  and returns `IDataProtectionBuilder`: always `AddDataProtection()`, with `ApplicationName`, `KeyRingPath` and
+  `DisableAutomaticKeyGeneration` of `CuriosusDataProtectionOptions` (validated on start). `DataProtectionOptions`,
+  `IsEnabled`, `DisableDataProtection()`, `SecureLessDataProtectionProvider` and `SecureLessDataProtector` are removed,
+  and automatic key generation is no longer disabled unless asked for. See the
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools-web/4.0#dataprotection). ([#60](https://github.com/curiosus-dev/Curiosus.Utils/issues/60))
 
 ## [3.0.0] - 2026-10-03
 
