@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Curiosus.Tools.Web.Controllers
@@ -36,39 +37,33 @@ namespace Curiosus.Tools.Web.Controllers
         /// <summary>
         /// Страница с сообщением об ошибке.
         /// </summary>
-        /// <param name="logger"></param>
         /// <param name="error">Тип ошибки</param>
         [AllowAnonymous]
-        public ActionResult ErrorViewWithCode(
-            [FromServices] ILogger logger,
-            SiteError error)
+        public ActionResult ErrorViewWithCode(SiteError error)
         {
-            return ErrorView(logger, error.ToLocalizedString());
+            return ErrorView(error.ToLocalizedString());
         }
         
         /// <summary>
         /// Страница с ошибкой
         /// </summary>
         [AllowAnonymous]
-        public ActionResult ErrorViewParams(
-            [FromServices] ILogger logger, 
-            string fmt, 
-            params object[] args)
+        public ActionResult ErrorViewParams(string fmt, params object[] args)
         {
-            return ErrorView(logger, String.Format(fmt, args));
+            return ErrorView(String.Format(fmt, args));
         }
         
         /// <summary>
         /// Страница с сообщением об ошибке.
         /// Возвращает PartialView если ajax запрос.
         /// </summary>
-        /// <param name="logger"></param>
         /// <param name="errorText">Текст ошибки</param>
         [AllowAnonymous]
-        public ActionResult ErrorView(
-            [FromServices] ILogger logger, 
-            string? errorText = null)
+        public ActionResult ErrorView(string? errorText = null)
         {
+            // the category of the actual controller (HomeController), not of this base class
+            var logger = HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(GetType());
+
             var message = String.IsNullOrWhiteSpace(errorText)
                 ? LNG.UnexpectedError
                 : errorText;
@@ -82,7 +77,7 @@ namespace Curiosus.Tools.Web.Controllers
                 {
                     case BadHttpRequestException _:
                         message = ex.Message;
-                        logger.LogWarning(ex, $"Connection was closed by the client while sending response: {ex.Message}.");
+                        logger.LogWarning(ex, "Connection was closed by the client while sending response: {Error}", ex.Message);
                         break;
                     case TaskCanceledException _:
                     case OperationCanceledException _:
@@ -90,13 +85,13 @@ namespace Curiosus.Tools.Web.Controllers
                         logger.LogWarning(ex, "Request was canceled by user");
                         break;
                     default:
-                        logger.LogError(ex, $"Unhandled error: {ex.Message}");
+                        logger.LogError(ex, "Unhandled error: {Error}", ex.Message);
                         break;
                 }
             }
             else
             {
-                logger.LogWarning(message);
+                logger.LogWarning("{ErrorText}", message);
             }
 
             ViewBag.ErrorText = message;

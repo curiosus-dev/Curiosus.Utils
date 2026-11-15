@@ -17,7 +17,7 @@ namespace Curiosus.Notifications
         public Notificator(
             IEnumerable<INotificationChannel> channels,
             IEnumerable<INotificationBuilder> notificationBuilders,
-            ILogger logger)
+            ILogger<Notificator> logger)
         {
             if (channels == null) throw new ArgumentNullException(nameof(channels));
             if (notificationBuilders == null) throw new ArgumentNullException(nameof(notificationBuilders));

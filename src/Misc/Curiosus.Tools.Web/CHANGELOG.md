@@ -1,5 +1,21 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- `RequestLoggingMiddleware` takes `ILogger<RequestLoggingMiddleware>` instead of a non-generic `ILogger`, which
+  Curiosus.Hosting 4.0 no longer registers; its log category is the class name instead of `main`.
+  ([#41](https://github.com/curiosus-dev/Curiosus.Utils/issues/41))
+
+### Changed
+
+- **Breaking:** the error actions of `MVCBaseController` (`ErrorView`, `ErrorViewWithCode`, `ErrorViewParams`) no
+  longer take a `[FromServices] ILogger` parameter, which failed to resolve with Curiosus.Hosting 4.0: they create
+  their logger from `ILoggerFactory` with the actual controller as the category (`HomeController`) instead of `main`. Drop the
+  logger argument where a subclass calls them. See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools-web/4.0).
+  ([#41](https://github.com/curiosus-dev/Curiosus.Utils/issues/41))
+
 ## [3.0.0] - 2026-10-03
 
 ### Changed
