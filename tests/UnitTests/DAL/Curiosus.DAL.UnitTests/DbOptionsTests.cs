@@ -43,7 +43,7 @@ public class DbOptionsTests
         using var host = CreateHost(
             new Dictionary<string, string?> { ["Db:IsGlobalLoggingEnabled"] = "true" },
             services => services.AddOptions<DbOptions>()
-                .BindConfiguration("Db")
+                .BindConfiguration(DbOptions.SectionName)
                 .ValidateDataAnnotations()
                 .ValidateOnStart());
 
@@ -64,7 +64,7 @@ public class DbOptionsTests
                 ["Db:IsSensitiveDataLoggingEnabled"] = "true",
             },
             services => services.AddOptions<DbOptions>()
-                .BindConfiguration("Db")
+                .BindConfiguration(DbOptions.SectionName)
                 .ValidateDataAnnotations()
                 .ValidateOnStart());
 
@@ -166,7 +166,7 @@ public class DbOptionsTests
     private static void AddAppDbOptions(IServiceCollection services)
     {
         services.AddOptions<AppDbOptions>()
-            .BindConfiguration("Db")
+            .BindConfiguration(DbOptions.SectionName)
             .ValidateDataAnnotations()
             .ValidateOnStart();
         services.AddSingleton<IValidateOptions<AppDbOptions>, AppDbOptionsValidator>();

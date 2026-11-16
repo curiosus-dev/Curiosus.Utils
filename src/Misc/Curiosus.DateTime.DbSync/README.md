@@ -23,9 +23,11 @@ Register the data source of the **primary** database (a replica has its own cloc
 
 ```csharp
 builder.Services.AddNpgsqlDataSource(connectionString);           // registers DbDataSource too
-builder.Services.AddCuriosusDbSyncTimeProvider()
-    .BindConfiguration("DbTimeSync");                             // optional, defaults below
+builder.Services.AddCuriosusDbSyncTimeProvider();                // binds the DbTimeSync section
 ```
+
+The section is optional, the values below are the defaults. Another section path is the first argument
+(`AddCuriosusDbSyncTimeProvider("Clock:DbTimeSync")`), code configuration applied after the section is `configure:`.
 
 ```yaml
 DbTimeSync:
@@ -46,7 +48,7 @@ public class LeaseService(TimeProvider clock)
 ```
 
 Inject `DbSyncTimeProvider` itself to read `IsSynchronized` or `Offset`. Code that needs the local clock regardless uses
-`TimeProvider.System` directly. A keyed data source is selected with `dataSourceKey`.
+`TimeProvider.System` directly. A keyed data source is selected with `dataSourceKey: "..."`.
 
 ### How it works
 

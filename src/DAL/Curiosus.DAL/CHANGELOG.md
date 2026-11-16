@@ -6,8 +6,10 @@
 
 - **Breaking:** `DbOptions` moved to `Microsoft.Extensions.Options`: it no longer implements `IValidatableOptions` and
   `ILoggableOptions`, `Validate(prefix)` is removed and `ConnectionString` is checked by `[Required]` instead. Register it
-  (or your subclass) with `AddOptions<T>().BindConfiguration("Db").ValidateDataAnnotations().ValidateOnStart()` instead
-  of `AssertValid()`; a subclass that overrode `Validate` moves its rules to an `IValidateOptions<T>`. See the
+  (or your subclass) with
+  `AddOptions<T>().BindConfiguration(DbOptions.SectionName).ValidateDataAnnotations().ValidateOnStart()` instead of
+  `AssertValid()`; the new `DbOptions.SectionName` constant is the default section, `"Db"`; a subclass that overrode
+  `Validate` moves its rules to an `IValidateOptions<T>`. See the
   [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-dal/3.0#options). ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
 
 ### Removed
