@@ -60,5 +60,6 @@ services.AddHttpClient(UnisenderGoEmailSender.HttpClientName, client => client.T
 
 - [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.EMail](https://www.nuget.org/packages/Curiosus.EMail) — `IEMailSender` abstraction
-- [Curiosus.EMail.SMTP](https://www.nuget.org/packages/Curiosus.EMail.SMTP), [Curiosus.EMail.Mailgun](https://www.nuget.org/packages/Curiosus.EMail.Mailgun) — other providers
+- [Curiosus.EMail.SMTP](https://www.nuget.org/packages/Curiosus.EMail.SMTP) — another provider
+- [Curiosus.EMail.Mailgun removal](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-email-mailgun/4.0) — replacements for the removed Mailgun provider
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

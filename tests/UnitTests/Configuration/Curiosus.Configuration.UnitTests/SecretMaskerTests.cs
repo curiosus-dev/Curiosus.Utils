@@ -9,7 +9,6 @@ public class SecretMaskerTests
     // library options
     [InlineData("SmtpPassword")]
     [InlineData("Password")]
-    [InlineData("MailgunApiKey")]
     [InlineData("ApiKey")]
     [InlineData("SmscPassword")]
     [InlineData("SshPassword")]

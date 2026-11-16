@@ -54,5 +54,6 @@ chain, host name and revocation. `Auto` and `StartTlsWhenAvailable` are rejected
 - [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.EMail.SMTP 3.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-email-smtp/3.0)
 - [Curiosus.EMail](https://www.nuget.org/packages/Curiosus.EMail) — `IEMailSender` abstraction
-- [Curiosus.EMail.Mailgun](https://www.nuget.org/packages/Curiosus.EMail.Mailgun), [Curiosus.EMail.UnisenderGo](https://www.nuget.org/packages/Curiosus.EMail.UnisenderGo) — other providers
+- [Curiosus.EMail.UnisenderGo](https://www.nuget.org/packages/Curiosus.EMail.UnisenderGo) — another provider
+- [Curiosus.EMail.Mailgun removal](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-email-mailgun/4.0) — sending through Mailgun over SMTP with this package
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages
