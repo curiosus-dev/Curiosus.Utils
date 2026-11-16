@@ -60,16 +60,6 @@ public class EmailNotification : INotification
 
 The email notification channel uses the `IEMailSender` interface from Curiosus.EMail package, which supports multiple providers:
 
-### Mailgun
-```csharp
-services.AddCuriosusMailgunSender(options =>
-{
-    options.ApiKey = "your-api-key";
-    options.Domain = "your-domain.com";
-    options.FromEmail = "noreply@your-domain.com";
-});
-```
-
 ### SendGrid
 ```csharp
 services.AddCuriosusSendGridSender(options =>

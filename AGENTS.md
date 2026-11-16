@@ -16,7 +16,7 @@ Curiosus.Utils is a collection of .NET NuGet utility libraries published under M
 Every feature area follows an **abstraction + implementation** pattern:
 
 - **Base project** (`Curiosus.EMail`, `Curiosus.SMS`, `Curiosus.SFTP`, etc.) — defines interfaces and shared types
-- **Implementation projects** (`Curiosus.EMail.Smtp`, `Curiosus.EMail.Mailgun`, `Curiosus.SMS.Smsc`, etc.) — concrete implementations with third-party dependencies
+- **Implementation projects** (`Curiosus.EMail.Smtp`, `Curiosus.EMail.UnisenderGo`, `Curiosus.SMS.Smsc`, etc.) — concrete implementations with third-party dependencies
 
 This pattern repeats across: Archiver, DAL, Email, FileData, Hosting, Localization, Notifications, RequestProcessing, SFTP, SMS.
 
@@ -26,7 +26,7 @@ This pattern repeats across: Archiver, DAL, Email, FileData, Hosting, Localizati
 Curiosus.Configuration (base)
     └── Curiosus.Tools → used by most higher-level libraries
         ├── Curiosus.DAL.EF, Curiosus.DAL.Dapper
-        ├── Curiosus.EMail → Smtp, Mailgun, UnisenderGo
+        ├── Curiosus.EMail → Smtp, UnisenderGo
         ├── Curiosus.SMS → Smsc, Iqsms
         ├── Curiosus.Notifications → Notifications.EMail, Notifications.SMS
         └── Curiosus.Hosting → Curiosus.Hosting.Web
