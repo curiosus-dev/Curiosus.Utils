@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Curiosus.Configuration;
 using Curiosus.RequestProcessing.Workers;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -23,7 +22,7 @@ namespace Curiosus.RequestProcessing.Postgres
         where TWorkerParams : IWorkerExtraParams
         where TDispatcher : RequestDispatcherBase<TRequest, TWorker, TWorkerParams, TProcessingRequestInfo, TOptions>, IHostedService
         where TProcessingRequestInfo : class, IProcessingRequestInfo
-        where TOptions : RequestProcessorNodeOptions, IPostgresRequestProcessorNodeOptions
+        where TOptions : PostgresRequestProcessorNodeOptions
     {
         /// <summary>
         /// Параметры получателя событий.
@@ -38,8 +37,6 @@ namespace Curiosus.RequestProcessing.Postgres
             ILoggerFactory loggerFactory,
             IServiceProvider serviceProvider) : base(nodeOptions, loggerFactory, serviceProvider)
         {
-            nodeOptions.PostgresEventReceiver.AssertValid();
-
             EventReceiverOptions = nodeOptions.PostgresEventReceiver;
         }
 

@@ -1,7 +1,7 @@
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Microsoft.Extensions.Options;
 using Npgsql;
 using Xunit;
 
@@ -58,10 +58,20 @@ public class ChannelNameTests
     {
         var options = new PostgresEventReceiverOptions { EventNames = ["ok", "", " ", new string('a', 64), "a\0b"] };
 
-        var errors = options.Validate("Receiver");
+        var result = Validate(options);
 
-        errors.Should().HaveCount(4);
-        errors.Select(e => e.FieldName).Should().AllSatisfy(f => f.Should().StartWith("Receiver:EventNames"));
+        result.Failed.Should().BeTrue();
+        result.FailureMessage.Should().NotContain("EventNames:0").And
+            .Contain("EventNames:1").And.Contain("EventNames:2").And.Contain("EventNames:3").And.Contain("EventNames:4");
+    }
+
+    [Fact]
+    public void OptionsValidate_NoNames_Error()
+    {
+        var result = Validate(new PostgresEventReceiverOptions());
+
+        result.Failed.Should().BeTrue();
+        result.FailureMessage.Should().Contain("EventNames").And.Contain("at least one channel name");
     }
 
     [Fact]
@@ -69,8 +79,12 @@ public class ChannelNameTests
     {
         var options = new PostgresEventReceiverOptions { EventNames = ["requests", "MixedCase"] };
 
-        options.Validate().Should().BeEmpty();
+        Validate(options).Succeeded.Should().BeTrue();
     }
+
+    private static ValidateOptionsResult Validate(PostgresEventReceiverOptions options)
+        => new DataAnnotationValidateOptions<PostgresEventReceiverOptions>(Options.DefaultName)
+            .Validate(Options.DefaultName, options);
 
     [Fact]
     public async Task NotifyAsync_InvalidChannel_ThrowsBeforeConnecting()

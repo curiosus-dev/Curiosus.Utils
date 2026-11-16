@@ -1,8 +1,8 @@
 ﻿using System;
-using Curiosus.Configuration;
 using Curiosus.RequestProcessing.RabbitMQ.Options;
 using Curiosus.RequestProcessing.Workers;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Curiosus.RequestProcessing.RabbitMQ;
 
@@ -14,7 +14,19 @@ public static class IocExtensions
     /// <summary>
     /// Adds services for processing requests from RabbitMQ.
     /// </summary>
-    public static void AddRabbitMQRequestProcessor<
+    /// <remarks>
+    /// Registers the same services as
+    /// <see cref="RequestProcessorIocExtensions.AddRequestProcessor{TRequest,TWorker,TWorkerParams,TProcessorBootstrapper,TOptions,TDispatcher,TProcessingRequestInfo}"/>.
+    /// The options, <see cref="RabbitMQRequestProcessorNodeOptions.RabbitMQEventReceiver"/> included, are validated
+    /// with data annotations when the host starts. Only the first call for a <typeparamref name="TOptions"/> binds its
+    /// section and registers the services and the validation; a later call adds its <paramref name="configure"/> only.
+    /// </remarks>
+    /// <param name="services">Service collection.</param>
+    /// <param name="configSectionPath">Configuration section the options are bound from; a missing section binds
+    /// nothing, so the defaults and <paramref name="configure"/> apply.</param>
+    /// <param name="configure">Configures the options in code, after binding.</param>
+    /// <returns>Options builder of <typeparamref name="TOptions"/>, validated at start.</returns>
+    public static OptionsBuilder<TOptions> AddRabbitMQRequestProcessor<
         TRequest,
         TWorker,
         TWorkerParams,
@@ -23,27 +35,25 @@ public static class IocExtensions
         TDispatcher,
         TProcessingRequestInfo>(
         this IServiceCollection services,
-        TOptions processorNodeOptions)
+        string configSectionPath = RequestProcessorNodeOptions.SectionName,
+        Action<TOptions>? configure = null)
         where TRequest : IRequest
         where TWorkerParams : class, IWorkerExtraParams
         where TDispatcher : RabbitMQRequestDispatcherBase<TRequest, TWorker, TWorkerParams, TProcessingRequestInfo, TOptions>
         where TWorker : WorkerBase<RabbitMQRequestWrapper<TRequest>, TWorkerParams, TProcessingRequestInfo, TOptions>
-        where TOptions : RequestProcessorNodeOptions, IRabbitMQRequestProcessorNodeOptions
+        where TOptions : RabbitMQRequestProcessorNodeOptions
         where TProcessorBootstrapper : RabbitMQRequestProcessorBootstrapperBase<TRequest, TWorkerParams, TWorker, TDispatcher, TProcessingRequestInfo, TOptions>
         where TProcessingRequestInfo : class, IProcessingRequestInfo
     {
-        if (services == null) throw new ArgumentNullException(nameof(services));
-        if (processorNodeOptions == null) throw new ArgumentNullException(nameof(processorNodeOptions));
+        ArgumentNullException.ThrowIfNull(services);
 
-        processorNodeOptions.AssertValid();
-
-        services.AddRequestProcessor<
+        return services.AddRequestProcessor<
             RabbitMQRequestWrapper<TRequest>,
             TWorker,
             TWorkerParams,
             TProcessorBootstrapper,
             TOptions,
             TDispatcher,
-            TProcessingRequestInfo>(processorNodeOptions);
+            TProcessingRequestInfo>(configSectionPath, configure);
     }
 }

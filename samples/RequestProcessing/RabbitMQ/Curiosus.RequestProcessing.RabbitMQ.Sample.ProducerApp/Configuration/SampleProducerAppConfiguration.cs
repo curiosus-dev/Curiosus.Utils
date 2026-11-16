@@ -1,35 +1,30 @@
-using Curiosus.Configuration;
+using System.ComponentModel.DataAnnotations;
 using Curiosus.RabbitMQ;
+using Microsoft.Extensions.Options;
 
 namespace Curiosus.RequestProcessing.RabbitMQ.Sample.ProducerApp.Configuration;
 
 /// <summary>
 /// Options for sample producer app.
 /// </summary>
-public class SampleProducerAppConfiguration : IValidatableOptions
+public class SampleProducerAppConfiguration
 {
     /// <summary>
     /// RabbitMQ options.
     /// </summary>
-    public RabbitMQOptions RabbitMQ { get; } = new();
+    [Required]
+    [ValidateObjectMembers]
+    public RabbitMQOptions RabbitMQ { get; set; } = new();
 
     /// <summary>
     /// Name of RabbitMQ queue to send requests.
     /// </summary>
+    [Required]
     public string QueueName { get; set; } = null!;
 
     /// <summary>
     /// Delay between sending requests, ms.
     /// </summary>
+    [Range(1, int.MaxValue)]
     public int DelayBetweenSendMs { get; set; } = 10;
-
-    /// <inheritdoc />
-    public IReadOnlyCollection<ConfigurationValidationError> Validate(string? prefix = null)
-    {
-        var errors = new ConfigurationValidationErrorCollection(prefix);
-        errors.AddErrorIf(String.IsNullOrWhiteSpace(QueueName), nameof(QueueName), "can't be empty");
-        errors.AddErrorIf(DelayBetweenSendMs < 1, nameof(DelayBetweenSendMs), "can't be less than 1");
-        errors.AddErrors(RabbitMQ.Validate());
-        return errors;
-    }
 }

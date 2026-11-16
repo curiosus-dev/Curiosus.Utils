@@ -14,12 +14,12 @@ dotnet add package Curiosus.RequestProcessing.RabbitMQ
 
 ## Usage
 
-Node options must implement `IRabbitMQRequestProcessorNodeOptions`:
+Node options derive from `RabbitMQRequestProcessorNodeOptions`; they are validated, `RabbitMQEventReceiver`
+included, when the host starts:
 
 ```csharp
-public class MyNodeOptions : RequestProcessorNodeOptions, IRabbitMQRequestProcessorNodeOptions
+public class MyNodeOptions : RabbitMQRequestProcessorNodeOptions
 {
-    public RabbitMQEventReceiverOptions RabbitMQEventReceiver { get; } = new();
 }
 ```
 
@@ -76,8 +76,7 @@ The bootstrapper derives from `RabbitMQRequestProcessorBootstrapperBase<...>` an
 
 ```csharp
 services.AddRabbitMQRequestProcessor<
-    MyRequest, MyWorker, WorkerBasicExtraParams, MyBootstrapper, MyNodeOptions, MyDispatcher, MyProcessingInfo>(
-    nodeOptions);
+    MyRequest, MyWorker, WorkerBasicExtraParams, MyBootstrapper, MyNodeOptions, MyDispatcher, MyProcessingInfo>();
 ```
 
 `RabbitMQEvent.Payload` is a copy of the message body. `RabbitMQEvent.ReceivedData` is the `BasicDeliverEventArgs`
@@ -94,6 +93,7 @@ A complete consumer and producer is in
 ## See also
 
 - [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
+- [Curiosus.RequestProcessing.RabbitMQ 4.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-requestprocessing-rabbitmq/4.0)
 - [Curiosus.RequestProcessing](https://www.nuget.org/packages/Curiosus.RequestProcessing) — workers, dispatcher, bootstrapper
 - [Curiosus.RequestProcessing.Postgres](https://www.nuget.org/packages/Curiosus.RequestProcessing.Postgres) — Postgres transport
 - [Curiosus.RabbitMQ](https://www.nuget.org/packages/Curiosus.RabbitMQ) — RabbitMQ RPC client

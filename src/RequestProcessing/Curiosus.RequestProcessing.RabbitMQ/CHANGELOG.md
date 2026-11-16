@@ -1,5 +1,20 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- **Breaking:** the options are validated with data annotations of `Microsoft.Extensions.Options` when the host starts
+  instead of `IValidatableOptions`/`AssertValid()` of `Curiosus.Configuration`: `IRabbitMQRequestProcessorNodeOptions`
+  is replaced with the `RabbitMQRequestProcessorNodeOptions` class, and `AddRabbitMQRequestProcessor` binds them from the
+  configuration section `configSectionPath` (default `"RequestProcessor"`) and an optional `configure` delegate instead
+  of taking an options instance, and returns `OptionsBuilder<TOptions>`. To migrate, derive the node options from
+  `RabbitMQRequestProcessorNodeOptions`, call `AddRabbitMQRequestProcessor<...>()` (or pass your section path) and remove
+  `AssertValid()`, see the
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-requestprocessing-rabbitmq/4.0#options). ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+- `RabbitMQEventReceiverOptions.Port` must be at most 65535. ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+- `RabbitMQEventReceiver` no longer validates its options in the constructor: they are validated at start. ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+
 ## [3.0.0] - 2026-10-03
 
 ### Changed

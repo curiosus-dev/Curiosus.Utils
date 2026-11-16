@@ -14,14 +14,14 @@ dotnet add package Curiosus.RequestProcessing.Postgres
 
 ## Usage
 
-Node options must implement `IPostgresRequestProcessorNodeOptions`. `PostgresEventReceiver` has `EventNames`
-(required, channels to `LISTEN` to), `KeepAliveSec` (default 0) and `ReconnectionPauseMs` (default 100).
+Node options derive from `PostgresRequestProcessorNodeOptions`. `PostgresEventReceiver` has `EventNames`
+(required, channels to `LISTEN` to), `KeepAliveSec` (default 0) and `ReconnectionPauseMs` (default 100); it is
+validated with the node options when the host starts.
 
 ```csharp
-public class MyNodeOptions : RequestProcessorNodeOptions, IPostgresRequestProcessorNodeOptions
+public class MyNodeOptions : PostgresRequestProcessorNodeOptions
 {
-    public PostgresEventReceiverOptions PostgresEventReceiver { get; } = new();
-
+    [Required]
     public string ConnectionString { get; set; } = null!;
 }
 ```
@@ -60,8 +60,16 @@ described in [Curiosus.RequestProcessing](https://www.nuget.org/packages/Curiosu
 
 ```csharp
 services.AddPostgresRequestProcessor<
-    MyRequest, MyWorker, WorkerBasicExtraParams, MyBootstrapper, MyNodeOptions, MyDispatcher, MyProcessingInfo>(
-    nodeOptions);
+    MyRequest, MyWorker, WorkerBasicExtraParams, MyBootstrapper, MyNodeOptions, MyDispatcher, MyProcessingInfo>();
+```
+
+```yaml
+RequestProcessor:
+  Name: my-node
+  WorkersCount: 4
+  ConnectionString: Host=localhost;Database=app
+  PostgresEventReceiver:
+    EventNames: [ new_request ]
 ```
 
 On the database side, send a notification when a request is added and put the channel into
@@ -87,7 +95,7 @@ must be shorter than 8000 bytes.
 ## See also
 
 - [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
-- [Curiosus.RequestProcessing.Postgres 2.1 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-requestprocessing-postgres/2.1)
+- [Curiosus.RequestProcessing.Postgres 3.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-requestprocessing-postgres/3.0)
 - [Curiosus.RequestProcessing](https://www.nuget.org/packages/Curiosus.RequestProcessing) — workers, dispatcher, bootstrapper
 - [Curiosus.RequestProcessing.RabbitMQ](https://www.nuget.org/packages/Curiosus.RequestProcessing.RabbitMQ) — RabbitMQ transport
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages
