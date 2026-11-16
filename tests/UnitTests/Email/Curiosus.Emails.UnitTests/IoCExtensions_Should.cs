@@ -6,6 +6,7 @@ using Curiosus.EMail;
 using Curiosus.Email.UnisenderGo;
 using Curiosus.UnitTests.Shared;
 using FluentAssertions;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http;
 using Xunit;
@@ -19,12 +20,13 @@ namespace Curiosus.Emails.UnitTests
         {
             // arrange
             var handler = new FakeHttpMessageHandler().Respond(HttpStatusCode.OK, "{\"status\":\"success\",\"job_id\":\"1\"}");
-            var services = new ServiceCollection().AddLogging();
-            services.AddUnisenderGoEmailSender(new UnisenderGoEmailOptions
+            var services = new ServiceCollection().AddLogging()
+                .AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
+            services.AddUnisenderGoEmailSender(configure: o =>
             {
-                ApiKey = "key",
-                EmailFrom = "noreply@example.com",
-                FromName = "Example"
+                o.ApiKey = "key";
+                o.EmailFrom = "noreply@example.com";
+                o.FromName = "Example";
             });
             services.AddHttpClient(UnisenderGoEmailSender.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => handler);
             await using var provider = services.BuildServiceProvider();
@@ -44,11 +46,11 @@ namespace Curiosus.Emails.UnitTests
             var services = new ServiceCollection();
 
             // act
-            services.AddUnisenderGoEmailSender(new UnisenderGoEmailOptions
+            services.AddUnisenderGoEmailSender(configure: o =>
             {
-                ApiKey = "key",
-                EmailFrom = "noreply@example.com",
-                FromName = "Example"
+                o.ApiKey = "key";
+                o.EmailFrom = "noreply@example.com";
+                o.FromName = "Example";
             });
 
             // assert

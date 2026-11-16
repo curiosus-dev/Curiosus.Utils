@@ -30,7 +30,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Configuration\Curiosus.Configuration\Curiosus.Configuration.csproj" />
       <ProjectReference Include="..\Curiosus.EMail\Curiosus.EMail.csproj" />
     </ItemGroup>
 
@@ -38,6 +37,8 @@
       <PackageReference Include="MailKit" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+      <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+      <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
     </ItemGroup>
 
     <ItemGroup>

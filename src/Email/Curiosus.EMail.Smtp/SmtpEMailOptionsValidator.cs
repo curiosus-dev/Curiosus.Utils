@@ -1,38 +1,35 @@
-using System;
-using System.Collections.Generic;
-using Curiosus.Configuration;
 using MailKit.Security;
+using Microsoft.Extensions.Options;
 
 namespace Curiosus.EMail.Smtp
 {
     /// <summary>
-    /// Class for validating <see cref="ISmtpEMailOptions"/>.
+    /// Validates the rules of <see cref="SmtpEMailOptions"/> that data annotations don't express:
+    /// <see cref="SmtpEMailOptions.Security"/> doesn't allow a downgrade to plain text and
+    /// <see cref="SmtpEMailOptions.AllowInvalidServerCertificate"/> isn't set without TLS.
     /// </summary>
-    public static class SmtpEMailOptionsValidator
+    /// <remarks>
+    /// Registered by <see cref="IoCExtensions.AddSmtpEMailSender"/>.
+    /// </remarks>
+    public class SmtpEMailOptionsValidator : IValidateOptions<SmtpEMailOptions>
     {
-        /// <summary>
-        /// Validates an <see cref="ISmtpEMailOptions"/>.
-        /// </summary>
-        /// <returns></returns>
-        public static IReadOnlyCollection<ConfigurationValidationError> Validate(this ISmtpEMailOptions options, string? prefix = null)
+        /// <inheritdoc />
+        public ValidateOptionsResult Validate(string? name, SmtpEMailOptions options)
         {
-            var errors = new ConfigurationValidationErrorCollection(prefix);
+            var builder = new ValidateOptionsResultBuilder();
+            if (options.Security is SecureSocketOptions.Auto or SecureSocketOptions.StartTlsWhenAvailable)
+            {
+                builder.AddError(
+                    "Auto and StartTlsWhenAvailable allow a downgrade to plain text: use StartTls, SslOnConnect or None",
+                    nameof(options.Security));
+            }
 
-            errors.AddErrorIf(String.IsNullOrWhiteSpace(options.SmtpServer), nameof(options.SmtpServer),"can't be null or empty");
-            errors.AddErrorIf(String.IsNullOrWhiteSpace(options.SmtpLogin), nameof(options.SmtpLogin),"can't be null or empty");
-            errors.AddErrorIf(String.IsNullOrWhiteSpace(options.SmtpPassword), nameof(options.SmtpPassword),"can't be null or empty");
-            errors.AddErrorIf(String.IsNullOrWhiteSpace(options.EMailFrom), nameof(options.EMailFrom),"can't be null or empty");
-            errors.AddErrorIf(String.IsNullOrWhiteSpace(options.SenderName), nameof(options.SenderName),"can't be null or empty");
-            errors.AddErrorIf(options.SmtpPort <= 0, nameof(options.SmtpPort),"can't be less than 1");
-            errors.AddErrorIf(
-                options.Security is SecureSocketOptions.Auto or SecureSocketOptions.StartTlsWhenAvailable,
-                nameof(options.Security),
-                "Auto and StartTlsWhenAvailable allow a downgrade to plain text: use StartTls, SslOnConnect or None");
-            errors.AddErrorIf(
-                options.AllowInvalidServerCertificate && options.Security == SecureSocketOptions.None,
-                nameof(options.AllowInvalidServerCertificate),
-                "has no effect without TLS (Security is None)");
-            return errors;
+            if (options.AllowInvalidServerCertificate && options.Security == SecureSocketOptions.None)
+            {
+                builder.AddError("has no effect without TLS (Security is None)", nameof(options.AllowInvalidServerCertificate));
+            }
+
+            return builder.Build();
         }
     }
 }

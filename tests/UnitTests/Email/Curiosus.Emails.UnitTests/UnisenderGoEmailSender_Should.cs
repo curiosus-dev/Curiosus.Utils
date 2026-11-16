@@ -10,6 +10,7 @@ using Curiosus.Email.UnisenderGo;
 using Curiosus.UnitTests.Shared;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace Curiosus.Emails.UnitTests
@@ -29,14 +30,14 @@ namespace Curiosus.Emails.UnitTests
         private UnisenderGoEmailSender CreateSender() =>
             new(
                 NullLogger<UnisenderGoEmailSender>.Instance,
-                new UnisenderGoEmailOptions
+                Options.Create(new UnisenderGoEmailOptions
                 {
                     ApiKey = "api-key",
                     EmailFrom = "noreply@example.com",
                     FromName = "Example",
                     ReplyTo = "support@example.com",
                     TrackLinks = true
-                },
+                }),
                 _httpClientFactory);
 
         [Fact]

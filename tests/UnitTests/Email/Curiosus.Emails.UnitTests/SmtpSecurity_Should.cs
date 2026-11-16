@@ -1,3 +1,5 @@
+#nullable enable
+
 using System;
 using System.Linq;
 using Curiosus.EMail.Smtp;
@@ -7,6 +9,7 @@ using MailKit.Security;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace Curiosus.Emails.UnitTests
@@ -27,12 +30,18 @@ namespace Curiosus.Emails.UnitTests
             return options;
         }
 
+        private static ValidateOptionsResult Validate(SmtpEMailOptions options) =>
+            new SmtpEMailOptionsValidator().Validate(null, options);
+
         [Theory]
         [InlineData(SecureSocketOptions.Auto)]
         [InlineData(SecureSocketOptions.StartTlsWhenAvailable)]
         public void Validation_RejectsDowngradableSecurity(SecureSocketOptions security)
         {
-            Options(o => o.Security = security).Validate().Should().ContainSingle(e => e.FieldName == "Security");
+            var result = Validate(Options(o => o.Security = security));
+
+            result.Failed.Should().BeTrue();
+            result.Failures.Should().ContainSingle().Which.Should().Contain("Security");
         }
 
         [Theory]
@@ -42,18 +51,20 @@ namespace Curiosus.Emails.UnitTests
         [InlineData(SecureSocketOptions.None)]
         public void Validation_AcceptsExplicitSecurity(SecureSocketOptions? security)
         {
-            Options(o => o.Security = security).Validate().Should().BeEmpty();
+            Validate(Options(o => o.Security = security)).Succeeded.Should().BeTrue();
         }
 
         [Fact]
         public void Validation_RejectsInvalidCertificatesWithoutTls()
         {
-            Options(o =>
-                {
-                    o.Security = SecureSocketOptions.None;
-                    o.AllowInvalidServerCertificate = true;
-                })
-                .Validate().Should().ContainSingle(e => e.FieldName == "AllowInvalidServerCertificate");
+            var result = Validate(Options(o =>
+            {
+                o.Security = SecureSocketOptions.None;
+                o.AllowInvalidServerCertificate = true;
+            }));
+
+            result.Failed.Should().BeTrue();
+            result.Failures.Should().ContainSingle().Which.Should().Contain("AllowInvalidServerCertificate");
         }
 
         [Theory]
@@ -97,7 +108,7 @@ namespace Curiosus.Emails.UnitTests
         public void OptIn_IsValid_InAnyEnvironment()
         {
             // the owner decides: allowed in Production too, only warned about
-            Options(o => o.AllowInvalidServerCertificate = true).Validate().Should().BeEmpty();
+            Validate(Options(o => o.AllowInvalidServerCertificate = true)).Succeeded.Should().BeTrue();
         }
 
         [Fact]
@@ -105,7 +116,7 @@ namespace Curiosus.Emails.UnitTests
         {
             var logger = new FakeLogger<SmtpEMailSender>();
 
-            new SmtpEMailSender(Options(o => o.AllowInvalidServerCertificate = true), logger);
+            new SmtpEMailSender(Microsoft.Extensions.Options.Options.Create(Options(o => o.AllowInvalidServerCertificate = true)), logger);
 
             logger.Collector.GetSnapshot().Should().ContainSingle(r =>
                 r.Level == LogLevel.Warning && r.Message.Contains("AllowInvalidServerCertificate"));
@@ -116,7 +127,7 @@ namespace Curiosus.Emails.UnitTests
         {
             var logger = new FakeLogger<SmtpEMailSender>();
 
-            new SmtpEMailSender(Options(), logger);
+            new SmtpEMailSender(Microsoft.Extensions.Options.Options.Create(Options()), logger);
 
             logger.Collector.Count.Should().Be(0);
         }

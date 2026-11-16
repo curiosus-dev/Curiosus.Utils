@@ -1,5 +1,22 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- **Breaking:** options use `Microsoft.Extensions.Options`. `AddUnisenderGoEmailSender(string configSectionPath = "UnisenderGo",
+  Action<UnisenderGoEmailOptions>? configure = null, bool useAsDefaultSender = true)` binds the options from the
+  configuration section (`UnisenderGoEmailOptions.SectionName`), applies `configure`, validates them when the app starts
+  and returns `OptionsBuilder<UnisenderGoEmailOptions>`: call `services.AddUnisenderGoEmailSender()` instead of passing
+  an instance. `UnisenderGoEmailSender` takes `IOptions<UnisenderGoEmailOptions>`. `UnisenderGoEmailOptions` no longer
+  implements `IValidatableOptions`/`ILoggableOptions` (its rules are data annotations), and the package no longer
+  depends on `Curiosus.Configuration`. See the
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-email-unisendergo/4.0#options). ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+
+### Fixed
+
+- An empty `FromName` is reported as `FromName` instead of `EmailFrom`. ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+
 ## [3.0.0] - 2026-10-03
 
 ### Changed

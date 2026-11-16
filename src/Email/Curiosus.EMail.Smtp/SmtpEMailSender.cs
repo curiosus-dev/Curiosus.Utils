@@ -3,9 +3,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using MailKit.Net.Smtp;
 using MailKit.Security;
-using Curiosus.Configuration;
 using Curiosus.Tools;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using MimeKit;
 using MimeKit.Text;
 
@@ -14,17 +14,16 @@ namespace Curiosus.EMail.Smtp
     /// <inheritdoc />
     public class SmtpEMailSender : ISmtpEMailSender
     {
-        private readonly ISmtpEMailOptions _emailOptions;
+        private readonly SmtpEMailOptions _emailOptions;
         private readonly ILogger _logger;
 
         /// <inheritdoc cref="SmtpEMailSender"/>
         public SmtpEMailSender(
-            ISmtpEMailOptions smtpEMailOptions,
+            IOptions<SmtpEMailOptions> smtpEMailOptions,
             ILogger<SmtpEMailSender> logger)
         {
-            _emailOptions = smtpEMailOptions ?? throw new ArgumentNullException(nameof(smtpEMailOptions));
-            _emailOptions.AssertValid();
-            
+            ArgumentNullException.ThrowIfNull(smtpEMailOptions);
+            _emailOptions = smtpEMailOptions.Value;
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             if (_emailOptions.AllowInvalidServerCertificate)
@@ -122,10 +121,10 @@ namespace Curiosus.EMail.Smtp
 
         /// <summary>
         /// Applies the TLS options to the client: MailKit validates the certificate chain, the host name and revocation unless
-        /// <see cref="ISmtpEMailOptions.AllowInvalidServerCertificate"/> is set.
+        /// <see cref="SmtpEMailOptions.AllowInvalidServerCertificate"/> is set.
         /// </summary>
         /// <returns>How to secure the connection.</returns>
-        internal static SecureSocketOptions ConfigureClient(SmtpClient client, ISmtpEMailOptions options)
+        internal static SecureSocketOptions ConfigureClient(SmtpClient client, SmtpEMailOptions options)
         {
             if (options.AllowInvalidServerCertificate)
             {

@@ -16,7 +16,7 @@ dotnet add package Curiosus.Notifications.EMail
 Register an EMail sender, the channel and a builder that turns your metadata into emails:
 
 ```csharp
-services.AddSmtpEMailSender(smtpOptions);  // any IEMailSender implementation
+services.AddSmtpEMailSender();             // any IEMailSender implementation; binds the "Smtp" section
 services.AddCuriosusEMailChannel();        // also registers INotificator
 services.AddCuriosusNotificationBuilder<UserRegisteredEmailBuilder>();
 ```

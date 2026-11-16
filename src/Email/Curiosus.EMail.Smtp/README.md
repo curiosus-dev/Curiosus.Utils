@@ -13,12 +13,12 @@ dotnet add package Curiosus.EMail.SMTP
 
 ## Usage
 
-Options (`SmtpEMailOptions`, validated on registration):
+Options (`SmtpEMailOptions`, validated when the app starts: an invalid section throws `OptionsValidationException`):
 
 ```yaml
 Smtp:
   SmtpServer: smtp.example.com   # required
-  SmtpPort: 587                  # default 25
+  SmtpPort: 587                  # default 25, 1-65535
   SmtpLogin: noreply@example.com # required
   SmtpPassword: <secret>         # required
   EMailFrom: noreply@example.com # required
@@ -33,8 +33,7 @@ Smtp:
 using Curiosus.EMail;
 using Curiosus.EMail.Smtp;
 
-var smtpOptions = builder.Configuration.GetSection("Smtp").Get<SmtpEMailOptions>()!;
-builder.Services.AddSmtpEMailSender(smtpOptions); // ISmtpEMailSender and, by default, IEMailSender
+builder.Services.AddSmtpEMailSender(); // binds "Smtp"; ISmtpEMailSender and, by default, IEMailSender
 
 // in a service that receives IEMailSender sender: send with the default sender settings
 await sender.SendAsync("user@example.com", "Invoice", "Your invoice is attached", cancellationToken: ct);
@@ -44,6 +43,8 @@ await sender.SendAsync("user@example.com", "Hi", "<p>Hi!</p>", true,
     new SmtpEMailExtraParams(eMailFrom: "sales@example.com", senderName: "Sales"), ct);
 ```
 
+`AddSmtpEMailSender("Mail:Smtp")` binds another section, `AddSmtpEMailSender(configure: o => ...)` changes the options
+in code after the binding (it works without a section too). The cross-field rules are in `SmtpEMailOptionsValidator`.
 Pass `useAsDefaultSender: false` to register only `ISmtpEMailSender` when another provider is the default `IEMailSender`.
 Each send opens a new connection, secures it with TLS (implicit on port 465, STARTTLS otherwise; the connection fails
 when the server doesn't offer it) and authenticates with the login and password. The server certificate is validated:

@@ -14,7 +14,7 @@ dotnet add package Curiosus.EMail.UnisenderGo
 
 ## Usage
 
-Options (`UnisenderGoEmailOptions`, validated on registration):
+Options (`UnisenderGoEmailOptions`, validated when the app starts: an invalid section throws `OptionsValidationException`):
 
 ```yaml
 UnisenderGo:
@@ -34,8 +34,10 @@ UnisenderGo:
 using Curiosus.EMail;
 using Curiosus.Email.UnisenderGo;
 
-var unisenderOptions = builder.Configuration.GetSection("UnisenderGo").Get<UnisenderGoEmailOptions>()!;
-builder.Services.AddUnisenderGoEmailSender(unisenderOptions); // IUnisenderGoEmailSender and, by default, IEMailSender
+builder.Services.AddUnisenderGoEmailSender(); // binds "UnisenderGo"; IUnisenderGoEmailSender and, by default, IEMailSender
+
+// another section, and options changed in code after the binding
+builder.Services.AddUnisenderGoEmailSender("Mail:UnisenderGo", configure: o => o.TrackReads = false);
 
 // in a service that receives IEMailSender sender
 var response = await sender.SendAsync("user@example.com", "Welcome", "<p>Hello!</p>", isBodyHtml: true, ct);
@@ -59,6 +61,7 @@ services.AddHttpClient(UnisenderGoEmailSender.HttpClientName, client => client.T
 ## See also
 
 - [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
+- [Curiosus.EMail.UnisenderGo 4.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-email-unisendergo/4.0)
 - [Curiosus.EMail](https://www.nuget.org/packages/Curiosus.EMail) — `IEMailSender` abstraction
 - [Curiosus.EMail.SMTP](https://www.nuget.org/packages/Curiosus.EMail.SMTP) — another provider
 - [Curiosus.EMail.Mailgun removal](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-email-mailgun/4.0) — replacements for the removed Mailgun provider
