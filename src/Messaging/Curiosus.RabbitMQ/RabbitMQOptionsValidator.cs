@@ -5,13 +5,20 @@ namespace Curiosus.RabbitMQ;
 
 /// <summary>
 /// Validates <see cref="RabbitMQOptions"/>: an absolute <c>amqp</c>/<c>amqps</c> URI with a host and user info that
-/// RabbitMQ.Client can parse, and a positive <see cref="RabbitMQOptions.PublishTimeout"/>.
+/// RabbitMQ.Client can parse, and a positive <see cref="RabbitMQOptions.PublishTimeout"/> of at most
+/// <see cref="MaxPublishTimeout"/>.
 /// </summary>
 /// <remarks>
 /// Error messages never contain the URI: it carries the password.
 /// </remarks>
 public class RabbitMQOptionsValidator : IValidateOptions<RabbitMQOptions>
 {
+    /// <summary>
+    /// The longest <see cref="RabbitMQOptions.PublishTimeout"/>: the longest timeout of a
+    /// <see cref="System.Threading.CancellationTokenSource"/>, about 49.7 days.
+    /// </summary>
+    public static readonly TimeSpan MaxPublishTimeout = TimeSpan.FromMilliseconds(uint.MaxValue - 1);
+
     /// <inheritdoc />
     public ValidateOptionsResult Validate(string? name, RabbitMQOptions options)
     {
@@ -22,6 +29,8 @@ public class RabbitMQOptionsValidator : IValidateOptions<RabbitMQOptions>
 
         if (options.PublishTimeout <= TimeSpan.Zero)
             builder.AddError("must be positive", nameof(options.PublishTimeout));
+        else if (options.PublishTimeout > MaxPublishTimeout)
+            builder.AddError("must be at most 49 days", nameof(options.PublishTimeout));
 
         return builder.Build();
     }

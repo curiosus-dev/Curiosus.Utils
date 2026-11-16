@@ -84,8 +84,9 @@ Functional:
    Once `BasicPublishAsync` was called, the publish is never re-sent.
 8. Cancellation by the caller's token throws `OperationCanceledException`, not `RabbitPublishException`.
 9. Pool channels: a channel closed by the broker while its connection stays open is aborted at once, in the
-   background (`AbortAsync`, so a connection recovery before the next publish on it doesn't bring it back), disposed and
-   replaced on the next publish that needs it. A channel closed with its connection is kept: auto-recovery re-creates
+   background (`AbortAsync`, so a connection recovery before the next publish on it doesn't bring it back), and replaced
+   and disposed (not awaited under the slot's lock) on the next publish that needs it. A publish that took the channel
+   before it was replaced and gets `ObjectDisposedException` fails like one in flight (`ChannelClosed`). A channel closed with its connection is kept: auto-recovery re-creates
    it with confirmations on; one still closed after `RecoverySucceededAsync` is replaced too.
 10. RabbitMQ.Client goes from 7.0.0 to 7.2.1, the minimum version for consumers: 7.0.0 releases a lock it never took
     when a publish is cancelled while waiting for the channel (two senders on one channel, or a `SemaphoreFullException`
@@ -158,7 +159,8 @@ public class RabbitMQOptions
 }
 // RabbitMQOptionsValidator (IValidateOptions): an absolute URI with the amqp/amqps scheme and a host, user info that
 // RabbitMQ.Client can parse (it throws later with the password in the message otherwise), one path segment at most
-// (the virtual host; RabbitMQ.Client throws on more), PublishTimeout > 0. Error messages never contain the URI.
+// (the virtual host; RabbitMQ.Client throws on more), 0 < PublishTimeout <= MaxPublishTimeout (about 49.7 days, the
+// CancellationTokenSource limit). Error messages never contain the URI.
 
 // binds the section, then applies configure; a missing section binds nothing (defaults + configure)
 public static IServiceCollection AddCuriosusRabbitMQ(this IServiceCollection services,

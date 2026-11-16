@@ -63,6 +63,13 @@ internal sealed class RabbitConnectionProvider : IRabbitConnectionProvider, IAsy
             {
                 // not the caller's token: other callers wait for the same attempt
                 _openTask = Task.Run(() => OpenAsync(_disposeCts.Token), CancellationToken.None);
+
+                // observed even when every waiter cancelled: the failure is logged in OpenAsync
+                _openTask.ContinueWith(
+                    static t => _ = t.Exception,
+                    CancellationToken.None,
+                    TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+                    TaskScheduler.Default);
             }
 
             openTask = _openTask;

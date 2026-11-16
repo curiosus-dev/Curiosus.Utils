@@ -121,8 +121,10 @@ internal sealed class RabbitPublisher : IRabbitPublisher, IAsyncDisposable, IDis
         {
             throw TranslateCancellation(e, null);
         }
-        catch (Exception e) when (e is OperationInterruptedException or IOException)
+        catch (Exception e) when (e is OperationInterruptedException or IOException
+                                  || (e is ObjectDisposedException && Volatile.Read(ref _disposed) == 0))
         {
+            // ObjectDisposedException: the slot replaced and disposed a channel the broker had closed
             // the shutdown handler of the channel ran before RabbitMQ.Client failed the publishes in flight
             var closeReason = pooled.BrokerCloseReason;
             throw closeReason != null
@@ -288,7 +290,10 @@ internal sealed class RabbitPublisher : IRabbitPublisher, IAsyncDisposable, IDis
                 if (current is { IsBroken: true })
                 {
                     Volatile.Write(ref _current, null);
-                    await current.AbortAsync();
+
+                    // not awaited under the lock: disposing waits for the close to complete, which can take longer
+                    // than the publish timeout and would block the slot
+                    _ = current.AbortAndDisposeAsync();
                     current = null;
                 }
 
@@ -349,7 +354,7 @@ internal sealed class RabbitPublisher : IRabbitPublisher, IAsyncDisposable, IDis
                 _disposed = true;
                 var current = _current;
                 _current = null;
-                if (current != null) await current.AbortAsync();
+                if (current != null) await current.AbortAndDisposeAsync();
             }
             finally
             {
@@ -374,6 +379,9 @@ internal sealed class RabbitPublisher : IRabbitPublisher, IAsyncDisposable, IDis
         {
             Channel = channel;
             _connection = connection;
+
+            // RabbitMQ.Client runs a handler added to a closed channel at once, so a close between the creation of the
+            // channel and this line is seen too
             channel.ChannelShutdownAsync += OnChannelShutdownAsync;
         }
 
@@ -402,7 +410,8 @@ internal sealed class RabbitPublisher : IRabbitPublisher, IAsyncDisposable, IDis
             Volatile.Write(ref _brokerCloseReason, e);
 
             // aborted at once, so a connection recovery before the next publish on the slot doesn't re-create it;
-            // not awaited: the channel waits for its shutdown handlers before it fails the publishes in flight
+            // not awaited: the channel waits for its shutdown handlers before it fails the publishes in flight.
+            // Not disposed here: a publish that already took the channel would get ObjectDisposedException
             _ = AbortAsync();
 
             return Task.CompletedTask;
@@ -411,7 +420,7 @@ internal sealed class RabbitPublisher : IRabbitPublisher, IAsyncDisposable, IDis
         /// <summary>
         /// Aborts the channel once: that also removes it from the channels auto-recovery re-creates.
         /// </summary>
-        public Task AbortAsync()
+        private Task AbortAsync()
         {
             lock (_sync)
             {
@@ -430,7 +439,14 @@ internal sealed class RabbitPublisher : IRabbitPublisher, IAsyncDisposable, IDis
             {
                 // abort doesn't throw for a closed channel; anything else can't be handled here either
             }
+        }
 
+        /// <summary>
+        /// Aborts and disposes the channel once the slot no longer hands it out.
+        /// </summary>
+        public async Task AbortAndDisposeAsync()
+        {
+            await AbortAsync();
             await DisposeChannelAsync();
         }
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
@@ -113,6 +114,21 @@ public class RabbitMQOptionsValidator_Should
 
         result.Failed.Should().BeTrue();
         result.FailureMessage.Should().Contain(nameof(RabbitMQOptions.PublishTimeout));
+    }
+
+    [Fact]
+    public void CheckPublishTimeout_AgainstCancellationTokenSourceLimit()
+    {
+        var options = ValidOptions();
+        options.PublishTimeout = RabbitMQOptionsValidator.MaxPublishTimeout;
+
+        Validate(options).Succeeded.Should().BeTrue();
+        var createTimeout = () => new CancellationTokenSource(options.PublishTimeout, TimeProvider.System).Dispose();
+        createTimeout.Should().NotThrow();
+
+        options.PublishTimeout += TimeSpan.FromMilliseconds(1);
+        Validate(options).FailureMessage.Should().Contain(nameof(RabbitMQOptions.PublishTimeout));
+        createTimeout.Should().Throw<ArgumentOutOfRangeException>();
     }
 
     [Fact]
