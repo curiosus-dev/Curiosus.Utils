@@ -1,5 +1,5 @@
 using System;
-using Curiosus.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace Curiosus.Tools.HttpRequestTimeoutCalculator
 {
@@ -18,13 +18,13 @@ namespace Curiosus.Tools.HttpRequestTimeoutCalculator
         
         private readonly int _bytesPerSecond;
         
-        public HttpRequestParamsCalculator(HttpRequestParamsCalculatorOptions options)
+        /// <inheritdoc cref="HttpRequestParamsCalculator"/>
+        public HttpRequestParamsCalculator(IOptions<HttpRequestParamsCalculatorOptions> options)
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
-            
-            options.AssertValid();
-            
-            _bytesPerSecond = options.DataRateMBps * (int)1E6;
+            ArgumentNullException.ThrowIfNull(options);
+            _options = options.Value;
+
+            _bytesPerSecond = _options.DataRateMBps * (int)1E6;
         }
 
         /// <inheritdoc />

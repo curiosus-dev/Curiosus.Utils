@@ -41,7 +41,7 @@ issues that will add the page. Removed packages get a page too: it tells what re
 | Curiosity.* 1.x | Curiosus.* | Next major |
 |---|---|---|
 | `Curiosity.Archiver` | [Curiosus.Archiver](../packages/archiver/curiosus-archiver.md) | 3.0, planned in [#92](https://github.com/curiosus-dev/Curiosus.Utils/issues/92) |
-| `Curiosity.Archiver.SharpZip` | [Curiosus.Archiver.SharpZip](../packages/archiver/curiosus-archiver-sharpzip.md) | removed in favour of `Curiosus.Archiver`, planned in [#92](https://github.com/curiosus-dev/Curiosus.Utils/issues/92) |
+| `Curiosity.Archiver.SharpZip` | [Curiosus.Archiver.SharpZip](../packages/archiver/curiosus-archiver-sharpzip.md) | [3.0](./curiosus-archiver-sharpzip/3.0.md) (in progress): options on `Microsoft.Extensions.Options`; removal in favour of `Curiosus.Archiver` planned in [#92](https://github.com/curiosus-dev/Curiosus.Utils/issues/92) |
 | `Curiosity.Cache.MemoryCache` | [Curiosus.Cache.MemoryCache](../packages/misc/curiosus-cache-memorycache.md) | removed in favour of `IMemoryCache.GetOrCreateAsync`, planned in [#59](https://github.com/curiosus-dev/Curiosus.Utils/issues/59) |
 | `Curiosity.Configuration` | [Curiosus.Configuration](../packages/configuration/curiosus-configuration.md), [2.1 notes](./curiosus-configuration/2.1.md) | [3.0](./curiosus-configuration/3.0.md): options on `Microsoft.Extensions.Options`, planned in [#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44) |
 | `Curiosity.Configuration.YML` | [Curiosus.Configuration.YML](../packages/configuration/curiosus-configuration-yaml.md) | removed in favour of `AddCuriosusConfiguration` of `Curiosus.Hosting`, planned in [#40](https://github.com/curiosus-dev/Curiosus.Utils/issues/40) |
@@ -75,7 +75,7 @@ issues that will add the page. Removed packages get a page too: it tells what re
 | `Curiosity.SMS` | [Curiosus.SMS](../packages/sms/curiosus-sms.md) | 3.0, planned in [#81](https://github.com/curiosus-dev/Curiosus.Utils/issues/81) |
 | `Curiosity.SMS.Iqsms` | [Curiosus.SMS.Iqsms](../packages/sms/curiosus-sms-iqsms.md) | 4.0, planned in [#81](https://github.com/curiosus-dev/Curiosus.Utils/issues/81), [#82](https://github.com/curiosus-dev/Curiosus.Utils/issues/82) |
 | `Curiosity.SMS.Smsc` | [Curiosus.SMS.Smsc](../packages/sms/curiosus-sms-smsc.md) | 4.0, planned in [#81](https://github.com/curiosus-dev/Curiosus.Utils/issues/81), [#82](https://github.com/curiosus-dev/Curiosus.Utils/issues/82) |
-| `Curiosity.Tools` | [Curiosus.Tools](../packages/misc/curiosus-tools.md) | [3.0](./curiosus-tools/3.0.md) (in progress), planned in [#47](https://github.com/curiosus-dev/Curiosus.Utils/issues/47)–[#56](https://github.com/curiosus-dev/Curiosus.Utils/issues/56) |
+| `Curiosity.Tools` | [Curiosus.Tools](../packages/misc/curiosus-tools.md) | [3.0](./curiosus-tools/3.0.md) (in progress), planned in [#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44), [#47](https://github.com/curiosus-dev/Curiosus.Utils/issues/47)–[#56](https://github.com/curiosus-dev/Curiosus.Utils/issues/56) |
 | `Curiosity.Tools.Web` | [Curiosus.Tools.Web](../packages/misc/curiosus-tools-web.md) | [4.0](./curiosus-tools-web/4.0.md) (in progress), planned in [#60](https://github.com/curiosus-dev/Curiosus.Utils/issues/60)–[#67](https://github.com/curiosus-dev/Curiosus.Utils/issues/67) |
 
 ## Rename Curiosity to Curiosus

@@ -36,7 +36,7 @@ using Curiosus.Tools.TempFiles;
 var sftpOptions = configuration.GetSection("Sftp").Get<SftpClientOptions>()!;
 
 // SftpClient needs ITempFileStreamFactory from Curiosus.Tools
-services.AddTempFileServices(new TempFileOptions());
+services.AddTempFileServices();   // TempFileOptions from the "TempFiles" section
 services.AddSftpServices(sftpOptions);
 ```
 

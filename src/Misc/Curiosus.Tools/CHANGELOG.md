@@ -9,6 +9,28 @@
   `using var scope = measurer.Measure("Import");` logs `{MeasurerName} -> {MeasurerSpentTime} ms` to the `performance`
   logger, as before, with the elapsed time as whole milliseconds; `scope.ReplaceName(...)` renames it inside the block
   and a second `Dispose` no longer logs again. ([#52](https://github.com/curiosus-dev/Curiosus.Utils/issues/52))
+- `AddTempFileOptions()` registers `TempFileOptions` alone, bound and validated on start; `AddTempFileServices`,
+  `AddTempDirCleaner` of `Curiosus.Hosting` and `AddSharpZipArchiver` of `Curiosus.Archiver.SharpZip` share it.
+  ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+
+### Changed
+
+- **Breaking:** `TempFileOptions`, `HttpRequestParamsCalculatorOptions` and `CultureOptions` are options of
+  `Microsoft.Extensions.Options` validated with data annotations: they no longer implement `IValidatableOptions` and
+  `ILoggableOptions`, and have a `SectionName` constant (`TempFiles`, `HttpRequestParams`, `Culture`).
+  `AddTempFileServices` and `AddHttpRequestTimesCalculator` take an optional section path (default `SectionName`)
+  and an optional `Action<TOptions>` instead of an options instance: they bind the section, validate on start and
+  return `OptionsBuilder<TOptions>`. Only the first call binds and registers validation, later calls add their
+  `configure` only. `TempFileStreamFactory`, `TempFilesInitService` and `HttpRequestParamsCalculator` take
+  `IOptions<TOptions>`. Migrate with `services.AddTempFileServices()`, see the
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools/3.0#options). ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+- `AddTempFileServices` registers the temp directory initializer once, however many times it is called.
+  ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+
+### Fixed
+
+- `HttpRequestParamsCalculatorOptions.DataRateMBps` and `TimeoutMultiplier` must be greater than 0: 0 passed the old
+  validation, and a `DataRateMBps` of 0 made `CalculateTimeout` divide by zero. ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
 
 ### Removed
 

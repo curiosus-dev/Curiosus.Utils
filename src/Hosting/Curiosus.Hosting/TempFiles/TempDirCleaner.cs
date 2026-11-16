@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Curiosus.Tools.TempFiles;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Curiosus.Hosting.TempFiles
 {
@@ -19,14 +20,16 @@ namespace Curiosus.Hosting.TempFiles
         private readonly string _tempPath;
         private readonly ILogger<TempDirCleaner> _logger;
 
-        public TempDirCleaner(ILogger<TempDirCleaner> logger, TempFileOptions options)
+        /// <inheritdoc cref="TempDirCleaner"/>
+        public TempDirCleaner(ILogger<TempDirCleaner> logger, IOptions<TempFileOptions> options)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            if (options == null) throw new ArgumentNullException(nameof(options));
-            
-            _frequency = TimeSpan.FromHours(options.CleaningFrequencyHours);
-            _ttl = TimeSpan.FromHours(options.FileTtlHours);
-            _tempPath = options.TempPath;
+            ArgumentNullException.ThrowIfNull(options);
+
+            var value = options.Value;
+            _frequency = TimeSpan.FromHours(value.CleaningFrequencyHours);
+            _ttl = TimeSpan.FromHours(value.FileTtlHours);
+            _tempPath = value.TempPath;
         }
         
         public override async Task StartAsync(CancellationToken cancellationToken)

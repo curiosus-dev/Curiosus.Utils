@@ -17,7 +17,8 @@ dotnet add package Curiosus.Archiver.SharpZip
 `AddSharpZipArchiver` registers `SharpZipArchiver` as a singleton `IArchiver` and also registers
 the temp file services from [Curiosus.Tools](https://www.nuget.org/packages/Curiosus.Tools)
 (`TempFileOptions`, `ITempFileStreamFactory` and an app initializer that creates the temp directory).
-`TempFileOptions` is validated on registration.
+`TempFileOptions` are bound from the `TempFiles` section (defaults when it is missing) and validated when the host
+starts.
 
 ```yaml
 TempFiles:
@@ -31,8 +32,7 @@ using Curiosus.Archiver;
 using Curiosus.Archiver.SharpZip;
 using Curiosus.Tools.TempFiles;
 
-var tempFileOptions = builder.Configuration.GetSection("TempFiles").Get<TempFileOptions>() ?? new TempFileOptions();
-builder.Services.AddSharpZipArchiver(tempFileOptions);
+builder.Services.AddSharpZipArchiver();
 
 // later, in a service
 public class LogsArchiver(IArchiver archiver)
@@ -42,12 +42,13 @@ public class LogsArchiver(IArchiver archiver)
 }
 ```
 
-The section name (`TempFiles` above) is up to you. Pass `useZip64: false` if the archive must be opened
+Another section: `AddSharpZipArchiver("App:TempFiles")`; values in code: `AddSharpZipArchiver(configure: o => ...)`. Pass `useZip64: false` if the archive must be opened
 by old software (Windows XP, Android before 6.0).
 
 ## See also
 
 - [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
+- [Curiosus.Archiver.SharpZip 3.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-archiver-sharpzip/3.0)
 - [Curiosus.Archiver](https://www.nuget.org/packages/Curiosus.Archiver) — `IArchiver` abstraction
 - [Curiosus.Tools](https://www.nuget.org/packages/Curiosus.Tools) — temp files infrastructure
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages

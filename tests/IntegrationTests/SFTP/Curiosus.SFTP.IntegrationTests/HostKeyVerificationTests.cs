@@ -47,7 +47,7 @@ namespace Curiosus.SFTP.IntegrationTests
                 HostKeyFingerprintsSha256 = fingerprints,
                 RetryCount = 3,
                 RetryTimeoutSec = 5,
-            }, new TempFileStreamFactory(new TempFileOptions()), LoggerFactory.Create(b => b.AddProvider(new FakeLoggerProvider(_logs))));
+            }, new TempFileStreamFactory(Microsoft.Extensions.Options.Options.Create(new TempFileOptions())), LoggerFactory.Create(b => b.AddProvider(new FakeLoggerProvider(_logs))));
 
         [Fact]
         public async Task CorrectFingerprint_Connects()

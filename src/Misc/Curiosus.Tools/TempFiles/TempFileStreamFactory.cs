@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using Curiosus.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace Curiosus.Tools.TempFiles
 {
@@ -12,14 +12,11 @@ namespace Curiosus.Tools.TempFiles
         /// </summary>
         private readonly TempFileOptions _tempFileOptions;
 
-        public TempFileStreamFactory(TempFileOptions tempFileOptions)
+        /// <inheritdoc cref="TempFileStreamFactory"/>
+        public TempFileStreamFactory(IOptions<TempFileOptions> tempFileOptions)
         {
-            if (String.IsNullOrWhiteSpace(tempFileOptions.TempPath))
-                throw new ArgumentNullException(nameof(tempFileOptions.TempPath));
-            
-            _tempFileOptions = tempFileOptions ?? throw new ArgumentNullException(nameof(tempFileOptions));
-            
-            tempFileOptions.AssertValid();
+            ArgumentNullException.ThrowIfNull(tempFileOptions);
+            _tempFileOptions = tempFileOptions.Value;
         }
 
         /// <inheritdoc />
@@ -29,7 +26,7 @@ namespace Curiosus.Tools.TempFiles
                 ? $"{Guid.NewGuid()}.tmp"
                 : fileName;
             var tempFilePath = Path.Combine(_tempFileOptions.TempPath, tempFileName);
-            
+
             return new TempFileStream(tempFilePath, FileMode.Create);
         }
     }

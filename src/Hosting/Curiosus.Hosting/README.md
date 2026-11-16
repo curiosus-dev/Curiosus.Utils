@@ -92,7 +92,8 @@ Other helpers:
 
 - `CuriosusWatchdog` — base `BackgroundService` that runs `ProcessAsync` at a fixed rate on a `PeriodicTimer`, pauses
   after an exception and takes a `TimeProvider` for tests.
-- `AddTempDirCleaner(TempFileOptions)` — hosted service that deletes stale temp files.
+- `AddTempDirCleaner()` — hosted service that deletes stale temp files; reads `TempFileOptions` from the `TempFiles`
+  section, shared with `AddTempFileServices` of Curiosus.Tools.
 
 ## See also
 

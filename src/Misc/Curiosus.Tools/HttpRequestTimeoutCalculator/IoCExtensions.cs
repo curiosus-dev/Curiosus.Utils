@@ -1,6 +1,7 @@
-using Curiosus.Configuration;
+using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace Curiosus.Tools.HttpRequestTimeoutCalculator
 {
@@ -10,18 +11,28 @@ namespace Curiosus.Tools.HttpRequestTimeoutCalculator
     public static class IoCExtensions
     {
         /// <summary>
-        /// Adds to IoC <see cref="IHttpRequestParamsCalculator"/>
+        /// Adds to IoC <see cref="IHttpRequestParamsCalculator"/> with <see cref="HttpRequestParamsCalculatorOptions"/>
+        /// bound from the configuration section and validated at start.
         /// </summary>
-        public static IServiceCollection AddHttpRequestTimesCalculator(
+        /// <remarks>
+        /// Only the first call binds its <paramref name="configSectionPath"/> and registers the validation, so errors
+        /// are reported once; later calls only add their <paramref name="configure"/> and their section path is ignored.
+        /// </remarks>
+        /// <param name="services">Service collection.</param>
+        /// <param name="configSectionPath">Configuration section of the options; a missing section leaves the
+        /// defaults.</param>
+        /// <param name="configure">Configures options in code, after the section is bound.</param>
+        /// <returns>Options builder of <see cref="HttpRequestParamsCalculatorOptions"/>.</returns>
+        public static OptionsBuilder<HttpRequestParamsCalculatorOptions> AddHttpRequestTimesCalculator(
             this IServiceCollection services,
-            HttpRequestParamsCalculatorOptions options)
+            string configSectionPath = HttpRequestParamsCalculatorOptions.SectionName,
+            Action<HttpRequestParamsCalculatorOptions>? configure = null)
         {
-            options.AssertValid();
-            
-            services.TryAddSingleton(options);
+            var builder = services.AddBoundOptions(configSectionPath, configure);
+
             services.TryAddSingleton<IHttpRequestParamsCalculator, HttpRequestParamsCalculator>();
-            
-            return services;
+
+            return builder;
         }
     }
 }

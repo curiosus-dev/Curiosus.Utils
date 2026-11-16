@@ -19,7 +19,7 @@ using Curiosus.Tools.AppInitializer;
 using Curiosus.Tools.TempFiles;
 
 // startup: DI registrations
-services.AddTempFileServices(new TempFileOptions());      // ITempFileStreamFactory in ./.tmp
+services.AddTempFileServices();   // ITempFileStreamFactory; TempFileOptions from "TempFiles", ./.tmp by default
 services.AddAppInitializer<WarmUpCacheInitializer>();     // IAppInitializer, run on start by Curiosus.Hosting
 
 // unique 64-bit ids based on time; generatorId must differ between running processes
@@ -49,7 +49,8 @@ Main areas:
   `SensitiveDataProtector`, file size humanization.
 - **Collections and threading** — `CircularBuffer`, list/dictionary/hash set extensions, `DynamicSemaphoreSlim`.
 - **Diagnostics** — `PerformanceMeasurer.Measure` (register with `AddCuriosusPerformanceMeasurer()`).
-- **IO and HTTP** — temp file streams, stream extensions, `IHttpRequestParamsCalculator` for size-based timeouts.
+- **IO and HTTP** — temp file streams, stream extensions, `IHttpRequestParamsCalculator` for size-based timeouts
+  (`services.AddHttpRequestTimesCalculator()`, options from the `HttpRequestParams` section).
 
 See the [sample app](https://github.com/curiosus-dev/Curiosus.Utils/tree/main/samples/Curiosus.Tools.Sample)
 for phone, transliteration and sensitive data examples.
@@ -60,5 +61,4 @@ for phone, transliteration and sensitive data examples.
 - [Curiosus.Tools 3.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools/3.0)
 - [Curiosus.Tools.Web](https://www.nuget.org/packages/Curiosus.Tools.Web) — ASP.NET Core helpers
 - [Curiosus.Hosting](https://www.nuget.org/packages/Curiosus.Hosting) — app bootstrappers that run `IAppInitializer`s
-- [Curiosus.Configuration](https://www.nuget.org/packages/Curiosus.Configuration) — validatable options used here
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages
