@@ -1,6 +1,6 @@
 # RabbitMQ: shared connection and confirmed publisher
 
-- Status: Approved
+- Status: Implemented
 - Date: 2026-11-15
 - Issue: [#109](https://github.com/curiosus-dev/Curiosus.Utils/issues/109) (part 1 of 3), options from
   [#75](https://github.com/curiosus-dev/Curiosus.Utils/issues/75), options convention of
@@ -45,9 +45,12 @@ Out of scope (non-goals):
 
 Functional:
 
-1. `services.AddCuriosusRabbitMQ("RabbitMQ")` binds `RabbitMQOptions` with `AddCuriosusOptions`, validates them when
-   the host starts and registers the connection provider, the default serializer and the publisher as singletons.
+1. `services.AddCuriosusRabbitMQ()` binds `RabbitMQOptions` from `RabbitMQOptions.SectionName` (`"RabbitMQ"`) or another
+   section with `AddCuriosusOptions`, applies an optional `configure` action after binding, validates them when
+   the host starts and registers the connection provider, the default serializer, the publisher and
+   `RabbitMqRpcClientFactory` (which `AddRabbitMQRPC` registered) as singletons, plus `TimeProvider.System`.
    Registrations use `TryAdd`, so an app can register its own `IRabbitMQMessageSerializer` before or after the call.
+   Only the first call binds its section and registers the validation; a later call adds its `configure` only.
 2. The connection provider opens one `IConnection` on first use, named `ClientName`, with `AutomaticRecoveryEnabled`
    and topology recovery on. Concurrent first calls share one open attempt, which doesn't use any caller's token: a
    caller that cancels stops waiting, the others keep waiting. A failed open (`BrokerUnreachableException`) is not
@@ -57,6 +60,7 @@ Functional:
 3. The RPC client keeps its own connection, built from `ConnectionUri` and named `{ClientName}_rpc_client` as now. The
    exchange it publishes requests to, `RabbitMQOptions.ExchangeName` today, becomes an optional `requestExchange`
    argument of `RabbitMqRpcClientFactory.CreateClientAsync` (default: the default exchange `""`, as the option was).
+   The factory constructor takes `IOptions<RabbitMQOptions>`.
 4. `PublishAsync` serializes the message with `IRabbitMQMessageSerializer`, sets `content-type` from it, publishes on
    a channel opened with publisher confirmations and confirmation tracking, and completes when the broker acks. Each
    publish gets its own `BasicProperties` and headers dictionary: RabbitMQ.Client adds its `x-dotnet-pub-seq-no`
@@ -74,11 +78,16 @@ Functional:
 7. `PublishTimeout` (default 30 s) bounds the whole call. While the connection is down or recovering, RabbitMQ.Client
    fails a publish at once, so the publisher checks before sending: when the pool channel or the connection isn't
    open, it waits for recovery (`RecoverySucceededAsync` or the connection open again) and sends then, or fails with
-   `Timeout`. Once `BasicPublishAsync` was called, the publish is never re-sent.
+   `Timeout`. A connection that can't be opened is tried again every second; the `Timeout` exception carries the last
+   error as `InnerException`. Opening a pool channel is bounded by the same timeout: RabbitMQ.Client waits for
+   `channel.open-ok` up to its continuation timeout (20 s) whatever the token, so a channel opened too late is aborted.
+   Once `BasicPublishAsync` was called, the publish is never re-sent.
 8. Cancellation by the caller's token throws `OperationCanceledException`, not `RabbitPublishException`.
-9. Pool channels: a channel closed by the broker while its connection stays open is aborted (`AbortAsync`, so
-   auto-recovery doesn't bring it back), disposed and replaced on the next publish that needs it. A channel closed with
-   its connection is kept: auto-recovery re-creates it with confirmations on.
+9. Pool channels: a channel closed by the broker while its connection stays open is aborted at once, in the
+   background (`AbortAsync`, so a connection recovery before the next publish on it doesn't bring it back), and replaced
+   and disposed (not awaited under the slot's lock) on the next publish that needs it. A publish that took the channel
+   before it was replaced and gets `ObjectDisposedException` fails like one in flight (`ChannelClosed`). A channel closed with its connection is kept: auto-recovery re-creates
+   it with confirmations on; one still closed after `RecoverySucceededAsync` is replaced too.
 10. RabbitMQ.Client goes from 7.0.0 to 7.2.1, the minimum version for consumers: 7.0.0 releases a lock it never took
     when a publish is cancelled while waiting for the channel (two senders on one channel, or a `SemaphoreFullException`
     that hides the cancellation), and has no reply code and text on a return (`PublishReturnException`, 7.2.0).
@@ -135,6 +144,8 @@ Scenario: one connection
 ```csharp
 public class RabbitMQOptions
 {
+    public const string SectionName = "RabbitMQ";             // default configuration section
+
     [Required]
     public Uri ConnectionUri { get; set; } = null!;          // amqp:// or amqps://user:pass@host:port/vhost
 
@@ -147,10 +158,13 @@ public class RabbitMQOptions
     public int PublisherChannelCount { get; set; } = 4;
 }
 // RabbitMQOptionsValidator (IValidateOptions): an absolute URI with the amqp/amqps scheme and a host, user info that
-// RabbitMQ.Client can parse (it throws later with the password in the message otherwise), PublishTimeout > 0.
-// Error messages never contain the URI.
+// RabbitMQ.Client can parse (it throws later with the password in the message otherwise), one path segment at most
+// (the virtual host; RabbitMQ.Client throws on more), 0 < PublishTimeout <= MaxPublishTimeout (about 49.7 days, the
+// CancellationTokenSource limit). Error messages never contain the URI.
 
-public static IServiceCollection AddCuriosusRabbitMQ(this IServiceCollection services, string configSectionPath = "RabbitMQ");
+// binds the section, then applies configure; a missing section binds nothing (defaults + configure)
+public static OptionsBuilder<RabbitMQOptions> AddCuriosusRabbitMQ(this IServiceCollection services,
+    string configSectionPath = RabbitMQOptions.SectionName, Action<RabbitMQOptions>? configure = null);
 
 public interface IRabbitConnectionProvider
 {
@@ -194,6 +208,10 @@ public sealed class RabbitPublishException : Exception
     public string MessageId { get; }
     public ushort? ReplyCode { get; }
     public string? ReplyText { get; }
+
+    // public, so apps can throw it from test doubles of IRabbitPublisher
+    public RabbitPublishException(RabbitPublishFailure reason, string exchange, string routingKey, string messageId,
+        ushort? replyCode = null, string? replyText = null, Exception? innerException = null);
 }
 
 // RPC client, until #75

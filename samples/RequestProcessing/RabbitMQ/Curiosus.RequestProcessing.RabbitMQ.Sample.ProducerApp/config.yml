@@ -6,12 +6,10 @@ Log:
   LogConfigurationPath: NLog.config
   # Path to logs out directory
   LogOutputDirectory: logs
-  
+
 QueueName: test
-  
-# Connection to RabbitMQ
+
+# Connection to RabbitMQ (rabbitmq-docker-compose.yml)
 RabbitMQ:
-  HostName: localhost
-  UserName: test
-  Password: test
-  Port: 5674
+  ConnectionUri: amqp://test:test@localhost:5674/
+  ClientName: sample_producer

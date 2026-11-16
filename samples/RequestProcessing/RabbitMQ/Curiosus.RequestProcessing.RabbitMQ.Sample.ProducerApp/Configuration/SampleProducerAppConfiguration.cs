@@ -1,5 +1,4 @@
 using Curiosus.Configuration;
-using Curiosus.RabbitMQ;
 
 namespace Curiosus.RequestProcessing.RabbitMQ.Sample.ProducerApp.Configuration;
 
@@ -8,11 +7,6 @@ namespace Curiosus.RequestProcessing.RabbitMQ.Sample.ProducerApp.Configuration;
 /// </summary>
 public class SampleProducerAppConfiguration : IValidatableOptions
 {
-    /// <summary>
-    /// RabbitMQ options.
-    /// </summary>
-    public RabbitMQOptions RabbitMQ { get; } = new();
-
     /// <summary>
     /// Name of RabbitMQ queue to send requests.
     /// </summary>
@@ -29,7 +23,6 @@ public class SampleProducerAppConfiguration : IValidatableOptions
         var errors = new ConfigurationValidationErrorCollection(prefix);
         errors.AddErrorIf(String.IsNullOrWhiteSpace(QueueName), nameof(QueueName), "can't be empty");
         errors.AddErrorIf(DelayBetweenSendMs < 1, nameof(DelayBetweenSendMs), "can't be less than 1");
-        errors.AddErrors(RabbitMQ.Validate());
         return errors;
     }
 }

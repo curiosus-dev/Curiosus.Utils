@@ -1,56 +1,52 @@
 using System;
-using System.Collections.Generic;
-using Curiosus.Configuration;
+using System.ComponentModel.DataAnnotations;
 
 namespace Curiosus.RabbitMQ;
 
 /// <summary>
-/// Options to connect to RabbitMQ.
+/// Options of the RabbitMQ connection, the publisher and the RPC client, bound from configuration by
+/// <see cref="IoCExtensions.AddCuriosusRabbitMQ"/>.
 /// </summary>
-public class RabbitMQOptions : IValidatableOptions, ILoggableOptions
+/// <remarks>
+/// <see cref="RabbitMQOptionsValidator"/> checks the URI and the timeout when the host starts.
+/// </remarks>
+public class RabbitMQOptions
 {
     /// <summary>
-    /// Host where RabbitMQ located.
+    /// Default configuration section of the options.
     /// </summary>
-    public string HostName { get; set; } = "localhost";
+    public const string SectionName = "RabbitMQ";
 
     /// <summary>
-    /// Rabbit's port.
+    /// URI of the broker: <c>amqp://user:password@host:5672/vhost</c>, or <c>amqps://</c> for TLS (port 5671 by
+    /// default). Escape reserved characters of the user name, the password and the virtual host (<c>%2F</c> for the
+    /// default <c>/</c> virtual host is optional: an empty path selects it).
     /// </summary>
-    public int Port { get; set; } = 5672;
+    /// <remarks>
+    /// The URI carries the password: keep it in secrets, not in a committed configuration file.
+    /// For <c>amqps</c> the server certificate must be valid for the host of the URI.
+    /// </remarks>
+    [Required]
+    public Uri ConnectionUri { get; set; } = null!;
 
     /// <summary>
-    /// Rabbit's user name.
+    /// Name of the client: the connection is named after it in the management UI, and the RPC client uses it in its
+    /// connection name (<c>{ClientName}_rpc_client</c>), response queue names and correlation ids. Letters, digits,
+    /// <c>.</c>, <c>_</c> and <c>-</c>, up to 64 characters. Default: the machine name.
     /// </summary>
-    public string UserName { get; set; } = null!;
+    [Required]
+    [RegularExpression("^[A-Za-z0-9._-]{1,64}$")]
+    public string ClientName { get; set; } = Environment.MachineName;
 
     /// <summary>
-    /// Rabbit's password name.
+    /// How long <see cref="IRabbitPublisher.PublishAsync{T}"/> waits for the connection, a channel and the broker's
+    /// confirm together; then it fails with <see cref="RabbitPublishFailure.Timeout"/>. Default: 30 seconds.
     /// </summary>
-    public string Password { get; set; } = null!;
+    public TimeSpan PublishTimeout { get; set; } = TimeSpan.FromSeconds(30);
 
     /// <summary>
-    /// Name of exchange.
+    /// Number of channels the publisher spreads concurrent publishes over, from 1 to 64. Default: 4.
     /// </summary>
-    public string ExchangeName { get; set; } = "";
-
-    /// <summary>
-    /// Name of RabbitMQ client host name.
-    /// </summary>
-    public string ClientName { get; set; } = $"BWKR_{Environment.MachineName}";
-
-    /// <inheritdoc />
-    public IReadOnlyCollection<ConfigurationValidationError> Validate(string? prefix = null)
-    {
-        var errors = new ConfigurationValidationErrorCollection(prefix);
-
-        errors.AddErrorIf(String.IsNullOrEmpty(HostName), nameof(HostName), "can't be empty");
-        errors.AddErrorIf(Port < 1, nameof(Port), "can't be less than 1");
-        errors.AddErrorIf(String.IsNullOrEmpty(UserName), nameof(UserName), "can't be empty");
-        errors.AddErrorIf(String.IsNullOrEmpty(Password), nameof(Password), "can't be empty");
-        errors.AddErrorIf(String.IsNullOrEmpty(ClientName), nameof(ClientName), "can't be empty");
-        errors.AddErrorIf(ExchangeName == null!, nameof(ExchangeName), "can't be null");
-
-        return errors;
-    }
+    [Range(1, 64)]
+    public int PublisherChannelCount { get; set; } = 4;
 }

@@ -1,5 +1,37 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- `IRabbitPublisher`: publishes with publisher confirms and completes when the broker confirmed the message. A publish
+  that is not confirmed throws `RabbitPublishException` with a `Reason` (`Nacked`, `Returned`, `ChannelClosed`,
+  `ConnectionLost`, `Timeout`), the reply code and text of the broker, within `RabbitMQOptions.PublishTimeout` (30 s by
+  default). While the connection recovers, publishes wait for it; a message is never sent twice. Concurrent publishes
+  share `PublisherChannelCount` channels (4 by default). Message properties: `RabbitPublishProperties` ([#109](https://github.com/curiosus-dev/Curiosus.Utils/issues/109)).
+- `IRabbitConnectionProvider`: one connection per app, named `ClientName`, opened on first use, with automatic and
+  topology recovery; it is closed when the service provider is disposed. `amqps` URIs connect with TLS, and the
+  server certificate must be valid for the host of the URI ([#109](https://github.com/curiosus-dev/Curiosus.Utils/issues/109)).
+- `IRabbitMQMessageSerializer` with a System.Text.Json default, and `RabbitMQJson.DefaultOptions`, the JSON options of
+  the RPC client ([#109](https://github.com/curiosus-dev/Curiosus.Utils/issues/109)).
+
+### Changed
+
+- **Breaking:** `RabbitMQOptions` are bound from configuration and validated when the host starts:
+  `services.AddCuriosusRabbitMQ()` replaces `services.AddRabbitMQRPC(options)`: it binds the `RabbitMQ` section
+  (`RabbitMQOptions.SectionName`, or the `configSectionPath` argument), then applies the optional `configure` action,
+  so options can also be set in code, and returns `OptionsBuilder<RabbitMQOptions>` for more validation.
+  `ConnectionUri`
+  (`amqp://user:password@host:5672/vhost` or `amqps://`) replaces `HostName`, `Port`, `UserName` and `Password`;
+  `ExchangeName` became the `requestExchange` argument of `RabbitMqRpcClientFactory.CreateClientAsync`, whose
+  constructor takes `IOptions<RabbitMQOptions>`. `ClientName` must match `^[A-Za-z0-9._-]{1,64}$` and is the machine
+  name by default instead of `BWKR_{machine name}`: set it to keep the names of RPC response queues. `RabbitMQOptions`
+  no longer implements `IValidatableOptions` and `ILoggableOptions`. See the
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-rabbitmq/4.0). ([#109](https://github.com/curiosus-dev/Curiosus.Utils/issues/109), [#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+- **Breaking:** upgraded `RabbitMQ.Client` from `7.0.0` to `7.2.1`, now the minimum version: 7.0.0 can send from two
+  publishers at once on one channel after a cancelled publish, and has no reply code on a returned message.
+  See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-rabbitmq/4.0). ([#109](https://github.com/curiosus-dev/Curiosus.Utils/issues/109))
+
 ## [3.0.0] - 2026-10-03
 
 ### Changed

@@ -5,9 +5,9 @@
 
         <PackageId>Curiosus.RabbitMQ</PackageId>
         <Title>Curiosus.RabbitMQ</Title>
-        <Description>Reliable .NET client for RabbitMQ for RPC communication</Description>
-        <Summary>Containts RPC client for RabbitMQ.</Summary>
-        <PackageTags>Curiosus; Messaging; RPC; RabbitMQ; Messages; Queue; AMQP</PackageTags>
+        <Description>RabbitMQ for .NET apps: one shared connection, a publisher with publisher confirms and an RPC client.</Description>
+        <Summary>Shared RabbitMQ connection, confirmed publisher and RPC client.</Summary>
+        <PackageTags>Curiosus; Messaging; RPC; RabbitMQ; Messages; Queue; AMQP; Publisher; Confirms</PackageTags>
         <Language>English</Language>
 
         <AssemblyVersion>1.0.0</AssemblyVersion>
@@ -36,6 +36,7 @@
 
     <ItemGroup>
       <InternalsVisibleTo Include="Curiosus.RabbitMQ.UnitTests" />
+      <InternalsVisibleTo Include="Curiosus.RabbitMQ.IntegrationTests" />
     </ItemGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
