@@ -6,9 +6,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Curiosus.Configuration;
 using Curiosus.Tools;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Curiosus.SMS.Smsc
 {
@@ -37,12 +37,18 @@ namespace Curiosus.SMS.Smsc
         /// <summary>
         /// Creates a sender that gets <see cref="HttpClient"/> named <see cref="HttpClientName"/> from the factory.
         /// </summary>
-        public SmscSender(ILogger<SmscSender> logger, SmscOptions options, IHttpClientFactory httpClientFactory)
+        /// <remarks>
+        /// Options are validated by <see cref="IoCExtensions.AddSmscSmsSender"/> when the host starts, not here.
+        /// </remarks>
+        public SmscSender(ILogger<SmscSender> logger, IOptions<SmscOptions> options, IHttpClientFactory httpClientFactory)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _options = options ?? throw new ArgumentNullException(nameof(options));
-            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-            options.AssertValid();
+            ArgumentNullException.ThrowIfNull(logger);
+            ArgumentNullException.ThrowIfNull(options);
+            ArgumentNullException.ThrowIfNull(httpClientFactory);
+
+            _logger = logger;
+            _options = options.Value;
+            _httpClientFactory = httpClientFactory;
         }
 
         /// <inheritdoc />

@@ -5,6 +5,6 @@ Log:
   LogOutputDirectory: logs
   
 # must specified login and password
-IqsmsOptions:
+Iqsms:
   Login: 
   Password: 

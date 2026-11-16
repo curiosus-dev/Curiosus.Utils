@@ -12,6 +12,7 @@ using Curiosus.UnitTests.Shared;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace Curiosus.SMS.UnitTests
@@ -33,7 +34,7 @@ namespace Curiosus.SMS.UnitTests
         private IqsmsSender CreateSender(string? senderName = "SIIS") =>
             new(
                 _logger,
-                new IqsmsOptions { Login = "login", Password = "secret", Sender = senderName },
+                Options.Create(new IqsmsOptions { Login = "login", Password = "secret", Sender = senderName }),
                 _httpClientFactory);
 
         private static string MessageStatus(string status) =>

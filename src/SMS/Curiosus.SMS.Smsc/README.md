@@ -13,8 +13,9 @@ dotnet add package Curiosus.SMS.Smsc
 
 ## Usage
 
-`SmscOptions` requires `SmscLogin` and `SmscPassword`; `SmscSender` (sender name) is optional.
-For example, bound from configuration:
+`SmscOptions` requires `SmscLogin` and `SmscPassword`; `SmscSender` (sender name) is optional. They are validated
+when the host starts: a missing login or password stops the app with an `OptionsValidationException`.
+`AddSmscSmsSender` binds them from the `Smsc` section (`SmscOptions.SectionName`):
 
 ```yaml
 Smsc:
@@ -24,10 +25,11 @@ Smsc:
 ```
 
 ```csharp
-var smscOptions = configuration.GetSection("Smsc").Get<SmscOptions>()!;
-
 // registers ISmscSender and, by default, ISmsSender
-services.AddSmscSmsSender(smscOptions);
+services.AddSmscSmsSender();
+
+// another section, and values set in code (they override the section)
+services.AddSmscSmsSender("Sms:Smsc", options => options.SmscSender = "MyCompany");
 ```
 
 ```csharp
@@ -42,7 +44,7 @@ if (result.IsSuccess)
 await smsSender.SendSmsAsync("+71234567890", "Hello!", new SmscExtraParams("other-login", "other-password", null));
 ```
 
-Pass `useAsDefaultSender: false` to register only `ISmscSender` (e.g. when another provider is the default `ISmsSender`).
+Pass `useAsDefaultSender: false` (`services.AddSmscSmsSender(useAsDefaultSender: false)`) to register only `ISmscSender` (e.g. when another provider is the default `ISmsSender`).
 
 Notes:
 
@@ -60,6 +62,7 @@ services.AddHttpClient(SmscSender.HttpClientName, client => client.Timeout = Tim
 ## See also
 
 - [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
+- [Curiosus.SMS.Smsc 4.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-sms-smsc/4.0)
 - [Curiosus.SMS](https://www.nuget.org/packages/Curiosus.SMS) — `ISmsSender` abstraction
 - [Curiosus.SMS.Iqsms](https://www.nuget.org/packages/Curiosus.SMS.Iqsms) — sender for iqsms.ru
 - [Curiosus.Notifications.SMS](https://www.nuget.org/packages/Curiosus.Notifications.SMS) — SMS notification channel

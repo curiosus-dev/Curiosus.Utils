@@ -3,10 +3,9 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Curiosus.Configuration;
 using Curiosus.Tools;
 using Microsoft.Extensions.Logging;
-using System;
+using Microsoft.Extensions.Options;
 
 namespace Curiosus.SMS.Iqsms;
 
@@ -27,12 +26,18 @@ public class IqsmsSender : IIqsmsSender
     /// <summary>
     /// Creates a sender that gets <see cref="HttpClient"/> named <see cref="HttpClientName"/> from the factory.
     /// </summary>
-    public IqsmsSender(ILogger<IqsmsSender> logger, IqsmsOptions options, IHttpClientFactory httpClientFactory)
+    /// <remarks>
+    /// Options are validated by <see cref="IoCExtensions.AddIqsmsSender"/> when the host starts, not here.
+    /// </remarks>
+    public IqsmsSender(ILogger<IqsmsSender> logger, IOptions<IqsmsOptions> options, IHttpClientFactory httpClientFactory)
     {
-        _logger = logger   ?? throw new ArgumentNullException(nameof(logger));
-        _options = options ?? throw new ArgumentNullException(nameof(options));
-        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-        options.AssertValid();
+        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(httpClientFactory);
+
+        _logger = logger;
+        _options = options.Value;
+        _httpClientFactory = httpClientFactory;
     }
 
     /// <inheritdoc />

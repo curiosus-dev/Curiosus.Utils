@@ -13,11 +13,12 @@ dotnet add package Curiosus.SMS.Iqsms
 
 ## Usage
 
-`IqsmsOptions` requires `Login` and `Password`; `Sender` (sender name) is optional.
-For example, bound from configuration:
+`IqsmsOptions` requires `Login` and `Password`; `Sender` (sender name) is optional. They are validated when the host
+starts: a missing login or password stops the app with an `OptionsValidationException`.
+`AddIqsmsSender` binds them from the `Iqsms` section (`IqsmsOptions.SectionName`):
 
 ```yaml
-IqsmsOptions:
+Iqsms:
   Login: my-login
   Password: my-password
   Sender: MyCompany
@@ -25,10 +26,11 @@ IqsmsOptions:
 ```
 
 ```csharp
-var iqsmsOptions = configuration.GetSection("IqsmsOptions").Get<IqsmsOptions>()!;
-
 // registers IIqsmsSender and, by default, ISmsSender
-services.AddIqsmsSender(iqsmsOptions);
+services.AddIqsmsSender();
+
+// another section, and values set in code (they override the section)
+services.AddIqsmsSender("Sms:Iqsms", options => options.Sender = "MyCompany");
 ```
 
 ```csharp
@@ -42,7 +44,7 @@ if (!result.IsSuccess)
 await smsSender.SendSmsAsync("+79123456789", "Hello!", new IqsmsExtraParams(null, null, "OtherSender"));
 ```
 
-Pass `useAsDefaultSender: false` to register only `IIqsmsSender` (e.g. when another provider is the default `ISmsSender`).
+Pass `useAsDefaultSender: false` (`services.AddIqsmsSender(useAsDefaultSender: false)`) to register only `IIqsmsSender` (e.g. when another provider is the default `ISmsSender`).
 
 Notes:
 
@@ -64,6 +66,7 @@ services.AddHttpClient(IqsmsSender.HttpClientName, client => client.Timeout = Ti
 ## See also
 
 - [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
+- [Curiosus.SMS.Iqsms 4.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-sms-iqsms/4.0)
 - [Curiosus.SMS](https://www.nuget.org/packages/Curiosus.SMS) — `ISmsSender` abstraction
 - [Curiosus.SMS.Smsc](https://www.nuget.org/packages/Curiosus.SMS.Smsc) — sender for smsc.ru
 - [Curiosus.Notifications.SMS](https://www.nuget.org/packages/Curiosus.Notifications.SMS) — SMS notification channel

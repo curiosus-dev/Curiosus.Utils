@@ -1,9 +1,7 @@
 using System.CommandLine;
-using Curiosus.Configuration;
 using Curiosus.Hosting;
 using Curiosus.SMS;
 using Curiosus.SMS.Iqsms;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -24,9 +22,8 @@ rootCommand.SetAction(async (parseResult, cancellationToken) =>
     var builder = CuriosusHost.CreateBuilder(args).AddCuriosusDefaults();
     builder.AddCuriosusNLog();
 
-    // IqsmsOptions still uses the old validation model, AddIqsmsSender validates it
-    var iqsmsOptions = builder.Configuration.GetSection("IqsmsOptions").Get<IqsmsOptions>() ?? new IqsmsOptions();
-    builder.Services.AddIqsmsSender(iqsmsOptions);
+    // binds the "Iqsms" section and validates it when the host starts: an empty login or password stops the app
+    builder.Services.AddIqsmsSender();
 
     var phoneNumber = parseResult.GetValue(phoneOption)!;
 

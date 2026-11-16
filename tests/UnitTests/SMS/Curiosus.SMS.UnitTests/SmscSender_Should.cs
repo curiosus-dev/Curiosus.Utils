@@ -12,6 +12,7 @@ using Curiosus.SMS.Smsc;
 using Curiosus.UnitTests.Shared;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace Curiosus.SMS.UnitTests
@@ -31,7 +32,7 @@ namespace Curiosus.SMS.UnitTests
         private SmscSender CreateSender(string? senderName = "SIIS") =>
             new(
                 _logger,
-                new SmscOptions { SmscLogin = "login", SmscPassword = "secret", SmscSender = senderName },
+                Options.Create(new SmscOptions { SmscLogin = "login", SmscPassword = "secret", SmscSender = senderName }),
                 _httpClientFactory);
 
         [Fact]
