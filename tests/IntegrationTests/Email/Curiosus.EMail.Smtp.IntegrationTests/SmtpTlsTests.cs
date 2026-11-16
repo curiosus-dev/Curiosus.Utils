@@ -6,6 +6,7 @@ using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace Curiosus.EMail.Smtp.IntegrationTests
@@ -33,7 +34,7 @@ namespace Curiosus.EMail.Smtp.IntegrationTests
         public Task DisposeAsync() => _mailpit.DisposeAsync().AsTask();
 
         private SmtpEMailSender CreateSender(bool allowInvalidCertificate) =>
-            new(new SmtpEMailOptions
+            new(Options.Create(new SmtpEMailOptions
             {
                 SmtpServer = "localhost",
                 SmtpPort = _mailpit.GetMappedPublicPort(SmtpPort),
@@ -42,7 +43,7 @@ namespace Curiosus.EMail.Smtp.IntegrationTests
                 EMailFrom = "noreply@example.com",
                 SenderName = "Tests",
                 AllowInvalidServerCertificate = allowInvalidCertificate,
-            }, NullLogger<SmtpEMailSender>.Instance);
+            }), NullLogger<SmtpEMailSender>.Instance);
 
         [Fact]
         public async Task UntrustedCertificate_FailsByDefault()

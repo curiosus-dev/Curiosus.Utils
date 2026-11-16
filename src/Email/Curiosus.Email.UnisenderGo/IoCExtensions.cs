@@ -1,8 +1,8 @@
 using System;
-using Curiosus.Configuration;
 using Curiosus.EMail;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace Curiosus.Email.UnisenderGo
 {
@@ -12,28 +12,34 @@ namespace Curiosus.Email.UnisenderGo
     public static class IoCExtensions
     {
         /// <summary>
-        /// Adds UnisenderGo email sender to services.
+        /// Adds <see cref="IUnisenderGoEmailSender"/>, its named <c>HttpClient</c> and, when <paramref name="useAsDefaultSender"/>
+        /// is set, <see cref="IEMailSender"/> to services. <see cref="UnisenderGoEmailOptions"/> are validated when the app starts.
         /// </summary>
-        public static IServiceCollection AddUnisenderGoEmailSender(
+        /// <param name="services">Services.</param>
+        /// <param name="configure">Configures the options in code; bind them from configuration on the result.</param>
+        /// <param name="useAsDefaultSender">Registers the sender as <see cref="IEMailSender"/> too.</param>
+        /// <returns>
+        /// The builder of <see cref="UnisenderGoEmailOptions"/>: bind them with <c>.BindConfiguration("UnisenderGo")</c>.
+        /// </returns>
+        public static OptionsBuilder<UnisenderGoEmailOptions> AddUnisenderGoEmailSender(
             this IServiceCollection services,
-            UnisenderGoEmailOptions options,
+            Action<UnisenderGoEmailOptions>? configure = null,
             bool useAsDefaultSender = true)
         {
-            if (services == null) throw new ArgumentNullException(nameof(services));
-            if (options == null) throw new ArgumentNullException(nameof(options));
+            ArgumentNullException.ThrowIfNull(services);
 
-            options.AssertValid();
-            
-            services.TryAddSingleton(options);
+            var builder = services.AddOptions<UnisenderGoEmailOptions>();
+            if (configure != null) builder.Configure(configure);
+            builder.ValidateDataAnnotations().ValidateOnStart();
+
             services.AddHttpClient(UnisenderGoEmailSender.HttpClientName);
             services.TryAddSingleton<IUnisenderGoEmailSender, UnisenderGoEmailSender>();
-
             if (useAsDefaultSender)
             {
                 services.TryAddSingleton<IEMailSender>(s => s.GetRequiredService<IUnisenderGoEmailSender>());
             }
 
-            return services;
+            return builder;
         }
     }
 }

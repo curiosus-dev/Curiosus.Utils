@@ -6,10 +6,10 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Curiosus.Configuration;
 using Curiosus.EMail;
 using Curiosus.Tools;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Curiosus.Email.UnisenderGo
 {
@@ -38,13 +38,13 @@ namespace Curiosus.Email.UnisenderGo
         /// </summary>
         public UnisenderGoEmailSender(
             ILogger<UnisenderGoEmailSender> logger,
-            UnisenderGoEmailOptions options,
+            IOptions<UnisenderGoEmailOptions> options,
             IHttpClientFactory httpClientFactory)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            ArgumentNullException.ThrowIfNull(options);
+            _options = options.Value;
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-            options.AssertValid();
         }
 
         /// <inheritdoc />
