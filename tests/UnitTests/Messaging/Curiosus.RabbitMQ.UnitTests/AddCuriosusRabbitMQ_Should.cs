@@ -100,6 +100,54 @@ public class AddCuriosusRabbitMQ_Should
     }
 
     [Fact]
+    public void BindAndValidateOnce_OnSecondCall_AddingItsConfigure()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["RabbitMQ:ConnectionUri"] = "amqp://first.local/",
+                ["RabbitMQ:ClientName"] = "bad name",
+                ["Other:ConnectionUri"] = "amqp://other.local/"
+            })
+            .Build();
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(configuration);
+
+        services.AddCuriosusRabbitMQ(configure: o => o.PublisherChannelCount = 2);
+        services.AddCuriosusRabbitMQ("Other", o => o.PublishTimeout = TimeSpan.Zero);
+
+        using var provider = services.BuildServiceProvider();
+        var act = () => provider.GetRequiredService<IOptions<RabbitMQOptions>>().Value;
+
+        var exception = act.Should().Throw<OptionsValidationException>().Which;
+        exception.Failures.Count(f => f.Contains(nameof(RabbitMQOptions.ClientName))).Should().Be(1);
+        exception.Failures.Count(f => f.Contains(nameof(RabbitMQOptions.PublishTimeout))).Should().Be(1,
+            "the configure of the second call applies");
+        exception.Failures.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public void BindFirstSection_OnSecondCall()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["RabbitMQ:ConnectionUri"] = "amqp://first.local/",
+                ["Other:ConnectionUri"] = "amqp://other.local/"
+            })
+            .Build();
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(configuration);
+
+        services.AddCuriosusRabbitMQ();
+        services.AddCuriosusRabbitMQ("Other");
+
+        using var provider = services.BuildServiceProvider();
+        provider.GetRequiredService<IOptions<RabbitMQOptions>>().Value.ConnectionUri
+            .Should().Be(new Uri("amqp://first.local/"));
+    }
+
+    [Fact]
     public void RegisterValidatorOnce()
     {
         var services = new ServiceCollection();

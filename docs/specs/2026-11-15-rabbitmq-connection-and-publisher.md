@@ -50,6 +50,7 @@ Functional:
    the host starts and registers the connection provider, the default serializer, the publisher and
    `RabbitMqRpcClientFactory` (which `AddRabbitMQRPC` registered) as singletons, plus `TimeProvider.System`.
    Registrations use `TryAdd`, so an app can register its own `IRabbitMQMessageSerializer` before or after the call.
+   Only the first call binds its section and registers the validation; a later call adds its `configure` only.
 2. The connection provider opens one `IConnection` on first use, named `ClientName`, with `AutomaticRecoveryEnabled`
    and topology recovery on. Concurrent first calls share one open attempt, which doesn't use any caller's token: a
    caller that cancels stops waiting, the others keep waiting. A failed open (`BrokerUnreachableException`) is not

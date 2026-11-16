@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Curiosus.Configuration;
 using Curiosus.RabbitMQ.RPC;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +21,9 @@ public static class IoCExtensions
     /// <remarks>
     /// Services are added with <c>TryAdd</c>: register your own <see cref="IRabbitMQMessageSerializer"/> before or after
     /// this call to replace the default one. The connection is opened on first use, not when the host starts.
+    /// Only the first call binds its section and registers the validation; a later call adds its
+    /// <paramref name="configure"/> only, applied after the earlier ones, and its <paramref name="configSectionPath"/> is
+    /// ignored.
     /// </remarks>
     /// <param name="services">Service collection.</param>
     /// <param name="configSectionPath">
@@ -35,6 +39,14 @@ public static class IoCExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentException.ThrowIfNullOrWhiteSpace(configSectionPath);
 
+        // a second binding would apply the first section again, a second validation would report every error twice
+        if (services.Any(d => d.ServiceType == typeof(RegistrationMarker)))
+        {
+            if (configure != null) services.Configure(configure);
+            return services;
+        }
+
+        services.AddSingleton<RegistrationMarker>();
         var optionsBuilder = services.AddCuriosusOptions<RabbitMQOptions>(configSectionPath);
         if (configure != null) optionsBuilder.Configure(configure);
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<RabbitMQOptions>, RabbitMQOptionsValidator>());
@@ -47,4 +59,9 @@ public static class IoCExtensions
 
         return services;
     }
+
+    /// <summary>
+    /// Marks that <see cref="AddCuriosusRabbitMQ"/> was called.
+    /// </summary>
+    private sealed class RegistrationMarker;
 }
