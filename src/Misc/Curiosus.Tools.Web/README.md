@@ -20,12 +20,12 @@ using Curiosus.Tools.Web.ModelBinders;
 using Curiosus.Tools.Web.ReverseProxy;
 
 // services
-services.AddReverseProxy(configuration.ReverseProxy);   // ForwardedHeaders for ProxyIps; no-op when null
-services.AddMimeTypeMapping();                          // MimeMappingService
+services.AddReverseProxy().BindConfiguration("ReverseProxy");   // PathBase, ProxyIps; validated on start
+services.AddMimeTypeMapping();                                  // MimeMappingService
 services.AddMvc(options => options.ModelBinderProviders.Insert(0, new TrimStringModelBinderProvider()));
 
 // pipeline
-app.UseReverseProxy(configuration.ReverseProxy);        // forwarded headers + PathBase
+app.UseReverseProxy();                                  // forwarded headers + PathBase
 app.UseCuriosusExceptionHandler("/error");              // logs and re-executes the pipeline with /error
 app.UsePerformanceMeasurer();
 app.UseRequestLogging();                                // dumps request bodies, masks SensitiveDataProtector fields
@@ -40,10 +40,11 @@ What else is inside:
 - **Model binding** — `TrimStringModelBinderProvider`, `InvariantDecimalModelBinderProvider`,
   `DateTimeModelBinderProvider`, `DelimitedArrayModelBinder`, `TrimStringSystemJsonConverter` for `[FromBody]` strings.
 - **Middleware** — `UseUserTracer` (trace id cookie, needs `UniqueIdGenerator.Initialize`),
-  `UseLocalizationSetter` (language cookie), `UsePreviewDetector` (rewrites the path for link-preview bots).
+  `UseLocalizationSetter` (language cookie), `AddPreviewDetector()` + `UsePreviewDetector()` (rewrites the path
+  for link-preview bots to `RedirectPath`; or `UsePreviewDetector("/preview")` without registration).
 - **Options-driven services** — `AddCuriosusDataProtection()` (section `DataProtection`)
   (`ApplicationName`, `KeyRingPath`, `DisableAutomaticKeyGeneration`; protection is always on),
-  `AddReCaptcha(ReCaptchaOptions)` + `ReCaptchaService`, `AddSiteMap(mvcBuilder)` + `SiteMapBuilder`,
+  `AddReCaptcha().BindConfiguration("ReCaptcha")` + `ReCaptchaService`, `AddSiteMap(mvcBuilder)` + `SiteMapBuilder`,
   `ConfigureCookiesForOldBrowsers()` (SameSite fixes).
 - **MVC** — `MVCBaseController` (error views, AJAX responses, redirects), `SiteError`,
   `ModelStateExtensions.AddModelErrorIf`, `Page<T>`/`Paginator`, `InvariantDecimalTagHelper`.

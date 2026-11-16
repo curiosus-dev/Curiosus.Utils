@@ -1,6 +1,6 @@
 using System;
-using System.Collections.Generic;
-using Curiosus.Configuration;
+using System.Net;
+using Microsoft.Extensions.Options;
 
 namespace Curiosus.Tools.Web.ReverseProxy
 {
@@ -8,31 +8,51 @@ namespace Curiosus.Tools.Web.ReverseProxy
     /// Reverse proxy options that may affect the operation of our server
     /// </summary>
     /// <remarks>
-    /// Details about working for a proxy on https://docs.microsoft.com/ru-ru/aspnet/core/host-and-deploy/proxy-load-balancer?view=aspnetcore-2.2
+    /// Details about working behind a proxy: https://learn.microsoft.com/aspnet/core/host-and-deploy/proxy-load-balancer
     /// </remarks>
-    public class ReverseProxyOptions : ILoggableOptions, IValidatableOptions
+    public class ReverseProxyOptions
     {
-        /// <резюме>
-        /// Address of the server behind which the proxy is hidden
-        /// </резюме>
-        /// <пример>
-        /// example.domain.me/api
-        /// </пример>
+        /// <summary>
+        /// Path base under which the proxy publishes the app, starting with <c>/</c>, for example <c>/api</c>;
+        /// not set when the app is published at the root.
+        /// </summary>
         public string? PathBase { get; set; }
 
         /// <summary>
-        /// IP reverse proxy
+        /// IP addresses of the reverse proxies.
         /// </summary>
         /// <remarks>
-        /// Needed to add the ip to the white list, otherwise the server will ignore requests
-        /// By default, the whitelist is 127.0.0.1
+        /// Forwarded headers are accepted only from known proxies; by default only the loopback address is known.
         /// </remarks>
         public string[]? ProxyIps { get; set; }
+    }
 
+    /// <summary>
+    /// Validates <see cref="ReverseProxyOptions"/>: <see cref="ReverseProxyOptions.PathBase"/> starts with <c>/</c>,
+    /// every <see cref="ReverseProxyOptions.ProxyIps"/> entry is an IP address.
+    /// </summary>
+    public class ReverseProxyOptionsValidator : IValidateOptions<ReverseProxyOptions>
+    {
         /// <inheritdoc />
-        public virtual IReadOnlyCollection<ConfigurationValidationError> Validate(string? prefix = null)
+        public ValidateOptionsResult Validate(string? name, ReverseProxyOptions options)
         {
-            return Array.Empty<ConfigurationValidationError>();
+            ArgumentNullException.ThrowIfNull(options);
+
+            var builder = new ValidateOptionsResultBuilder();
+            if (!String.IsNullOrWhiteSpace(options.PathBase) && !options.PathBase.StartsWith('/'))
+                builder.AddError("must start with '/'", nameof(options.PathBase));
+
+            if (options.ProxyIps != null)
+            {
+                for (var i = 0; i < options.ProxyIps.Length; i++)
+                {
+                    var proxyIp = options.ProxyIps[i];
+                    if (!String.IsNullOrWhiteSpace(proxyIp) && !IPAddress.TryParse(proxyIp, out _))
+                        builder.AddError($"\"{proxyIp}\" is not an IP address", $"{nameof(options.ProxyIps)}[{i}]");
+                }
+            }
+
+            return builder.Build();
         }
     }
 }

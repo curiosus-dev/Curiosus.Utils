@@ -1,6 +1,8 @@
 using System;
-using Curiosus.Configuration;
+using System.Linq;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Curiosus.Tools.Web.Middleware
 {
@@ -9,39 +11,38 @@ namespace Curiosus.Tools.Web.Middleware
         /// <summary>
         /// Adds middleware that detects requests from preview bots/services and redirects to the specified page.
         /// </summary>
+        /// <param name="app">Application builder.</param>
+        /// <param name="redirectPath">Path to redirect to, starting with <c>/</c>.</param>
         public static IApplicationBuilder UsePreviewDetector(this IApplicationBuilder app, string redirectPath)
         {
-            if (app == null)
-            {
-                throw new ArgumentNullException(nameof(app));
-            }
-            if (String.IsNullOrWhiteSpace(redirectPath))
-            {
-                throw new ArgumentNullException(nameof(redirectPath));
-            }
+            ArgumentNullException.ThrowIfNull(app);
+            ArgumentException.ThrowIfNullOrWhiteSpace(redirectPath);
 
-            return app.UsePreviewDetector(new PreviewDetectOptions
+            return app.UseMiddleware<PreviewDetectMiddleware>(Options.Create(new PreviewDetectOptions
             {
                 RedirectPath = redirectPath
-            });
+            }));
         }
-        
-        /// <summary>
-        /// Adds middleware that detects requests from preview bots/services and redirects to the specified page.
-        /// </summary>
-        public static IApplicationBuilder UsePreviewDetector(this IApplicationBuilder app, PreviewDetectOptions options)
-        {
-            if (app == null)
-            {
-                throw new ArgumentNullException(nameof(app));
-            }
-            if (options == null)
-            {
-                throw new ArgumentNullException(nameof(options));
-            }
-            options.AssertValid();
 
-            return app.UseMiddleware<PreviewDetectMiddleware>(options);
+        /// <summary>
+        /// Adds middleware that detects requests from preview bots/services and redirects to the page of
+        /// <see cref="PreviewDetectOptions"/> registered by
+        /// <see cref="PreviewDetectorServiceCollectionExtensions.AddPreviewDetector"/>.
+        /// </summary>
+        /// <param name="app">Application builder.</param>
+        /// <exception cref="InvalidOperationException"><c>AddPreviewDetector</c> wasn't called.</exception>
+        public static IApplicationBuilder UsePreviewDetector(this IApplicationBuilder app)
+        {
+            ArgumentNullException.ThrowIfNull(app);
+
+            var registered = app.ApplicationServices
+                .GetServices<IValidateOptions<PreviewDetectOptions>>()
+                .OfType<PreviewDetectOptionsValidator>()
+                .Any();
+            if (!registered)
+                throw new InvalidOperationException("Call services.AddPreviewDetector() before app.UsePreviewDetector()");
+
+            return app.UseMiddleware<PreviewDetectMiddleware>();
         }
     }
 }

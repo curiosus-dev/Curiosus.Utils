@@ -1,47 +1,43 @@
-using System;
-using System.Collections.Generic;
-using Curiosus.Configuration;
+using System.ComponentModel.DataAnnotations;
 
 namespace Curiosus.Tools.Web.ReCaptcha
 {
     /// <summary>
     /// Options required for the reCAPTCHA service to work.
     /// </summary>
-    public class ReCaptchaOptions : IValidatableOptions, ILoggableOptions
-    { 
+    public class ReCaptchaOptions
+    {
         /// <summary>
-        /// Address of the reCAPTCHA API.
+        /// Absolute address of the reCAPTCHA verification API. Default: <c>https://www.google.com/recaptcha/api/siteverify</c>.
         /// </summary>
-        public string ReCaptchaApiUrl { get; set; } = null!;
-        
+        [Required]
+        [Url]
+        public string ReCaptchaApiUrl { get; set; } = "https://www.google.com/recaptcha/api/siteverify";
+
         /// <summary>
-        /// Use this key in the HTML code that your site transmits to users ' devices.
+        /// Use this key in the HTML code that your site transmits to users' devices. Required.
         /// </summary>
-        public string ReCaptchaClientKey { get; set; } = null!;
-        
+        [Required]
+        public string ReCaptchaClientKey { get; set; } = "";
+
         /// <summary>
-        /// Use this secret key to exchange data between the site and the reCAPTCHA service.
+        /// Use this secret key to exchange data between the site and the reCAPTCHA service. Required.
         /// </summary>
-        public string ReCaptchaServerKey { get; set; } = null!;
-        
-        /// <inheritdoc/>
+        [Required]
+        public string ReCaptchaServerKey { get; set; } = "";
+
+        /// <summary>
+        /// Delay between retries, in seconds; not negative. Not used by <see cref="ReCaptchaService"/>: configure retries
+        /// on the <c>HttpClient</c> named <see cref="ReCaptchaService.HttpClientName"/>.
+        /// </summary>
+        [Range(0, int.MaxValue)]
         public int RetryTimeoutSec { get; set; } = 1;
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Number of retries; not negative. Not used by <see cref="ReCaptchaService"/>: configure retries on the
+        /// <c>HttpClient</c> named <see cref="ReCaptchaService.HttpClientName"/>.
+        /// </summary>
+        [Range(0, int.MaxValue)]
         public int RetryCount { get; set; } = 3;
-
-        /// <inheritdoc />
-        public virtual IReadOnlyCollection<ConfigurationValidationError> Validate(string? prefix = null)
-        {
-            var errors = new ConfigurationValidationErrorCollection(prefix);
-
-            errors.AddErrorIf(String.IsNullOrWhiteSpace(ReCaptchaApiUrl), nameof(ReCaptchaApiUrl), "can not be empty");
-            errors.AddErrorIf(String.IsNullOrWhiteSpace(ReCaptchaClientKey), nameof(ReCaptchaClientKey), "can not be empty");
-            errors.AddErrorIf(String.IsNullOrWhiteSpace(ReCaptchaServerKey), nameof(ReCaptchaServerKey), "can not be empty");
-            errors.AddErrorIf(RetryTimeoutSec < 0, nameof(RetryTimeoutSec), "should be greater than 0");
-            errors.AddErrorIf(RetryCount < 0, nameof(RetryCount), "should be greater than 0");
-            
-            return errors;
-        }
     }
 }

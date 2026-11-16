@@ -1,54 +1,71 @@
 using System;
 using System.Net;
-using Curiosus.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Curiosus.Tools.Web.ReverseProxy
 {
     /// <summary>
-    /// Extension methods for <see cref= "IServiceCollection" /> that include support for the server running behind a proxy
+    /// Extension methods for <see cref="IServiceCollection"/> that include support for the server running behind a proxy
     /// </summary>
     public static class IoCExtensions
     {
         /// <summary>
-        /// Configures support for the application for the reverse proxy.
-        /// If <see cref= "options" /> <see langword= "null"/>, there will be no support
+        /// Registers <see cref="ReverseProxyOptions"/>, validated when the host starts, and configures
+        /// <see cref="ForwardedHeadersOptions"/> from them: <c>X-Forwarded-For</c> and <c>X-Forwarded-Proto</c> from
+        /// the loopback address and <see cref="ReverseProxyOptions.ProxyIps"/>. Add the middleware with
+        /// <c>app.UseReverseProxy()</c>.
         /// </summary>
-        /// <remarks>
-        /// Must call before enabling authorization and other handlers
-        /// </remarks>
-        /// <param name="services"></param>
-        /// <param name= "options">Reverse proxy options</param>
-        /// <returns></returns>
-        /// <exception cref= "ArgumentNullException" >If <see cref= "services" /> <see langowrd= "null" /></exception>
-        public static IServiceCollection AddReverseProxy(
+        /// <param name="services">Service collection.</param>
+        /// <param name="configure">Configures options in code; bind them from configuration with
+        /// <c>.BindConfiguration("ReverseProxy")</c> on the result.</param>
+        /// <returns>Options builder, validated at start.</returns>
+        public static OptionsBuilder<ReverseProxyOptions> AddReverseProxy(
             this IServiceCollection services,
-            ReverseProxyOptions? options = null)
+            Action<ReverseProxyOptions>? configure = null)
         {
-            if (services == null) throw new ArgumentNullException(nameof(services));
-            if (options == null) return services;
-            
-            options.AssertValid();
+            ArgumentNullException.ThrowIfNull(services);
 
-            services.Configure<ForwardedHeadersOptions>(configureOptions =>
+            var builder = services.AddOptions<ReverseProxyOptions>();
+            if (configure != null) builder.Configure(configure);
+            builder.ValidateOnStart();
+
+            // guarded by the validator registration, so that a second call doesn't add the proxies twice
+            if (!IsRegistered(services))
             {
-                if (options.ProxyIps != null)
-                {
-                    foreach (var proxyIp in options.ProxyIps)
+                services.AddSingleton<IValidateOptions<ReverseProxyOptions>, ReverseProxyOptionsValidator>();
+                services.AddOptions<ForwardedHeadersOptions>()
+                    .Configure<IOptions<ReverseProxyOptions>>((target, source) =>
                     {
-                        if (String.IsNullOrWhiteSpace(proxyIp)) continue;
-                        
-                        configureOptions.KnownProxies.Add(IPAddress.Parse(proxyIp));
-                    }
-                }
-                
-                configureOptions.ForwardedHeaders = 
-                    ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-            });
-            
-            return services;
+                        if (source.Value.ProxyIps != null)
+                        {
+                            foreach (var proxyIp in source.Value.ProxyIps)
+                            {
+                                if (String.IsNullOrWhiteSpace(proxyIp)) continue;
+
+                                target.KnownProxies.Add(IPAddress.Parse(proxyIp));
+                            }
+                        }
+
+                        target.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                    });
+            }
+
+            return builder;
+        }
+
+        private static bool IsRegistered(IServiceCollection services)
+        {
+            foreach (var descriptor in services)
+            {
+                if (descriptor.ServiceType == typeof(IValidateOptions<ReverseProxyOptions>)
+                    && descriptor.ImplementationType == typeof(ReverseProxyOptionsValidator))
+                    return true;
+            }
+
+            return false;
         }
     }
 }

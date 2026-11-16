@@ -7,6 +7,7 @@ using System.Web;
 using Curiosus.Tools.Web.ReCaptcha;
 using Curiosus.UnitTests.Shared;
 using FluentAssertions;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace Curiosus.Tools.UnitTests.Web
@@ -23,12 +24,12 @@ namespace Curiosus.Tools.UnitTests.Web
 
         private ReCaptchaService CreateService() =>
             new(
-                new ReCaptchaOptions
+                Options.Create(new ReCaptchaOptions
                 {
                     ReCaptchaApiUrl = "https://www.google.com/recaptcha/api/siteverify",
                     ReCaptchaClientKey = "client",
                     ReCaptchaServerKey = "server & key"
-                },
+                }),
                 _httpClientFactory);
 
         [Fact]
