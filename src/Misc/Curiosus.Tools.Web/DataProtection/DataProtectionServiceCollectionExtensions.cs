@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using Curiosus.Configuration;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.DataProtection.Repositories;
@@ -22,19 +21,21 @@ namespace Curiosus.Tools.Web.DataProtection
         /// is always protected: there is no way to turn protection off.
         /// </summary>
         /// <param name="services">Service collection.</param>
-        /// <param name="configSectionPath">Path of the configuration section, <c>DataProtection</c> by default.</param>
+        /// <param name="configSectionPath">Path of the configuration section,
+        /// <see cref="CuriosusDataProtectionOptions.SectionName"/> by default.</param>
+        /// <param name="configure">Configures options in code, after the section is bound. Only the first call binds its
+        /// section and registers validation; later calls add their <paramref name="configure"/> only.</param>
         /// <returns>Data protection builder for <c>ProtectKeysWithCertificate</c>, another key repository, etc.</returns>
         /// <remarks>
-        /// The options are bound with <c>AddCuriosusOptions</c> and validated when the host starts: <c>KeyRingPath</c>
-        /// must exist, and <c>DisableAutomaticKeyGeneration</c> needs <c>KeyRingPath</c>.
+        /// The options are validated when the host starts: <c>KeyRingPath</c> must exist, and
+        /// <c>DisableAutomaticKeyGeneration</c> needs <c>KeyRingPath</c>.
         /// </remarks>
         public static IDataProtectionBuilder AddCuriosusDataProtection(
             this IServiceCollection services,
-            string configSectionPath = "DataProtection")
+            string configSectionPath = CuriosusDataProtectionOptions.SectionName,
+            Action<CuriosusDataProtectionOptions>? configure = null)
         {
-            if (services == null) throw new ArgumentNullException(nameof(services));
-
-            services.AddCuriosusOptions<CuriosusDataProtectionOptions>(configSectionPath);
+            services.AddSectionOptions(configSectionPath, configure);
             services.TryAddEnumerable(ServiceDescriptor
                 .Singleton<IValidateOptions<CuriosusDataProtectionOptions>, CuriosusDataProtectionOptionsValidator>());
 

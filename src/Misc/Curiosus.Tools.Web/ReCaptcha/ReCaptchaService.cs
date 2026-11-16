@@ -5,9 +5,13 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 
 namespace Curiosus.Tools.Web.ReCaptcha
 {
+    /// <summary>
+    /// Verifies reCAPTCHA response tokens with the reCAPTCHA API.
+    /// </summary>
     public class ReCaptchaService
     {
         /// <summary>
@@ -21,9 +25,11 @@ namespace Curiosus.Tools.Web.ReCaptcha
         /// <summary>
         /// Creates a service that gets <see cref="HttpClient"/> named <see cref="HttpClientName"/> from the factory.
         /// </summary>
-        public ReCaptchaService(ReCaptchaOptions options, IHttpClientFactory httpClientFactory)
+        public ReCaptchaService(IOptions<ReCaptchaOptions> options, IHttpClientFactory httpClientFactory)
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            ArgumentNullException.ThrowIfNull(options);
+
+            _options = options.Value;
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 

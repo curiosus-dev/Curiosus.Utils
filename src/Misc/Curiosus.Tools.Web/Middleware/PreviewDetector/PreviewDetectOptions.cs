@@ -1,27 +1,38 @@
 using System;
-using System.Collections.Generic;
-using Curiosus.Configuration;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 
 namespace Curiosus.Tools.Web.Middleware
 {
     /// <summary>
     /// Options for the <see cref="PreviewDetectMiddleware"/>.
     /// </summary>
-    public class PreviewDetectOptions : IValidatableOptions, ILoggableOptions
+    public class PreviewDetectOptions
     {
+        /// <summary>Default configuration section of the options.</summary>
+        public const string SectionName = "PreviewDetect";
+
         /// <summary>
-        /// The path to redirect to if a Preview request is detected
+        /// The path to redirect to if a Preview request is detected, for example <c>/preview</c>. Required.
         /// </summary>
         public PathString RedirectPath { get; set; }
+    }
 
-        public IReadOnlyCollection<ConfigurationValidationError> Validate(string? prefix = null)
+    /// <summary>
+    /// Validates <see cref="PreviewDetectOptions"/>: <see cref="PreviewDetectOptions.RedirectPath"/> is set.
+    /// </summary>
+    public class PreviewDetectOptionsValidator : IValidateOptions<PreviewDetectOptions>
+    {
+        /// <inheritdoc />
+        public ValidateOptionsResult Validate(string? name, PreviewDetectOptions options)
         {
-            var errors = new ConfigurationValidationErrorCollection(prefix);
-            
-            errors.AddErrorIf(String.IsNullOrWhiteSpace(RedirectPath), nameof(RedirectPath), "can't be empty");
+            ArgumentNullException.ThrowIfNull(options);
 
-            return errors;
+            var builder = new ValidateOptionsResultBuilder();
+            if (String.IsNullOrWhiteSpace(options.RedirectPath.Value))
+                builder.AddError("can't be empty", nameof(options.RedirectPath));
+
+            return builder.Build();
         }
     }
 }

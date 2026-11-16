@@ -5,6 +5,9 @@ namespace Curiosus.Tools.Web.DataProtection
     /// </summary>
     public class CuriosusDataProtectionOptions
     {
+        /// <summary>Default configuration section of the options.</summary>
+        public const string SectionName = "DataProtection";
+
         /// <summary>
         /// Application discriminator of every purpose chain (<c>SetApplicationName</c>). Changing it, even its case,
         /// invalidates auth cookies, antiforgery tokens and Identity tokens already issued: keep the exact value.

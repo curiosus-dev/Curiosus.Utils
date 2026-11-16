@@ -26,6 +26,13 @@
   Curiosus.Hosting 4.0 no longer registers; its log category is the class name instead of `main`.
   ([#41](https://github.com/curiosus-dev/Curiosus.Utils/issues/41))
 
+### Added
+
+- `AddRedirectAllowList(configSectionPath = "Redirects", configure)` binds `RedirectAllowListOptions` from a section;
+  `AddCuriosusDataProtection` takes an optional `configure` applied after the section, and
+  `CuriosusDataProtectionOptions.SectionName`/`RedirectAllowListOptions.SectionName` name the default sections. See the
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools-web/4.0#options). ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+
 ### Changed
 
 - **Breaking:** `HtmlSanitizerHelper` is replaced by `services.AddCuriosusHtmlSanitizer(configure)`, which registers a
@@ -51,6 +58,21 @@
   `IsEnabled`, `DisableDataProtection()`, `SecureLessDataProtectionProvider` and `SecureLessDataProtector` are removed,
   and automatic key generation is no longer disabled unless asked for. See the
   [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools-web/4.0#dataprotection). ([#60](https://github.com/curiosus-dev/Curiosus.Utils/issues/60))
+- **Breaking:** options use `Microsoft.Extensions.Options` instead of the Curiosus.Configuration options model:
+  `ReCaptchaOptions`, `ReverseProxyOptions` and `PreviewDetectOptions` no longer implement `IValidatableOptions` and
+  `ILoggableOptions` and have no `Validate` method; they are validated when the host starts (data annotations,
+  `ReverseProxyOptionsValidator`, `PreviewDetectOptionsValidator`). `AddReCaptcha`, `AddReverseProxy` and the new
+  `AddPreviewDetector` take `(string configSectionPath = XxxOptions.SectionName, Action<XxxOptions>? configure = null)`
+  instead of an options instance: they bind the section (`ReCaptcha`, `ReverseProxy`, `PreviewDetect`), apply
+  `configure` after it and return `OptionsBuilder<T>`; a second call only adds its `configure`. `UseReverseProxy()` and `UsePreviewDetector()` read
+  the registered options and throw when they aren't registered; `UseReverseProxy(ReverseProxyOptions?)` and
+  `UsePreviewDetector(PreviewDetectOptions)` are removed, `UsePreviewDetector(string)` stays. `ReCaptchaService` and
+  `PreviewDetectMiddleware` take `IOptions<T>`. `IWebAppConfigurationWithPublicDomain` no longer extends
+  `ILoggableOptions` and `IValidatableOptions`. See the
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools-web/4.0#options). ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+- `ReCaptchaOptions.ReCaptchaApiUrl` defaults to `https://www.google.com/recaptcha/api/siteverify` and must be an
+  absolute URL; `ReverseProxyOptions.PathBase` must start with `/` and `ProxyIps` must be IP addresses, checked on start
+  instead of failing in `UsePathBase` or `IPAddress.Parse`. ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
 
 ## [3.0.0] - 2026-10-03
 
