@@ -73,14 +73,13 @@ own type created in the bootstrapper's `CreateWorkerParams`).
 Registration of a custom transport:
 
 ```csharp
-services
-    .AddRequestProcessor<
-        MyRequest, MyWorker, WorkerBasicExtraParams, MyBootstrapper, MyNodeOptions, MyDispatcher, MyProcessingInfo>()
-    .BindConfiguration("RequestProcessor");
+services.AddRequestProcessor<
+    MyRequest, MyWorker, WorkerBasicExtraParams, MyBootstrapper, MyNodeOptions, MyDispatcher, MyProcessingInfo>();
 ```
 
-It registers the worker (transient), the bootstrapper as a hosted service and the options: `IOptions<MyNodeOptions>`,
-validated when the host starts, and its value as `MyNodeOptions` and `RequestProcessorNodeOptions` for constructors
+It registers the worker (transient), the bootstrapper as a hosted service and the options: `IOptions<MyNodeOptions>`
+bound from the `RequestProcessor` section (`RequestProcessorNodeOptions.SectionName`; pass another path as the first
+argument, and an `Action<MyNodeOptions>` as the second to configure them in code), validated when the host starts, and its value as `MyNodeOptions` and `RequestProcessorNodeOptions` for constructors
 that take them. Rules of your own options are data annotations (`[ValidateObjectMembers]` on nested options) and, for
 rules over several properties, your own `IValidateOptions<MyNodeOptions>`. Transport packages provide `AddPostgresRequestProcessor` and
 `AddRabbitMQRequestProcessor` wrappers with ready-made bootstrapper bases.

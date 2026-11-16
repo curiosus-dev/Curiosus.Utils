@@ -25,10 +25,11 @@ Options are validated at start and channel names are case-sensitive now: see the
 
 - **Breaking:** the options are validated with data annotations of `Microsoft.Extensions.Options` when the host starts
   instead of `IValidatableOptions`/`AssertValid()` of `Curiosus.Configuration`: `IPostgresRequestProcessorNodeOptions`
-  is replaced with the `PostgresRequestProcessorNodeOptions` class, and `AddPostgresRequestProcessor` takes an optional
-  `Action<TOptions>` instead of an options instance and returns `OptionsBuilder<TOptions>`. To migrate, derive the node
-  options from `PostgresRequestProcessorNodeOptions` and call
-  `AddPostgresRequestProcessor<...>().BindConfiguration("RequestProcessor")`, see the
+  is replaced with the `PostgresRequestProcessorNodeOptions` class, and `AddPostgresRequestProcessor` binds them from the
+  configuration section `configSectionPath` (default `"RequestProcessor"`) and an optional `configure` delegate instead
+  of taking an options instance, and returns `OptionsBuilder<TOptions>`. To migrate, derive the node options from
+  `PostgresRequestProcessorNodeOptions`, call `AddPostgresRequestProcessor<...>()` (or pass your section path) and remove
+  `AssertValid()`, see the
   [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-requestprocessing-postgres/3.0#options). ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
 - `DbEventReceiver` no longer validates its options in the constructor: they are validated at start. ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
 - Channel names are used exactly as written, so mixed-case names are case-sensitive: `MyChannel` now receives

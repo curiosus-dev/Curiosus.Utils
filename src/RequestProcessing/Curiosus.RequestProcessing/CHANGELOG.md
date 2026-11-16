@@ -6,9 +6,10 @@
 
 - **Breaking:** `RequestProcessorNodeOptions` is validated with data annotations of `Microsoft.Extensions.Options`
   when the host starts instead of `IValidatableOptions`/`AssertValid()` of `Curiosus.Configuration`, and
-  `AddRequestProcessor` takes an optional `Action<TOptions>` instead of an options instance and returns
-  `OptionsBuilder<TOptions>`. To migrate, call `AddRequestProcessor<...>().BindConfiguration("RequestProcessor")`,
-  and move the `Validate(prefix)` override of your options subclass to attributes and an `IValidateOptions<T>`, see
+  `AddRequestProcessor` binds them from the configuration section `configSectionPath` (default
+  `RequestProcessorNodeOptions.SectionName`, `"RequestProcessor"`) and an optional `configure` delegate instead of
+  taking an options instance, and returns `OptionsBuilder<TOptions>`. To migrate, call `AddRequestProcessor<...>()`
+  (or pass your section path), remove `AssertValid()`, and move the `Validate(prefix)` override of your options subclass to attributes and an `IValidateOptions<T>`, see
   the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-requestprocessing/3.0#options). `TOptions` and `RequestProcessorNodeOptions`
   stay resolvable from DI, so worker and bootstrapper constructors don't change. ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
 - **Breaking:** `RequestProcessorNodeOptions.EventsPeriodicCheckSec` must be at least 1: 0 passed validation and made

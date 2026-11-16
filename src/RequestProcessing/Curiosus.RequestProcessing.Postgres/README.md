@@ -59,10 +59,8 @@ The dispatcher (`RequestDispatcherBase`) implements `GetRequestsAsync(maxRequest
 described in [Curiosus.RequestProcessing](https://www.nuget.org/packages/Curiosus.RequestProcessing).
 
 ```csharp
-services
-    .AddPostgresRequestProcessor<
-        MyRequest, MyWorker, WorkerBasicExtraParams, MyBootstrapper, MyNodeOptions, MyDispatcher, MyProcessingInfo>()
-    .BindConfiguration("RequestProcessor");
+services.AddPostgresRequestProcessor<
+    MyRequest, MyWorker, WorkerBasicExtraParams, MyBootstrapper, MyNodeOptions, MyDispatcher, MyProcessingInfo>();
 ```
 
 ```yaml

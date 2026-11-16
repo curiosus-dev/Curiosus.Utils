@@ -6,13 +6,18 @@ namespace Curiosus.RequestProcessing
     /// Настройки приложения-обработчика запросов из очереди.
     /// </summary>
     /// <remarks>
-    /// Validated with data annotations when the host starts (see
+    /// Bound from the <see cref="SectionName"/> section and validated with data annotations when the host starts (see
     /// <see cref="RequestProcessorIocExtensions.AddRequestProcessor{TRequest,TWorker,TWorkerParams,TProcessorBootstrapper,TOptions,TDispatcher,TProcessingRequestInfo}"/>).
     /// Derive from it to add options of a transport or of the app; mark nested options with
     /// <see cref="Microsoft.Extensions.Options.ValidateObjectMembersAttribute"/> to validate them too.
     /// </remarks>
     public class RequestProcessorNodeOptions
     {
+        /// <summary>
+        /// Default configuration section of the options.
+        /// </summary>
+        public const string SectionName = "RequestProcessor";
+
         /// <summary>
         /// Уникальное имя обработчика запросов из очереди.
         /// </summary>

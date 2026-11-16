@@ -77,15 +77,37 @@ public class PostgresRequestProcessorOptionsTests
             .Should().Contain(f => f.Contains("EventNames"));
     }
 
-    private static IHost BuildHost(IDictionary<string, string?> configuration)
+    [Fact]
+    public void BindCustomSection_AndApplyConfigureAfterIt()
+    {
+        using var host = BuildHost(
+            new Dictionary<string, string?>
+            {
+                ["Processors:Orders:Name"] = "orders",
+                ["Processors:Orders:WorkersCount"] = "2",
+                ["Processors:Orders:PostgresEventReceiver:EventNames:0"] = "orders_queue",
+            },
+            "Processors:Orders",
+            o => o.WorkersCount = 6);
+
+        var options = host.Services.GetRequiredService<TestNodeOptions>();
+
+        options.Name.Should().Be("orders");
+        options.WorkersCount.Should().Be(6);
+        options.PostgresEventReceiver.EventNames[0].Should().Be("orders_queue");
+    }
+
+    private static IHost BuildHost(
+        IDictionary<string, string?> configuration,
+        string configSectionPath = RequestProcessorNodeOptions.SectionName,
+        Action<TestNodeOptions>? configure = null)
     {
         var builder = Host.CreateEmptyApplicationBuilder(new HostApplicationBuilderSettings());
         builder.Configuration.AddInMemoryCollection(configuration);
         builder.Services.AddLogging();
         builder.Services
             .AddPostgresRequestProcessor<
-                TestRequest, TestWorker, WorkerBasicExtraParams, TestBootstrapper, TestNodeOptions, TestDispatcher, TestProcessingInfo>()
-            .BindConfiguration("RequestProcessor");
+                TestRequest, TestWorker, WorkerBasicExtraParams, TestBootstrapper, TestNodeOptions, TestDispatcher, TestProcessingInfo>(configSectionPath, configure);
 
         return builder.Build();
     }

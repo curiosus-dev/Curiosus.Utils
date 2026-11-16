@@ -66,15 +66,39 @@ public class RabbitMQRequestProcessorOptions_Should
         failures.Should().NotContain("guest", "values, secrets included, are not printed");
     }
 
-    private static IHost BuildHost(IDictionary<string, string?> configuration)
+    [Fact]
+    public void BindCustomSection_AndApplyConfigureAfterIt()
+    {
+        using var host = BuildHost(
+            new Dictionary<string, string?>
+            {
+                ["Processors:Orders:Name"] = "orders",
+                ["Processors:Orders:WorkersCount"] = "2",
+                ["Processors:Orders:RabbitMQEventReceiver:QueueName"] = "orders_queue",
+                ["Processors:Orders:RabbitMQEventReceiver:UserName"] = "guest",
+                ["Processors:Orders:RabbitMQEventReceiver:Password"] = "guest",
+            },
+            "Processors:Orders",
+            o => o.WorkersCount = 6);
+
+        var options = host.Services.GetRequiredService<TestNodeOptions>();
+
+        options.Name.Should().Be("orders");
+        options.WorkersCount.Should().Be(6);
+        options.RabbitMQEventReceiver.QueueName.Should().Be("orders_queue");
+    }
+
+    private static IHost BuildHost(
+        IDictionary<string, string?> configuration,
+        string configSectionPath = RequestProcessorNodeOptions.SectionName,
+        Action<TestNodeOptions>? configure = null)
     {
         var builder = Host.CreateEmptyApplicationBuilder(new HostApplicationBuilderSettings());
         builder.Configuration.AddInMemoryCollection(configuration);
         builder.Services.AddLogging();
         builder.Services
             .AddRabbitMQRequestProcessor<
-                TestRequest, TestWorker, WorkerBasicExtraParams, TestBootstrapper, TestNodeOptions, TestDispatcher, TestProcessingInfo>()
-            .BindConfiguration("RequestProcessor");
+                TestRequest, TestWorker, WorkerBasicExtraParams, TestBootstrapper, TestNodeOptions, TestDispatcher, TestProcessingInfo>(configSectionPath, configure);
 
         return builder.Build();
     }

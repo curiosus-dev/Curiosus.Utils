@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using Curiosus.RequestProcessing.Workers;
@@ -59,9 +60,10 @@ public class RequestProcessorOptionsTests
     }
 
     [Fact]
-    public void AddRequestProcessor_ConfigureDelegate_AppliesIt()
+    public void AddRequestProcessor_NoSection_ConfigureDelegateOnly()
     {
         var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
         services.AddLogging();
         services.AddRequestProcessor<
             TestRequest,
@@ -70,7 +72,7 @@ public class RequestProcessorOptionsTests
             TestBootstrapper<RequestProcessorNodeOptions>,
             RequestProcessorNodeOptions,
             TestDispatcher<RequestProcessorNodeOptions>,
-            TestProcessingInfo>(o =>
+            TestProcessingInfo>(configure: o =>
         {
             o.Name = "node";
             o.WorkersCount = 3;
@@ -79,6 +81,89 @@ public class RequestProcessorOptionsTests
 
         provider.GetRequiredService<RequestProcessorNodeOptions>().WorkersCount.Should().Be(3);
         provider.GetRequiredService<TestWorker<RequestProcessorNodeOptions>>().Should().NotBeNull();
+    }
+
+    [Fact]
+    public void AddRequestProcessor_CustomSectionPath_BindsIt()
+    {
+        using var host = BuildHost<RequestProcessorNodeOptions>(
+            new Dictionary<string, string?>
+            {
+                ["RequestProcessor:Name"] = "default-section",
+                ["Processors:Orders:Name"] = "orders",
+                ["Processors:Orders:WorkersCount"] = "7",
+            },
+            configSectionPath: "Processors:Orders");
+
+        var options = host.Services.GetRequiredService<RequestProcessorNodeOptions>();
+
+        options.Name.Should().Be("orders");
+        options.WorkersCount.Should().Be(7);
+    }
+
+    [Fact]
+    public void AddRequestProcessor_ConfigureDelegate_OverridesBoundValue()
+    {
+        using var host = BuildHost<RequestProcessorNodeOptions>(
+            new Dictionary<string, string?>
+            {
+                ["RequestProcessor:Name"] = "node",
+                ["RequestProcessor:WorkersCount"] = "2",
+            },
+            configure: o => o.WorkersCount = 5);
+
+        var options = host.Services.GetRequiredService<RequestProcessorNodeOptions>();
+
+        options.Name.Should().Be("node");
+        options.WorkersCount.Should().Be(5);
+    }
+
+    [Fact]
+    public async Task AddRequestProcessor_SecondCall_AddsConfigureOnly_ErrorsReportedOnce()
+    {
+        using var host = BuildHost<RequestProcessorNodeOptions>(
+            new Dictionary<string, string?>
+            {
+                ["RequestProcessor:WorkersCount"] = "2",
+                ["Other:Name"] = "other",
+            },
+            services => AddProcessor(services, "Other", o => o.WorkersCount = 0));
+
+        var act = () => host.StartAsync();
+
+        var failures = (await act.Should().ThrowAsync<OptionsValidationException>()).Which.Failures;
+        failures.Should().ContainSingle(f => f.Contains(nameof(RequestProcessorNodeOptions.WorkersCount)),
+            "the second call adds its configure, but no second validation");
+        failures.Should().ContainSingle(f => f.Contains(nameof(RequestProcessorNodeOptions.Name)),
+            "the section of the second call is not bound");
+    }
+
+    [Fact]
+    public void AddRequestProcessor_SecondCall_RegistersServicesOnce()
+    {
+        var services = new ServiceCollection();
+        AddProcessor(services, RequestProcessorNodeOptions.SectionName, null);
+        var count = services.Count;
+
+        AddProcessor(services, "Other", o => o.Name = "x");
+
+        services.Count(d => d.ServiceType == typeof(IHostedService)).Should().Be(1);
+        services.Count.Should().Be(count + 1, "only the configure delegate is added");
+    }
+
+    [Fact]
+    public void AddRequestProcessor_EmptySectionPath_Throws()
+    {
+        var act = () => new ServiceCollection().AddRequestProcessor<
+            TestRequest,
+            TestWorker<RequestProcessorNodeOptions>,
+            WorkerBasicExtraParams,
+            TestBootstrapper<RequestProcessorNodeOptions>,
+            RequestProcessorNodeOptions,
+            TestDispatcher<RequestProcessorNodeOptions>,
+            TestProcessingInfo>(" ");
+
+        act.Should().Throw<ArgumentException>();
     }
 
     [Theory]
@@ -151,6 +236,19 @@ public class RequestProcessorOptionsTests
         failures.Should().Contain(nameof(DerivedAppNodeOptions.Priority));
     }
 
+    private static void AddProcessor(
+        IServiceCollection services,
+        string configSectionPath,
+        Action<RequestProcessorNodeOptions>? configure)
+        => services.AddRequestProcessor<
+            TestRequest,
+            TestWorker<RequestProcessorNodeOptions>,
+            WorkerBasicExtraParams,
+            TestBootstrapper<RequestProcessorNodeOptions>,
+            RequestProcessorNodeOptions,
+            TestDispatcher<RequestProcessorNodeOptions>,
+            TestProcessingInfo>(configSectionPath, configure);
+
     private static RequestProcessorNodeOptions ValidOptions() => new() { Name = "node", WorkersCount = 1 };
 
     private static ValidateOptionsResult Validate(RequestProcessorNodeOptions options)
@@ -159,7 +257,9 @@ public class RequestProcessorOptionsTests
 
     private static IHost BuildHost<TOptions>(
         IDictionary<string, string?> configuration,
-        Action<IServiceCollection>? configureServices = null)
+        Action<IServiceCollection>? configureServices = null,
+        string configSectionPath = RequestProcessorNodeOptions.SectionName,
+        Action<TOptions>? configure = null)
         where TOptions : RequestProcessorNodeOptions
     {
         var builder = Host.CreateEmptyApplicationBuilder(new HostApplicationBuilderSettings());
@@ -173,8 +273,7 @@ public class RequestProcessorOptionsTests
                 TestBootstrapper<TOptions>,
                 TOptions,
                 TestDispatcher<TOptions>,
-                TestProcessingInfo>()
-            .BindConfiguration("RequestProcessor");
+                TestProcessingInfo>(configSectionPath, configure);
         configureServices?.Invoke(builder.Services);
 
         return builder.Build();

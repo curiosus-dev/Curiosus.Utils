@@ -8,17 +8,16 @@ using Microsoft.Extensions.DependencyInjection;
 var builder = CuriosusHost.CreateBuilder(args).AddCuriosusDefaults();
 builder.AddCuriosusNLog();
 
-// options are bound from the "RequestProcessor" section and validated when the host starts
-builder.Services
-    .AddRabbitMQRequestProcessor<
-        SampleRequest,
-        SampleRequestProcessingWorker,
-        WorkerBasicExtraParams,
-        SampleRequestProcessingBootstrapper,
-        SampleRequestProcessorNodeOptions,
-        SampleRequestDispatcher,
-        SampleRequestProcessingInfo>()
-    .BindConfiguration("RequestProcessor");
+// options are bound from the "RequestProcessor" section (RequestProcessorNodeOptions.SectionName) and validated when
+// the host starts
+builder.Services.AddRabbitMQRequestProcessor<
+    SampleRequest,
+    SampleRequestProcessingWorker,
+    WorkerBasicExtraParams,
+    SampleRequestProcessingBootstrapper,
+    SampleRequestProcessorNodeOptions,
+    SampleRequestDispatcher,
+    SampleRequestProcessingInfo>();
 
 builder.Services.AddSingleton<SampleRequestProcessingMetricsCollector>();
 builder.Services.AddHostedService(x => x.GetRequiredService<SampleRequestProcessingMetricsCollector>());

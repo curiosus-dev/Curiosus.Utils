@@ -75,10 +75,8 @@ The bootstrapper derives from `RabbitMQRequestProcessorBootstrapperBase<...>` an
 `WorkerBase<RabbitMQRequestWrapper<MyRequest>, ...>` and reads the message from `SourceRequest`.
 
 ```csharp
-services
-    .AddRabbitMQRequestProcessor<
-        MyRequest, MyWorker, WorkerBasicExtraParams, MyBootstrapper, MyNodeOptions, MyDispatcher, MyProcessingInfo>()
-    .BindConfiguration("RequestProcessor");
+services.AddRabbitMQRequestProcessor<
+    MyRequest, MyWorker, WorkerBasicExtraParams, MyBootstrapper, MyNodeOptions, MyDispatcher, MyProcessingInfo>();
 ```
 
 `RabbitMQEvent.Payload` is a copy of the message body. `RabbitMQEvent.ReceivedData` is the `BasicDeliverEventArgs`

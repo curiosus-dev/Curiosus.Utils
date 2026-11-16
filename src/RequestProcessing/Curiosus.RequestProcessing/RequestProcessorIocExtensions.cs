@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Curiosus.RequestProcessing.Workers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -19,10 +20,16 @@ namespace Curiosus.RequestProcessing
         /// <see cref="IOptions{TOptions}"/>, and as <typeparamref name="TOptions"/> and
         /// <see cref="RequestProcessorNodeOptions"/> (the value of <see cref="IOptions{TOptions}"/>) for workers and
         /// bootstrappers that take them. The options are validated with data annotations when the host starts.
+        /// <para>
+        /// Only the first call for a <typeparamref name="TOptions"/> binds its section and registers the services and
+        /// the validation; a later call adds its <paramref name="configure"/> only (its
+        /// <paramref name="configSectionPath"/> is ignored), so errors are reported once and the processor runs once.
+        /// </para>
         /// </remarks>
         /// <param name="services">Service collection.</param>
-        /// <param name="configure">Configures the options in code; bind them from configuration with
-        /// <c>.BindConfiguration("RequestProcessor")</c> on the result.</param>
+        /// <param name="configSectionPath">Configuration section the options are bound from; a missing section binds
+        /// nothing, so the defaults and <paramref name="configure"/> apply.</param>
+        /// <param name="configure">Configures the options in code, after binding.</param>
         /// <returns>Options builder of <typeparamref name="TOptions"/>, validated at start.</returns>
         public static OptionsBuilder<TOptions> AddRequestProcessor<
             TRequest,
@@ -33,6 +40,7 @@ namespace Curiosus.RequestProcessing
             TDispatcher,
             TProcessingRequestInfo>(
             this IServiceCollection services,
+            string configSectionPath = RequestProcessorNodeOptions.SectionName,
             Action<TOptions>? configure = null)
             where TRequest : IRequest
             where TWorkerParams : class, IWorkerExtraParams
@@ -43,8 +51,18 @@ namespace Curiosus.RequestProcessing
             where TProcessingRequestInfo : class, IProcessingRequestInfo
         {
             ArgumentNullException.ThrowIfNull(services);
+            ArgumentException.ThrowIfNullOrWhiteSpace(configSectionPath);
 
+            var isRegistered = services.Any(d => d.ServiceType == typeof(RegistrationMarker<TOptions>));
             var optionsBuilder = services.AddOptions<TOptions>();
+            if (isRegistered)
+            {
+                if (configure != null) optionsBuilder.Configure(configure);
+                return optionsBuilder;
+            }
+
+            services.AddSingleton<RegistrationMarker<TOptions>>();
+            optionsBuilder.BindConfiguration(configSectionPath);
             if (configure != null) optionsBuilder.Configure(configure);
             optionsBuilder.ValidateDataAnnotations().ValidateOnStart();
 
@@ -58,6 +76,13 @@ namespace Curiosus.RequestProcessing
                 services.AddSingleton<RequestProcessorNodeOptions>(p => p.GetRequiredService<IOptions<TOptions>>().Value);
 
             return optionsBuilder;
+        }
+
+        /// <summary>
+        /// Marks that the request processor with <typeparamref name="TOptions"/> is registered.
+        /// </summary>
+        private sealed class RegistrationMarker<TOptions>
+        {
         }
     }
 }
