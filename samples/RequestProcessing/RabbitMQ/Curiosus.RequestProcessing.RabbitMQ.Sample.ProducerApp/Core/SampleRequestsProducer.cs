@@ -7,6 +7,7 @@ using Curiosus.RequestProcessing.RabbitMQ.Sample.ProducerApp.Configuration;
 using Curiosus.Tools;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
@@ -47,12 +48,12 @@ public class SampleRequestsProducer : BackgroundService
     private readonly CancellationTokenSource _cancellationTokenSource = new();
 
     public SampleRequestsProducer(
-        SampleProducerAppConfiguration configuration,
+        IOptions<SampleProducerAppConfiguration> configuration,
         ILogger<SampleRequestsProducer> logger)
     {
-        _configuration = configuration;
+        _configuration = configuration.Value;
         _logger = logger;
-        _rabbitMQOptions = configuration.RabbitMQ;
+        _rabbitMQOptions = _configuration.RabbitMQ;
     }
 
     /// <inheritdoc />

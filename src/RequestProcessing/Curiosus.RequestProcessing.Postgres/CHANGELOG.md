@@ -2,10 +2,12 @@
 
 ## [Unreleased]
 
-Channel names are case-sensitive now: see the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-requestprocessing-postgres/2.1).
+Options are validated at start and channel names are case-sensitive now: see the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-requestprocessing-postgres/3.0).
 
 ### Added
 
+- `PgChannelNamesAttribute` validates a list of channel names with the rules of
+  `PostgresEventReceiverOptions.EventNames`, for channel lists of your own options. ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
 - `NotifyAsync` extension methods for `NpgsqlConnection` and `NpgsqlDataSource` send a notification with
   `pg_notify` and parameters. On a connection with an open transaction the notification is sent on commit.
   Use them instead of building `NOTIFY` SQL by string interpolation.
@@ -21,10 +23,18 @@ Channel names are case-sensitive now: see the [migration notes](https://curiosus
 
 ### Changed
 
+- **Breaking:** the options are validated with data annotations of `Microsoft.Extensions.Options` when the host starts
+  instead of `IValidatableOptions`/`AssertValid()` of `Curiosus.Configuration`: `IPostgresRequestProcessorNodeOptions`
+  is replaced with the `PostgresRequestProcessorNodeOptions` class, and `AddPostgresRequestProcessor` takes an optional
+  `Action<TOptions>` instead of an options instance and returns `OptionsBuilder<TOptions>`. To migrate, derive the node
+  options from `PostgresRequestProcessorNodeOptions` and call
+  `AddPostgresRequestProcessor<...>().BindConfiguration("RequestProcessor")`, see the
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-requestprocessing-postgres/3.0#options). ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+- `DbEventReceiver` no longer validates its options in the constructor: they are validated at start. ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
 - Channel names are used exactly as written, so mixed-case names are case-sensitive: `MyChannel` now receives
   `pg_notify('MyChannel', ...)` and `NOTIFY "MyChannel"`, but no longer an unquoted `NOTIFY MyChannel`. Lower-case names
   are not affected. To migrate, use lower-case names or send with `NotifyAsync`, see the
-  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-requestprocessing-postgres/2.1). ([#73](https://github.com/curiosus-dev/Curiosus.Utils/issues/73))
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-requestprocessing-postgres/3.0). ([#73](https://github.com/curiosus-dev/Curiosus.Utils/issues/73))
 - Options validation rejects empty, whitespace-only, NUL-containing and longer than 63 bytes channel names at startup;
   empty names were skipped with a warning before. ([#73](https://github.com/curiosus-dev/Curiosus.Utils/issues/73))
 

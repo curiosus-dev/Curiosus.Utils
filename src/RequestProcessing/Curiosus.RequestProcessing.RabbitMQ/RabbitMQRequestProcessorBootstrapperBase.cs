@@ -25,7 +25,7 @@ public abstract class RabbitMQRequestProcessorBootstrapperBase<
     where TWorkerParams : IWorkerExtraParams
     where TDispatcher : RequestDispatcherBase<RabbitMQRequestWrapper<TRequest>, TWorker, TWorkerParams, TProcessingRequestInfo, TOptions>, IHostedService
     where TProcessingRequestInfo : class, IProcessingRequestInfo
-    where TOptions : RequestProcessorNodeOptions, IRabbitMQRequestProcessorNodeOptions
+    where TOptions : RabbitMQRequestProcessorNodeOptions
 {
     /// <summary>
     /// Received events from RabbitMQ.

@@ -1,5 +1,3 @@
-using Curiosus.Configuration;
-using Curiosus.RequestProcessing;
 using Curiosus.RequestProcessing.RabbitMQ.Options;
 
 namespace Curiosus.RequestProcessing.RabbitMQ.Sample.ConsumerApp.RequestProcessing;
@@ -7,17 +5,10 @@ namespace Curiosus.RequestProcessing.RabbitMQ.Sample.ConsumerApp.RequestProcessi
 /// <summary>
 /// Options for request processor.
 /// </summary>
-public class SampleRequestProcessorNodeOptions : RequestProcessorNodeOptions, IRabbitMQRequestProcessorNodeOptions
+/// <remarks>
+/// Derives from <see cref="RabbitMQRequestProcessorNodeOptions"/>: the place for options of the app, validated with
+/// data annotations together with the inherited ones.
+/// </remarks>
+public class SampleRequestProcessorNodeOptions : RabbitMQRequestProcessorNodeOptions
 {
-    /// <inheritdoc cref="IRabbitMQRequestProcessorNodeOptions.RabbitMQEventReceiver"/>
-    public RabbitMQEventReceiverOptions RabbitMQEventReceiver { get; } = new();
-
-    /// <inheritdoc />
-    public override IReadOnlyCollection<ConfigurationValidationError> Validate(string? prefix = null)
-    {
-        var errors = new ConfigurationValidationErrorCollection(prefix);
-        errors.AddErrors(base.Validate(prefix));
-        errors.AddErrors(RabbitMQEventReceiver.Validate(nameof(RabbitMQEventReceiver)));
-        return errors;
-    }
 }

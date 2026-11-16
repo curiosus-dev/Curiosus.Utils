@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using Curiosus.Configuration;
 using Curiosus.RequestProcessing.RabbitMQ.Options;
 using Curiosus.Tools;
 using Microsoft.Extensions.Hosting;
@@ -86,7 +85,6 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver, IAsyncDi
         if (qos < 0) throw new ArgumentOutOfRangeException(nameof(qos));
 
         _eventReceiverOptions = eventReceiverOptions ?? throw new ArgumentNullException(nameof(eventReceiverOptions));
-        eventReceiverOptions.AssertValid();
 
         _logger = logger;
         _qos = qos;

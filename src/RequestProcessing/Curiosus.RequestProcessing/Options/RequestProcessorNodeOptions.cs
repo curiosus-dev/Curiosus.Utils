@@ -1,18 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using Curiosus.Configuration;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Curiosus.RequestProcessing
 {
     /// <summary>
     /// Настройки приложения-обработчика запросов из очереди.
     /// </summary>
-    public class RequestProcessorNodeOptions :
-        ILoggableOptions,
-        IValidatableOptions
+    /// <remarks>
+    /// Validated with data annotations when the host starts (see
+    /// <see cref="RequestProcessorIocExtensions.AddRequestProcessor{TRequest,TWorker,TWorkerParams,TProcessorBootstrapper,TOptions,TDispatcher,TProcessingRequestInfo}"/>).
+    /// Derive from it to add options of a transport or of the app; mark nested options with
+    /// <see cref="Microsoft.Extensions.Options.ValidateObjectMembersAttribute"/> to validate them too.
+    /// </remarks>
+    public class RequestProcessorNodeOptions
     {
-        private const string ShouldBeEqualOrGreaterThanMask = "Должен быть больше либо равен {0}";
-
         /// <summary>
         /// Уникальное имя обработчика запросов из очереди.
         /// </summary>
@@ -21,34 +21,25 @@ namespace Curiosus.RequestProcessing
         /// (каждая нода, когда берет запрос, лочит его, указывая свое имя).
         /// Например, ISACR-1, ISACR-WCIOM.
         /// </remarks>
+        [Required]
         public string Name { get; set; } = null!;
 
         /// <summary>
-        /// Время периодической проверки базы на запросы, события от которых потерялись/не дошли.
+        /// Время периодической проверки базы на запросы, события от которых потерялись/не дошли, секунды. At least 1.
         /// </summary>
+        [Range(1, int.MaxValue)]
         public int EventsPeriodicCheckSec { get; set; } = 60;
 
         /// <summary>
-        /// Количество воркеров.
+        /// Количество воркеров. At least 1.
         /// </summary>
+        [Range(1, int.MaxValue)]
         public int WorkersCount { get; set; }
 
         /// <summary>
-        /// Период для записи в лог состояния диспетчера и воркеров в лог, секунды.
+        /// Период для записи в лог состояния диспетчера и воркеров в лог, секунды. At least 1.
         /// </summary>
+        [Range(1, int.MaxValue)]
         public int StateFlushPeriodSec { get; set; } = 60;
-
-        /// <inheritdoc />
-        public virtual IReadOnlyCollection<ConfigurationValidationError> Validate(string? prefix = null)
-        {
-            var errors = new ConfigurationValidationErrorCollection(prefix);
-
-            errors.AddErrorIf(String.IsNullOrWhiteSpace(Name), nameof(Name), " не должно быть пустым");
-            errors.AddErrorIf(EventsPeriodicCheckSec < 0, nameof(EventsPeriodicCheckSec), String.Format(ShouldBeEqualOrGreaterThanMask, 0));
-            errors.AddErrorIf(WorkersCount <= 0, nameof(WorkersCount), String.Format(ShouldBeEqualOrGreaterThanMask, 1));
-            errors.AddErrorIf(StateFlushPeriodSec <= 0, nameof(StateFlushPeriodSec), String.Format(ShouldBeEqualOrGreaterThanMask, 1));
-
-            return errors;
-        }
     }
 }

@@ -22,7 +22,7 @@ public abstract class RabbitMQRequestDispatcherBase<TRequest, TWorker, TWorkerEx
     where TWorker : WorkerBase<RabbitMQRequestWrapper<TRequest>, TWorkerExtraParams, TProcessingRequestInfo, TNodeOptions>
     where TWorkerExtraParams : IWorkerExtraParams
     where TProcessingRequestInfo : class, IProcessingRequestInfo
-    where TNodeOptions: RequestProcessorNodeOptions, IRabbitMQRequestProcessorNodeOptions 
+    where TNodeOptions : RabbitMQRequestProcessorNodeOptions
 {
     /// <summary>
     /// Internal queue of received events from RabbitMQ. This events should be processed by workers.

@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Curiosus.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Npgsql;
@@ -45,7 +44,6 @@ namespace Curiosus.RequestProcessing.Postgres
             ILogger<DbEventReceiver> logger)
         {
             _eventReceiverOptions = eventReceiverOptions ?? throw new ArgumentNullException(nameof(eventReceiverOptions));
-            eventReceiverOptions.AssertValid();
             _dbOptions = monitoredDatabase ?? throw new ArgumentNullException(nameof(monitoredDatabase));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 

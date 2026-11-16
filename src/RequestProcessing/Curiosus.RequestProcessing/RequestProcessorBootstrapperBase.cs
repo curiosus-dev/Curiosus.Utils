@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Curiosus.Configuration;
 using Curiosus.RequestProcessing.Workers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -78,7 +77,6 @@ namespace Curiosus.RequestProcessing
             IServiceProvider serviceProvider)
         {
             NodeOptions = nodeOptions ?? throw new ArgumentNullException(nameof(nodeOptions));
-            NodeOptions.AssertValid();
 
             LoggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
             ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));

@@ -27,7 +27,9 @@ Building blocks (all generic, you inherit from them):
   `IEventReceiver` for every `IEventSource`, wakes the dispatcher on each received event and also every
   `EventsPeriodicCheckSec` seconds, and calls `ResetStuckRequestsAsync` on start.
 - `RequestProcessorNodeOptions` — `Name` (required, unique node name), `WorkersCount` (required, > 0),
-  `EventsPeriodicCheckSec` (default 60), `StateFlushPeriodSec` (default 60, how often workers load is logged).
+  `EventsPeriodicCheckSec` (default 60, > 0), `StateFlushPeriodSec` (default 60, > 0, how often workers load is
+  logged). Derive your options from it (or from the options class of a transport); the options are validated with
+  data annotations when the host starts.
 
 A worker (resolved from the container, so it can take any registered services):
 
@@ -71,18 +73,22 @@ own type created in the bootstrapper's `CreateWorkerParams`).
 Registration of a custom transport:
 
 ```csharp
-services.AddRequestProcessor<
-    MyRequest, MyWorker, WorkerBasicExtraParams, MyBootstrapper, MyNodeOptions, MyDispatcher, MyProcessingInfo>(
-    nodeOptions);
+services
+    .AddRequestProcessor<
+        MyRequest, MyWorker, WorkerBasicExtraParams, MyBootstrapper, MyNodeOptions, MyDispatcher, MyProcessingInfo>()
+    .BindConfiguration("RequestProcessor");
 ```
 
-It registers the worker (transient), the bootstrapper as a hosted service and the options (as `MyNodeOptions` and
-`RequestProcessorNodeOptions`). Transport packages provide `AddPostgresRequestProcessor` and
+It registers the worker (transient), the bootstrapper as a hosted service and the options: `IOptions<MyNodeOptions>`,
+validated when the host starts, and its value as `MyNodeOptions` and `RequestProcessorNodeOptions` for constructors
+that take them. Rules of your own options are data annotations (`[ValidateObjectMembers]` on nested options) and, for
+rules over several properties, your own `IValidateOptions<MyNodeOptions>`. Transport packages provide `AddPostgresRequestProcessor` and
 `AddRabbitMQRequestProcessor` wrappers with ready-made bootstrapper bases.
 
 ## See also
 
 - [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
+- [Curiosus.RequestProcessing 3.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-requestprocessing/3.0)
 - [Curiosus.RequestProcessing.Postgres](https://www.nuget.org/packages/Curiosus.RequestProcessing.Postgres) — Postgres `LISTEN/NOTIFY` as event source
 - [Curiosus.RequestProcessing.RabbitMQ](https://www.nuget.org/packages/Curiosus.RequestProcessing.RabbitMQ) — RabbitMQ queue as event source
 - [RabbitMQ consumer/producer sample](https://github.com/curiosus-dev/Curiosus.Utils/tree/main/samples/RequestProcessing/RabbitMQ)
