@@ -1,5 +1,6 @@
 using Curiosus.Configuration;
 using Curiosus.Hosting;
+using Curiosus.RabbitMQ;
 using Curiosus.RequestProcessing.RabbitMQ.Sample.ProducerApp.Configuration;
 using Curiosus.RequestProcessing.RabbitMQ.Sample.ProducerApp.Core;
 using Microsoft.Extensions.Configuration;
@@ -12,6 +13,7 @@ builder.AddCuriosusNLog();
 var configuration = builder.Configuration.Get<SampleProducerAppConfiguration>() ?? new SampleProducerAppConfiguration();
 configuration.AssertValid();
 builder.Services.AddSingleton(configuration);
+builder.Services.AddCuriosusRabbitMQ();
 builder.Services.AddHostedService<SampleRequestsProducer>();
 
 return await CuriosusApp.RunAsync(builder.Build());

@@ -78,7 +78,9 @@ Curiosus.Configuration (base)
   (`[Unreleased]` is skipped). A package that uses an unreleased API of another package here must be released in the
   same release PR or after it, pre-releases included; otherwise it fails at runtime with `MissingMethodException`.
 - Testcontainers on the arm64 sandbox: `axllent/mailpit` (SMTP with STARTTLS, `MP_SMTP_TLS_CERT=sans:localhost`) and
-  `linuxserver/openssh-server` from Docker Hub (SFTP) run; `atmoz/sftp` is amd64-only.
+  `linuxserver/openssh-server` from Docker Hub (SFTP) run; `atmoz/sftp` is amd64-only. `rabbitmq:4.1-alpine` runs, and
+  `PauseAsync()` of the container gives a broker that doesn't answer. Its `rabbitmqctl list_connections` has no
+  `user_provided_name`: the connection name is in `client_properties` (see `RabbitMqFixture.GetChannelCountsAsync`).
 - Provider packages (EMail, SMS, SFTP) don't depend on Hosting (owner's review of #141); their options are checked by
   options validation. Insecure opt-ins such as `AllowInvalidServerCertificate` are not blocked per environment, only
   logged as a warning: the user decides.

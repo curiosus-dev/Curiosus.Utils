@@ -1,5 +1,4 @@
 using System;
-using Curiosus.Configuration;
 using Curiosus.Tools;
 
 namespace Curiosus.RabbitMQ;
@@ -9,13 +8,15 @@ namespace Curiosus.RabbitMQ;
 /// </summary>
 public class CorrelationIdGenerator
 {
-    private readonly RabbitMQOptions _rabbitMqOptions;
+    private readonly string _clientName;
 
     /// <inheritdoc cref="CorrelationIdGenerator"/>
     public CorrelationIdGenerator(RabbitMQOptions rabbitMqOptions)
     {
-        _rabbitMqOptions = rabbitMqOptions ?? throw new ArgumentNullException(nameof(rabbitMqOptions));
-        _rabbitMqOptions.AssertValid();
+        ArgumentNullException.ThrowIfNull(rabbitMqOptions);
+        ArgumentException.ThrowIfNullOrWhiteSpace(rabbitMqOptions.ClientName, nameof(rabbitMqOptions));
+
+        _clientName = rabbitMqOptions.ClientName;
     }
 
     /// <summary>
@@ -23,7 +24,7 @@ public class CorrelationIdGenerator
     /// </summary>
     public string GenerateCorrelationId()
     {
-        return $"{_rabbitMqOptions.ClientName}_r{UniqueIdGenerator.Generate().ToPublicId()}";
+        return $"{_clientName}_r{UniqueIdGenerator.Generate().ToPublicId()}";
     }
 
     /// <summary>
@@ -33,6 +34,6 @@ public class CorrelationIdGenerator
     {
         if (String.IsNullOrWhiteSpace(baseCorrelationId)) throw new ArgumentNullException(nameof(baseCorrelationId));
 
-        return $"{baseCorrelationId}->{_rabbitMqOptions.ClientName}_r{UniqueIdGenerator.Generate().ToPublicId()}";
+        return $"{baseCorrelationId}->{_clientName}_r{UniqueIdGenerator.Generate().ToPublicId()}";
     }
 }

@@ -7,7 +7,8 @@ using Xunit;
 namespace Curiosus.RabbitMQ.UnitTests
 {
     /// <summary>
-    /// Unit tests for <see cref="RabbitMqRpcClient.DefaultJsonSerializerOptions"/>.
+    /// Unit tests for <see cref="RabbitMQJson.DefaultOptions"/>, the options of
+    /// <see cref="RabbitMqRpcClient.DefaultJsonSerializerOptions"/>.
     /// Checks compatibility with messages produced and consumed by Newtonsoft.Json-based RPC peers.
     /// </summary>
     public class RabbitMqRpcClientJson_Should
@@ -32,7 +33,7 @@ namespace Curiosus.RabbitMQ.UnitTests
             var json = "{\"id\":\"42\",\"name\":\"Заявка\",\"amount\":\"10.5\",\"comment\":\"срочно\"}";
 
             // act
-            var message = JsonSerializer.Deserialize<RpcMessage>(json, RabbitMqRpcClient.DefaultJsonSerializerOptions);
+            var message = JsonSerializer.Deserialize<RpcMessage>(json, RabbitMQJson.DefaultOptions);
 
             // assert
             message.Should().NotBeNull();
@@ -55,17 +56,23 @@ namespace Curiosus.RabbitMQ.UnitTests
             };
 
             // act
-            var json = JsonSerializer.Serialize(message, RabbitMqRpcClient.DefaultJsonSerializerOptions);
+            var json = JsonSerializer.Serialize(message, RabbitMQJson.DefaultOptions);
 
             // assert
             json.Should().Be("{\"Id\":42,\"Name\":\"Заявка\",\"Amount\":10.5,\"Comment\":\"срочно\"}");
         }
 
         [Fact]
+        public void BeTheOptionsOfRpcClient()
+        {
+            RabbitMqRpcClient.DefaultJsonSerializerOptions.Should().BeSameAs(RabbitMQJson.DefaultOptions);
+        }
+
+        [Fact]
         public void BeReadOnly()
         {
             // act
-            var act = () => RabbitMqRpcClient.DefaultJsonSerializerOptions.WriteIndented = true;
+            var act = () => RabbitMQJson.DefaultOptions.WriteIndented = true;
 
             // assert
             act.Should().Throw<InvalidOperationException>();

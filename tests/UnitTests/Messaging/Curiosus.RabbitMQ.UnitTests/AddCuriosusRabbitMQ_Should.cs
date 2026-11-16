@@ -1,0 +1,143 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Security;
+using Curiosus.RabbitMQ.RPC;
+using FluentAssertions;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using Xunit;
+
+namespace Curiosus.RabbitMQ.UnitTests;
+
+public class AddCuriosusRabbitMQ_Should
+{
+    private static ServiceProvider BuildServices(
+        Action<IServiceCollection>? configure = null,
+        string uri = "amqp://app:pass@rabbit.local/")
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Messaging:ConnectionUri"] = uri,
+                ["Messaging:ClientName"] = "orders-api-1"
+            })
+            .Build();
+
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(configuration);
+        services.AddLogging();
+        configure?.Invoke(services);
+
+        return services.BuildServiceProvider();
+    }
+
+    [Fact]
+    public void RegisterServicesAsSingletons()
+    {
+        using var provider = BuildServices(s => s.AddCuriosusRabbitMQ("Messaging"));
+
+        provider.GetRequiredService<IOptions<RabbitMQOptions>>().Value.ClientName.Should().Be("orders-api-1");
+        provider.GetRequiredService<IRabbitConnectionProvider>().Should().BeOfType<RabbitConnectionProvider>()
+            .And.BeSameAs(provider.GetRequiredService<IRabbitConnectionProvider>());
+        provider.GetRequiredService<IRabbitMQMessageSerializer>().Should().BeOfType<RabbitMQJsonMessageSerializer>()
+            .And.BeSameAs(provider.GetRequiredService<IRabbitMQMessageSerializer>());
+        provider.GetRequiredService<IRabbitPublisher>().Should().BeOfType<RabbitPublisher>()
+            .And.BeSameAs(provider.GetRequiredService<IRabbitPublisher>());
+        provider.GetRequiredService<RabbitMqRpcClientFactory>()
+            .Should().BeSameAs(provider.GetRequiredService<RabbitMqRpcClientFactory>());
+    }
+
+    [Fact]
+    public void RegisterValidatorOnce()
+    {
+        var services = new ServiceCollection();
+
+        services.AddCuriosusRabbitMQ();
+        services.AddCuriosusRabbitMQ();
+
+        services.Count(d => d.ImplementationType == typeof(RabbitMQOptionsValidator)).Should().Be(1);
+    }
+
+    [Fact]
+    public void KeepCustomSerializer_RegisteredBefore()
+    {
+        var custom = new CustomSerializer();
+        using var provider = BuildServices(s =>
+        {
+            s.AddSingleton<IRabbitMQMessageSerializer>(custom);
+            s.AddCuriosusRabbitMQ("Messaging");
+        });
+
+        provider.GetRequiredService<IRabbitMQMessageSerializer>().Should().BeSameAs(custom);
+    }
+
+    [Fact]
+    public void UseCustomSerializer_RegisteredAfter()
+    {
+        var custom = new CustomSerializer();
+        using var provider = BuildServices(s =>
+        {
+            s.AddCuriosusRabbitMQ("Messaging");
+            s.AddSingleton<IRabbitMQMessageSerializer>(custom);
+        });
+
+        provider.GetRequiredService<IRabbitMQMessageSerializer>().Should().BeSameAs(custom);
+    }
+
+    [Fact]
+    public void ThrowOnEmptySection()
+    {
+        var act = () => new ServiceCollection().AddCuriosusRabbitMQ(" ");
+
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void OpenConnection_NamedAfterClientName_WithRecovery()
+    {
+        using var provider = BuildServices(s => s.AddCuriosusRabbitMQ("Messaging"));
+
+        var factory = ((RabbitConnectionProvider)provider.GetRequiredService<IRabbitConnectionProvider>()).ConnectionFactory;
+
+        factory.ClientProvidedName.Should().Be("orders-api-1");
+        factory.AutomaticRecoveryEnabled.Should().BeTrue();
+        factory.TopologyRecoveryEnabled.Should().BeTrue();
+        factory.HostName.Should().Be("rabbit.local");
+        factory.UserName.Should().Be("app");
+        factory.Ssl.Enabled.Should().BeFalse();
+    }
+
+    [Fact]
+    public void ResetAmqpsPolicyErrors_ToNone()
+    {
+        using var provider = BuildServices(s => s.AddCuriosusRabbitMQ("Messaging"), "amqps://app:pass@rabbit.local/prod");
+
+        var factory = ((RabbitConnectionProvider)provider.GetRequiredService<IRabbitConnectionProvider>()).ConnectionFactory;
+
+        factory.Ssl.Enabled.Should().BeTrue();
+        factory.Ssl.ServerName.Should().Be("rabbit.local");
+        factory.Ssl.AcceptablePolicyErrors.Should().Be(SslPolicyErrors.None);
+        factory.Port.Should().Be(5671);
+        factory.VirtualHost.Should().Be("prod");
+    }
+
+    [Fact]
+    public void NameRpcConnection_AfterClientName()
+    {
+        var factory = RabbitConnectionFactoryBuilder.Create(new Uri("amqps://rabbit.local/"), "orders-api-1_rpc_client");
+
+        factory.ClientProvidedName.Should().Be("orders-api-1_rpc_client");
+        factory.Ssl.AcceptablePolicyErrors.Should().Be(SslPolicyErrors.None);
+    }
+
+    private sealed class CustomSerializer : IRabbitMQMessageSerializer
+    {
+        public string ContentType => "application/x-custom";
+
+        public ReadOnlyMemory<byte> Serialize<T>(T message) => Array.Empty<byte>();
+
+        public T Deserialize<T>(ReadOnlyMemory<byte> body, string? contentType) => default!;
+    }
+}

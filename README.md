@@ -36,7 +36,8 @@ e-mail and SMS, notifications, request processing, file formats, localization an
 - **Notifications** — one `INotificator` call fans an event out to e-mail, SMS or custom channels running as queued
   background services, with post-processors for the results.
 - **Request processing** — a fixed pool of workers in a hosted service, fed from a Postgres table queue
-  (`LISTEN/NOTIFY`) or RabbitMQ; plus a RabbitMQ request-reply client.
+  (`LISTEN/NOTIFY`) or RabbitMQ; plus a shared RabbitMQ connection, a publisher with publisher confirms and a
+  request-reply client.
 - **Files** — streaming XLSX (NPOI) and CSV (Sylvan/CsvHelper) readers and writers, ZIP archives (SharpZipLib),
   SFTP (SSH.NET).
 - **Web** — ASP.NET Core middleware, model binders, data protection, reCAPTCHA, sitemap; localization keyed by

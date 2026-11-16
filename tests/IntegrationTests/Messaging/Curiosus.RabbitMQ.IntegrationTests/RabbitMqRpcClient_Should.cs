@@ -7,6 +7,7 @@ using Curiosus.RabbitMQ.IntegrationTests.Fixture;
 using Curiosus.RabbitMQ.RPC;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Xunit;
@@ -33,14 +34,11 @@ public class RabbitMqRpcClient_Should
     {
         var options = new RabbitMQOptions
         {
-            HostName = _fixture.HostName,
-            Port = _fixture.Port,
-            UserName = RabbitMqFixture.UserName,
-            Password = RabbitMqFixture.Password,
+            ConnectionUri = _fixture.ConnectionUri,
             ClientName = "rpc_tests"
         };
 
-        return new RabbitMqRpcClientFactory(NullLoggerFactory.Instance, options);
+        return new RabbitMqRpcClientFactory(NullLoggerFactory.Instance, Options.Create(options));
     }
 
     /// <summary>
@@ -209,6 +207,46 @@ public class RabbitMqRpcClient_Should
 
         // assert
         response.Value.Should().Be("after!");
+    }
+
+    [Fact]
+    public async Task SendRequests_ToRequestExchange()
+    {
+        // arrange
+        using var cts = new CancellationTokenSource(TestTimeout);
+        var requestQueueName = RabbitMqFixture.UniqueName("rpc_exchange");
+        var exchangeName = RabbitMqFixture.UniqueName("rpc_requests");
+        await using var service = await StartEchoServiceAsync(requestQueueName, cts.Token);
+        await using (var connection = await _fixture.CreateConnectionAsync(cts.Token))
+        await using (var channel = await connection.CreateChannelAsync(cancellationToken: cts.Token))
+        {
+            await channel.ExchangeDeclareAsync(exchangeName, ExchangeType.Direct, cancellationToken: cts.Token);
+            await channel.QueueBindAsync(requestQueueName, exchangeName, requestQueueName, cancellationToken: cts.Token);
+        }
+
+        await using var client = await CreateFactory().CreateClientAsync(
+            requestQueueName, requestExchange: exchangeName, cancellationToken: cts.Token);
+
+        // act
+        var response = await client.SendWithAutoAcknowledgeAsync<EchoResponse, EchoRequest>(
+            new EchoRequest("routed"), "correlation_routed", cts.Token);
+
+        // assert
+        response.Value.Should().Be("routed!");
+    }
+
+    [Fact]
+    public async Task NameConnection_AfterClientName()
+    {
+        // arrange
+        using var cts = new CancellationTokenSource(TestTimeout);
+        var requestQueueName = RabbitMqFixture.UniqueName("rpc_name");
+
+        // act
+        await using var client = await CreateFactory().CreateClientAsync(requestQueueName, cancellationToken: cts.Token);
+
+        // assert
+        (await _fixture.GetChannelCountsAsync("rpc_tests_rpc_client", cts.Token)).Should().NotBeEmpty();
     }
 
     private static async Task WaitUntilAsync(Func<Task<bool>> condition, CancellationToken cancellationToken)

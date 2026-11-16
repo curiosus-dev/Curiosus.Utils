@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Text;
-using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -34,28 +32,14 @@ public class RabbitMqRpcClient : IAsyncDisposable
     private static readonly TimeSpan ConnectionCloseTimeout = TimeSpan.FromSeconds(3);
 
     /// <summary>
-    /// Default JSON options for requests and responses.
+    /// Default JSON options for requests and responses: <see cref="RabbitMQJson.DefaultOptions"/>.
     /// </summary>
     /// <remarks>
     /// Mimics Newtonsoft.Json defaults (used before 2.0.0) to keep the wire format compatible with existing RPC peers:
     /// case-insensitive property names, public fields, numbers from strings and unescaped non-ASCII characters.
     /// The instance is read-only; to customize, copy it: <c>new JsonSerializerOptions(DefaultJsonSerializerOptions)</c>.
     /// </remarks>
-    public static JsonSerializerOptions DefaultJsonSerializerOptions { get; } = CreateDefaultJsonSerializerOptions();
-
-    private static JsonSerializerOptions CreateDefaultJsonSerializerOptions()
-    {
-        var options = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true,
-            IncludeFields = true,
-            NumberHandling = JsonNumberHandling.AllowReadingFromString,
-            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-        };
-        options.MakeReadOnly(populateMissingResolver: true);
-
-        return options;
-    }
+    public static JsonSerializerOptions DefaultJsonSerializerOptions => RabbitMQJson.DefaultOptions;
 
     /// <summary>
     /// Time for waiting connection full recovering before sending data to the queues.
