@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- **Breaking:** depends on `Curiosus.DAL` 3.0, whose `DbOptions` moved to `Microsoft.Extensions.Options`
+  (`Validate(prefix)`/`AssertValid()` removed, `ConnectionString` checked by `[Required]` when the host starts) and which
+  no longer brings `Curiosus.Configuration`: reference it yourself if you used it through this package. See the
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-dal/3.0#options). ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+
 ## [2.0.0] - 2026-09-27
 
 ### Changed
