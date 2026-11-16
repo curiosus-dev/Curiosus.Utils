@@ -50,12 +50,29 @@ public class OrderService(ICuriosusDataContextFactory contextFactory, ILogger<Or
 }
 ```
 
-`DbOptions` implements `IValidatableOptions`, so it can be checked with `options.AssertValid()` from
-[Curiosus.Configuration](https://www.nuget.org/packages/Curiosus.Configuration).
+Register `DbOptions` (or your subclass of it) as options: `ConnectionString` is `[Required]`, so the host fails to
+start without it.
+
+```csharp
+services.AddOptions<DbOptions>()
+    .BindConfiguration("Db")
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+public class AppDataContextFactory(IOptions<DbOptions> options) : ICuriosusDataContextFactory
+{
+    // options.Value.ConnectionString, options.Value.ReadOnlyConnectionString
+}
+```
+
+A subclass keeps the base rules through `ValidateDataAnnotations()` and adds its own cross-field rules with an
+`IValidateOptions<TSubclass>`, see the
+[migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-dal/3.0#subclasses-of-dboptions).
 
 ## See also
 
 - [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
+- [Curiosus.DAL 3.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-dal/3.0)
 - [Curiosus.DAL.EF](https://www.nuget.org/packages/Curiosus.DAL.EF) — EF Core base contexts implementing these interfaces
 - [Curiosus.DAL.Dapper](https://www.nuget.org/packages/Curiosus.DAL.Dapper) — `ISqlExecutor` implementation on Dapper
 - [Curiosus.DAL.EF.Polly](https://www.nuget.org/packages/Curiosus.DAL.EF.Polly) — Polly policy for EF concurrency errors
