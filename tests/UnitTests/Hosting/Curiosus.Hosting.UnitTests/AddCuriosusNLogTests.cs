@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using NLog;
 using NLog.Targets;
 using Xunit;
@@ -179,7 +180,7 @@ namespace Curiosus.Hosting.UnitTests
 
             var act = () => builder.AddCuriosusNLog();
 
-            act.Should().Throw<Microsoft.Extensions.Options.OptionsValidationException>();
+            act.Should().Throw<OptionsValidationException>();
         }
 
         [Fact]
@@ -188,11 +189,75 @@ namespace Curiosus.Hosting.UnitTests
             File.WriteAllText(Path.Combine(_contentRoot, "other.config"), MemoryConfig);
             var builder = CreateBuilder(("Log:LogConfigurationPath", "missing.config"));
 
-            builder.AddCuriosusNLog(o => o.LogConfigurationPath = "other.config");
+            builder.AddCuriosusNLog(configure: o => o.LogConfigurationPath = "other.config");
             using var host = builder.Build();
             host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("test").LogInformation("hello");
 
             Logs().Should().ContainSingle();
+        }
+
+        [Fact]
+        public void CustomSectionPath_IsRead()
+        {
+            File.WriteAllText(Path.Combine(_contentRoot, "custom.config"), MemoryConfig);
+            var builder = CreateBuilder(
+                ("Logging:NLog:LogConfigurationPath", "custom.config"),
+                ("Logging:NLog:LogOutputDirectory", "custom-log"));
+
+            builder.AddCuriosusNLog("Logging:NLog");
+            using var host = builder.Build();
+            host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("test").LogInformation("hello");
+
+            Logs().Should().ContainSingle().Which.Should().Contain(Path.Combine(_contentRoot, "custom-log"));
+            host.Services.GetRequiredService<IOptions<CuriosusNLogOptions>>().Value.LogConfigurationPath
+                .Should().Be("custom.config");
+        }
+
+        [Fact]
+        public void ConfigureDelegate_AppliesToTheOptionsToo()
+        {
+            File.WriteAllText(Path.Combine(_contentRoot, "NLog.config"), MemoryConfig);
+            var builder = CreateBuilder(("Log:LogOutputDirectory", "from-section"));
+
+            builder.AddCuriosusNLog(configure: o => o.LogOutputDirectory = "from-code");
+            using var host = builder.Build();
+
+            host.Services.GetRequiredService<IOptions<CuriosusNLogOptions>>().Value.LogOutputDirectory
+                .Should().Be("from-code");
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData(" ")]
+        public void EmptySectionPath_Throws(string path)
+        {
+            var builder = CreateBuilder();
+
+            var act = () => builder.AddCuriosusNLog(path);
+
+            act.Should().Throw<ArgumentException>();
+        }
+
+        [Fact]
+        public void CalledTwice_SetsNLogUpOnce_SecondConfigureReachesOnlyTheOptions()
+        {
+            File.WriteAllText(Path.Combine(_contentRoot, "NLog.config"), MemoryConfig);
+            var builder = CreateBuilder(("Log:LogOutputDirectory", "first"));
+
+            builder.AddCuriosusNLog();
+            var configuration = LogManager.Configuration;
+            var act = () => builder.AddCuriosusNLog("Missing", o => o.LogConfigurationPath = "missing.config");
+
+            act.Should().NotThrow("the second call doesn't load NLog.config again");
+            LogManager.Configuration.Should().BeSameAs(configuration);
+            builder.Services.Count(d => d.ServiceType == typeof(IValidateOptions<CuriosusNLogOptions>)).Should().Be(1);
+            using var host = builder.Build();
+            host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("test").LogInformation("hello");
+
+            Logs().Should().ContainSingle().Which.Should().Contain(Path.Combine(_contentRoot, "first"));
+            var options = host.Services.GetRequiredService<IOptions<CuriosusNLogOptions>>().Value;
+            options.LogConfigurationPath.Should().Be("missing.config");
+            options.LogOutputDirectory.Should().Be("first", "the section is not bound again");
         }
 
         public void Dispose()

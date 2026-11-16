@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Curiosus.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,12 +17,14 @@ namespace Curiosus.Hosting
     public static class CuriosusNLogExtensions
     {
         /// <summary>
-        /// Sets up NLog from the file named by the <c>Log</c> section: replaces the logging providers with NLog, sets
-        /// the <c>outputdir</c> (absolute path) and <c>appname</c> variables and makes <c>${configsetting}</c> read the
-        /// app configuration.
+        /// Sets up NLog from the file named by the configuration section (<c>Log</c> by default): replaces the logging
+        /// providers with NLog, sets the <c>outputdir</c> (absolute path) and <c>appname</c> variables and makes
+        /// <c>${configsetting}</c> read the app configuration.
         /// </summary>
         /// <param name="builder">Application builder.</param>
-        /// <param name="configure">Overrides the options bound from the <c>Log</c> section.</param>
+        /// <param name="configSectionPath">Configuration section the options are bound from; a missing section binds
+        /// nothing, so the defaults and <paramref name="configure"/> apply.</param>
+        /// <param name="configure">Configures options in code, after the binding.</param>
         /// <param name="configureNLogExtensions">Registers more NLog extensions before NLog.config is loaded.
         /// <c>CuriosusWebHost.CreateBuilder</c> of Curiosus.Hosting.Web already registers the <c>${aspnet-*}</c> layout
         /// renderers; a web app on a plain <c>WebApplication.CreateBuilder</c> passes
@@ -35,16 +38,34 @@ namespace Curiosus.Hosting
         /// The app calls it itself, it is not part of the host defaults: an app that moves to centralized log collection
         /// (OpenTelemetry or console output collected by an agent) removes this call and keeps the rest of its setup.
         /// </para>
+        /// <para>
+        /// NLog is set up, the section is bound and validation is registered by the first call only. A later call adds
+        /// its <paramref name="configure"/> to <see cref="IOptions{TOptions}"/> of <see cref="CuriosusNLogOptions"/>
+        /// and ignores <paramref name="configSectionPath"/> and <paramref name="configureNLogExtensions"/>: NLog keeps
+        /// the configuration the first call loaded.
+        /// </para>
         /// </remarks>
         /// <exception cref="OptionsValidationException">The options are invalid.</exception>
         public static OptionsBuilder<CuriosusNLogOptions> AddCuriosusNLog(
             this IHostApplicationBuilder builder,
+            string configSectionPath = CuriosusNLogOptions.SectionName,
             Action<CuriosusNLogOptions>? configure = null,
             Action<ISetupExtensionsBuilder>? configureNLogExtensions = null)
         {
-            if (builder == null) throw new ArgumentNullException(nameof(builder));
+            ArgumentNullException.ThrowIfNull(builder);
+            ArgumentException.ThrowIfNullOrWhiteSpace(configSectionPath);
 
-            var options = builder.Configuration.GetCuriosusOptions(CuriosusNLogOptions.SectionName, configure);
+            var services = builder.Services;
+            if (services.Any(d => d.ServiceType == typeof(CuriosusNLogMarker)))
+            {
+                // NLog is a process-wide singleton already set up by the first call: loading it again here would
+                // replace its targets while the first configuration is in use
+                var optionsBuilder = services.AddOptions<CuriosusNLogOptions>();
+                if (configure != null) optionsBuilder.Configure(configure);
+                return optionsBuilder;
+            }
+
+            var options = builder.Configuration.GetCuriosusOptions(configSectionPath, configure);
 
             CuriosusNLog.LoadConfiguration(
                 options,
@@ -58,9 +79,13 @@ namespace Curiosus.Hosting
             // disposing the host (CuriosusApp.RunAsync does) flushes NLog, so no LogManager.Shutdown() in Program.cs
             builder.Logging.AddNLog(new NLogProviderOptions { ShutdownOnDispose = true });
 
-            return builder.Services
-                .AddCuriosusOptions<CuriosusNLogOptions>(CuriosusNLogOptions.SectionName)
-                .Configure(o => configure?.Invoke(o));
+            services.AddSingleton<CuriosusNLogMarker>();
+            var result = services.AddCuriosusOptions<CuriosusNLogOptions>(configSectionPath);
+            if (configure != null) result.Configure(configure);
+            return result;
         }
+
+        /// <summary>Marks the service collection whose builder <see cref="AddCuriosusNLog"/> has set up.</summary>
+        private sealed class CuriosusNLogMarker;
     }
 }

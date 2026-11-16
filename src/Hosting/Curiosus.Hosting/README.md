@@ -71,7 +71,8 @@ Log:                        # AddCuriosusNLog only
 - systemd and Windows service lifetimes (no-op otherwise).
 
 It doesn't touch logging providers: `builder.AddCuriosusNLog()` sets NLog up from the `Log` section (`${var:outputdir}`,
-`${var:appname}`, `${configsetting:item=Section.Key}`). An app that moves to centralized log collection drops that call.
+`${var:appname}`, `${configsetting:item=Section.Key}`); another section path is its first argument, options set in code
+are `configure: o => ...`. An app that moves to centralized log collection drops that call.
 
 ### Exit codes
 
