@@ -1,26 +1,30 @@
-﻿using Curiosus.Configuration;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Curiosus.SMS.Iqsms;
 
 /// <summary>
-/// Options for <see cref="Curiosus.SMS.Iqsms.IqsmsSender"/>
+/// Options for <see cref="Curiosus.SMS.Iqsms.IqsmsSender"/>.
 /// </summary>
-public class IqsmsOptions : IValidatableOptions, ILoggableOptions
+/// <remarks>
+/// Register them with <see cref="IoCExtensions.AddIqsmsSender"/> and bind from configuration with
+/// <c>.BindConfiguration("Iqsms")</c>; they are validated when the host starts.
+/// </remarks>
+public class IqsmsOptions
 {
-    private const string CanNotBeEmptyErrorDescription = "can not be empty";
-
     /// <summary>
-    /// Login for iqsms.
+    /// Login for iqsms. Required.
     /// </summary>
+    [Required]
     public string Login { get; set; } = null!;
 
     /// <summary>
-    /// Pass for iqsms
+    /// Password for iqsms. Required.
     /// </summary>
+    [Required]
     public string Password { get; set; } = null!;
 
     /// <summary>
-    /// Sender's name.
+    /// Sender's name. Optional.
     /// </summary>
     public string? Sender { get; set; }
 
@@ -31,14 +35,4 @@ public class IqsmsOptions : IValidatableOptions, ILoggableOptions
     /// iqsms.ru requires phone number in format +71234567890
     /// </remarks>
     public bool AutoTransformPhoneNumber { get; set; } = true;
-
-    /// <inheritdoc />
-    public IReadOnlyCollection<ConfigurationValidationError> Validate(string? prefix = null)
-    {
-        var errors = new ConfigurationValidationErrorCollection(prefix);
-        errors.AddErrorIf(String.IsNullOrEmpty(Login), nameof(Login), CanNotBeEmptyErrorDescription);
-        errors.AddErrorIf(String.IsNullOrEmpty(Password), nameof(Password), CanNotBeEmptyErrorDescription);
-
-        return errors;
-    }
 }

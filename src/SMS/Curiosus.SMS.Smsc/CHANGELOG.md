@@ -7,6 +7,16 @@
 - Phone numbers are masked in the log messages of `SmscSender` (`79*****4567`) and in the error descriptions it
   returns; they were written in full at `Information` and `Warning`. Log messages are templates now. ([#84](https://github.com/curiosus-dev/Curiosus.Utils/issues/84))
 
+### Changed
+
+- **Breaking:** `SmscOptions` moved to `Microsoft.Extensions.Options`: `AddSmscSmsSender(Action<SmscOptions>?, bool)`
+  returns `OptionsBuilder<SmscOptions>` and validates the options when the host starts (`SmscLogin` and `SmscPassword`
+  are required, now also not whitespace); `AddSmscSmsSender(SmscOptions, bool)` is removed, the `SmscSender`
+  constructor takes `IOptions<SmscOptions>`, and `SmscOptions` no longer implements
+  `IValidatableOptions`/`ILoggableOptions`. Register with `services.AddSmscSmsSender().BindConfiguration("Smsc")`, see
+  the [migration guide](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-sms-smsc/4.0#options)
+  ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44)).
+
 ## [3.0.0] - 2026-10-03
 
 ### Security

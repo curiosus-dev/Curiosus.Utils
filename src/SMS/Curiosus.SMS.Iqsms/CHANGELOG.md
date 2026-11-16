@@ -12,6 +12,13 @@
 
 ### Changed
 
+- **Breaking:** `IqsmsOptions` moved to `Microsoft.Extensions.Options`: `AddIqsmsSender(Action<IqsmsOptions>?, bool)`
+  returns `OptionsBuilder<IqsmsOptions>` and validates the options when the host starts (`Login` and `Password` are
+  required, now also not whitespace); `AddIqsmsSender(IqsmsOptions, bool)` is removed, the `IqsmsSender` constructor
+  takes `IOptions<IqsmsOptions>`, and `IqsmsOptions` no longer implements `IValidatableOptions`/`ILoggableOptions`.
+  Register with `services.AddIqsmsSender().BindConfiguration("Iqsms")`, see the
+  [migration guide](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-sms-iqsms/4.0#options)
+  ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44)).
 - The response of the JSON API is parsed: message status `accepted` → success; `not enough balance`/`not enough credits`
   → `NoMoney`; `invalid mobile phone` → `DeliveryError`; a package-level error about authorization or HTTP 401 → `Auth`;
   non-2xx, network errors and timeouts → `Communication`; anything else → `Unknown`. `SmsSentResult.ResponseJson` holds

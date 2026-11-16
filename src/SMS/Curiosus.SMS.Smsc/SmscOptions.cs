@@ -1,39 +1,31 @@
-using System;
-using System.Collections.Generic;
-using Curiosus.Configuration;
+using System.ComponentModel.DataAnnotations;
 
 namespace Curiosus.SMS.Smsc
 {
     /// <summary>
-    /// Options for <see cref="Curiosus.SMS.Smsc.SmscSender"/>
+    /// Options for <see cref="Curiosus.SMS.Smsc.SmscSender"/>.
     /// </summary>
-    public class SmscOptions : IValidatableOptions, ILoggableOptions
+    /// <remarks>
+    /// Register them with <see cref="IoCExtensions.AddSmscSmsSender"/> and bind from configuration with
+    /// <c>.BindConfiguration("Smsc")</c>; they are validated when the host starts.
+    /// </remarks>
+    public class SmscOptions
     {
-        private const string CanNotBeEmptyErrorDescription = "can not be empty";
-
         /// <summary>
-        /// Login for Smsc.
+        /// Login for Smsc. Required.
         /// </summary>
+        [Required]
         public string SmscLogin { get; set; } = null!;
 
         /// <summary>
-        /// Pass for Smsc.
+        /// Password for Smsc. Required.
         /// </summary>
+        [Required]
         public string SmscPassword { get; set; } = null!;
 
         /// <summary>
-        /// Sender's name.
+        /// Sender's name. Optional.
         /// </summary>
-        public string? SmscSender { get; set; } = null!;
-
-        /// <inheritdoc />
-        public IReadOnlyCollection<ConfigurationValidationError> Validate(string? prefix = null)
-        {
-            var errors = new ConfigurationValidationErrorCollection(prefix);
-            errors.AddErrorIf(String.IsNullOrEmpty(SmscLogin), nameof(SmscLogin), CanNotBeEmptyErrorDescription);
-            errors.AddErrorIf(String.IsNullOrEmpty(SmscPassword), nameof(SmscPassword), CanNotBeEmptyErrorDescription);
-
-            return errors;
-        }
+        public string? SmscSender { get; set; }
     }
 }
