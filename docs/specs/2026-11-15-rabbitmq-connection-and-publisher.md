@@ -59,8 +59,8 @@ Functional:
    argument of `RabbitMqRpcClientFactory.CreateClientAsync` (default: the default exchange `""`, as the option was).
 4. `PublishAsync` serializes the message with `IRabbitMQMessageSerializer`, sets `content-type` from it, publishes on
    a channel opened with publisher confirmations and confirmation tracking, and completes when the broker acks. Each
-   publish gets its own `BasicProperties` and headers dictionary: RabbitMQ.Client adds the `x-dotnet-pub-seq-no`
-   header to them, and consumers see it.
+   publish gets its own `BasicProperties` and headers dictionary: RabbitMQ.Client adds its `x-dotnet-pub-seq-no`
+   header to them (a constant of the client, which matches returns to publishes by it), and consumers see it.
 5. Properties: `MessageId` (a new GUID v7 when not set), `CorrelationId`, `Persistent` (default `true`), `Mandatory`
    (default `false`), `Headers`. `timestamp` is set from `TimeProvider`.
 6. A publish fails with `RabbitPublishException` and a `Reason`:
@@ -245,21 +245,17 @@ Configuration:
 
 ## Rollout
 
-- `Curiosus.RabbitMQ` gets `## [4.0.0-alpha.1]` when the owner releases the alphas; `AddCuriosusOptions` is unreleased
-  in `Curiosus.Configuration`, so that package is released in the same release PR or before it.
-- **Breaking** (needs the migration page): `RabbitMQOptions` is bound from configuration and has `ConnectionUri` and
-  `ClientName` instead of `HostName`/`Port`/`UserName`/`Password`/`ExchangeName`; `AddRabbitMQRPC(options)` becomes
-  `AddCuriosusRabbitMQ(section)`; `ExchangeName` of the RPC client becomes the `requestExchange` argument;
-  RabbitMQ.Client 7.2.1 is the minimum version. The rest of the RPC client API stays until
-  [#75](https://github.com/curiosus-dev/Curiosus.Utils/issues/75).
+- All issues of milestone [M5](https://github.com/curiosus-dev/Curiosus.Utils/milestone/5) (#109 parts 1–3, #75,
+  #77, #78, #79) are released in one version (owner): `Curiosus.RabbitMQ` 4.0.0 and the RequestProcessing packages
+  come out when all of them are done. Until then each merged part is released as a pre-release from `main`, starting
+  with `## [4.0.0-alpha.1]` for this part, when the owner releases the alphas.
+- So the breaking changes land in the first alpha (owner, review of this spec): `RabbitMQOptions` is bound from
+  configuration and has `ConnectionUri` and `ClientName` instead of `HostName`/`Port`/`UserName`/`Password`/
+  `ExchangeName`; `AddRabbitMQRPC(options)` becomes `AddCuriosusRabbitMQ(section)`; `ExchangeName` of the RPC client
+  becomes the `requestExchange` argument; RabbitMQ.Client 7.2.1 is the minimum version. The rest of the RPC client API
+  changes with [#75](https://github.com/curiosus-dev/Curiosus.Utils/issues/75), in a later alpha of the same version.
+  The migration page gets the section of this part.
+- `AddCuriosusOptions` is unreleased in `Curiosus.Configuration`: that package is released in the same release PR or
+  before it.
 - `Curiosus.RequestProcessing.RabbitMQ` keeps its own options and connection until
   [#77](https://github.com/curiosus-dev/Curiosus.Utils/issues/77); it builds against RabbitMQ.Client 7.2.1.
-
-## Open questions
-
-1. **Break `RabbitMQOptions` in the first alpha?** The spec above changes them now to the shape #75 plans for 4.0.0,
-   so an app has one options type and one configuration change from the first alpha. The RPC client keeps its own
-   connection until #75 either way (it reconnects and disposes connections by hand, which #75 reworks). The alternative
-   is additive: keep `RabbitMQOptions` and `AddRabbitMQRPC` as they are, add `RabbitMQConnectionOptions` for the
-   provider and the publisher, and break only with #75. Cost: two options types and two configuration sections until
-   then, and a second migration step for the app.
