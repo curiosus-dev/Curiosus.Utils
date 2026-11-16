@@ -34,7 +34,7 @@ using Curiosus.Tools.TempFiles;
 
 // SftpClient needs ITempFileStreamFactory from Curiosus.Tools
 services.AddTempFileServices(new TempFileOptions());
-services.AddSftpServices().BindConfiguration("Sftp");
+services.AddSftpServices();   // binds the "Sftp" section
 ```
 
 ```csharp
@@ -46,8 +46,10 @@ await using var file = await client.DownloadFileFromServerAsync("/upload", "data
 ```
 
 `AddSftpServices` registers the options, `ISftpClientFactory` and an app initializer (`IAppInitializer`, executed
-by Curiosus.Hosting on start) that checks the connection when `CheckOnStart` is `true`. It returns the
-`OptionsBuilder<SftpClientOptions>`: bind it with `.BindConfiguration("Sftp")`, or pass a `configure` delegate. The
+by Curiosus.Hosting on start) that checks the connection when `CheckOnStart` is `true`. It binds the
+options from the `Sftp` section (`SftpClientOptions.SectionName`; pass another path as the first argument), applies the
+optional `configure` delegate on top and returns the `OptionsBuilder<SftpClientOptions>`; a missing section binds
+nothing, so code-only configuration works. The
 options are validated when the host starts (data annotations and `SftpClientOptionsValidator`), so an invalid
 configuration fails with `OptionsValidationException` before the app runs. Every client takes the current options, so a
 reloaded configuration (a rotated password or host key) applies to the next `GetSftpClient()`.

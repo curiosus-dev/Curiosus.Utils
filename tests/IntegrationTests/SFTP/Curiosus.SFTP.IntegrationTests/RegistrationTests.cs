@@ -8,6 +8,7 @@ using Curiosus.Tools.TempFiles;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using FluentAssertions;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -36,9 +37,10 @@ namespace Curiosus.SFTP.IntegrationTests
         private ServiceProvider BuildProvider(string[] fingerprints)
         {
             var services = new ServiceCollection();
+            services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
             services.AddLogging();
             services.AddSingleton<ITempFileStreamFactory, UnusedTempFileStreamFactory>();
-            services.AddSftpServices(o =>
+            services.AddSftpServices(configure: o =>
             {
                 o.SshServer = _server.Hostname;
                 o.SshPort = _server.GetMappedPublicPort(SshPort);

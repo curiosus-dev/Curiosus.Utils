@@ -26,12 +26,31 @@ namespace Curiosus.SFTP.UnitTests
             o.HostKeyFingerprintsSha256 = [Fingerprint];
         }
 
-        private static ServiceProvider BuildProvider(Action<SftpClientOptions> configure)
+        private static ServiceCollection Services(Dictionary<string, string?>? configuration = null)
         {
             var services = new ServiceCollection();
-            services.AddSftpServices(configure);
+            services.AddSingleton<IConfiguration>(new ConfigurationBuilder()
+                .AddInMemoryCollection(configuration ?? [])
+                .Build());
+            return services;
+        }
+
+        private static ServiceProvider BuildProvider(Action<SftpClientOptions> configure)
+        {
+            var services = Services();
+            services.AddSftpServices(configure: configure);
             return services.BuildServiceProvider();
         }
+
+        private static readonly Dictionary<string, string?> SftpSection = new()
+        {
+            ["Sftp:SshServer"] = "sftp.example.com",
+            ["Sftp:SshPort"] = "2222",
+            ["Sftp:SshLogin"] = "user",
+            ["Sftp:SshPrivateKeyPath"] = "/secrets/id_ed25519",
+            ["Sftp:HostKeyFingerprintsSha256:0"] = "SHA256:" + Fingerprint,
+            ["Sftp:HostKeyFingerprintsSha256:1"] = Fingerprint,
+        };
 
         private static OptionsValidationException ValidationError(Action<SftpClientOptions> change)
         {
@@ -143,50 +162,85 @@ namespace Curiosus.SFTP.UnitTests
         }
 
         [Fact]
-        public void AddSftpServices_Twice_DoesNotDuplicateValidatorsOrInitializers()
+        public void AddSftpServices_Twice_DoesNotDuplicateRegistrations()
         {
-            var services = new ServiceCollection();
+            var services = Services();
             services.AddSftpServices();
             services.AddSftpServices();
 
-            services.Count(d => d.ServiceType == typeof(IValidateOptions<SftpClientOptions>)
-                    && d.ImplementationType == typeof(SftpClientOptionsValidator))
-                .Should().Be(1);
+            services.Count(d => d.ServiceType == typeof(IValidateOptions<SftpClientOptions>)).Should().Be(2,
+                "one data annotations validator and SftpClientOptionsValidator");
             services.Count(d => d.ServiceType == typeof(IAppInitializer)).Should().Be(1);
             services.Count(d => d.ServiceType == typeof(ISftpClientFactory)).Should().Be(1);
         }
 
         [Fact]
-        public void BindConfiguration_ReadsTheSection()
+        public void AddSftpServices_Twice_ReportsEveryErrorOnce()
         {
-            var configuration = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string?>
-                {
-                    ["Sftp:SshServer"] = "sftp.example.com",
-                    ["Sftp:SshPort"] = "2222",
-                    ["Sftp:SshLogin"] = "user",
-                    ["Sftp:SshPrivateKeyPath"] = "/secrets/id_ed25519",
-                    ["Sftp:HostKeyFingerprintsSha256:0"] = "SHA256:" + Fingerprint,
-                    ["Sftp:HostKeyFingerprintsSha256:1"] = Fingerprint,
-                })
-                .Build();
-            var services = new ServiceCollection();
-            services.AddSingleton<IConfiguration>(configuration);
-            services.AddSftpServices().BindConfiguration("Sftp");
+            var services = Services();
+            services.AddSftpServices(configure: Valid);
+            services.AddSftpServices(configure: o => o.SshServer = "");
+            using var provider = services.BuildServiceProvider();
+
+            var act = () => provider.GetRequiredService<IOptions<SftpClientOptions>>().Value;
+
+            act.Should().Throw<OptionsValidationException>().Which.Failures.Should().ContainSingle();
+        }
+
+        [Fact]
+        public void Binds_TheDefaultSection()
+        {
+            SftpClientOptions.SectionName.Should().Be("Sftp");
+            var services = Services(SftpSection);
+            services.AddSftpServices();
             using var provider = services.BuildServiceProvider();
 
             var options = provider.GetRequiredService<IOptions<SftpClientOptions>>().Value;
 
+            options.SshServer.Should().Be("sftp.example.com");
             options.SshPort.Should().Be(2222);
             options.SshPrivateKeyPath.Should().Be("/secrets/id_ed25519");
             options.HostKeyFingerprintsSha256.Should().Equal("SHA256:" + Fingerprint, Fingerprint);
         }
 
         [Fact]
+        public void Binds_ACustomSectionPath()
+        {
+            var services = Services(SftpSection.ToDictionary(p => "Storage:" + p.Key, p => p.Value));
+            services.AddSftpServices("Storage:Sftp");
+            using var provider = services.BuildServiceProvider();
+
+            provider.GetRequiredService<IOptions<SftpClientOptions>>().Value.SshPort.Should().Be(2222);
+        }
+
+        [Fact]
+        public void Configure_OverridesTheBoundValues()
+        {
+            var services = Services(SftpSection);
+            services.AddSftpServices(configure: o => o.SshPort = 2022);
+            using var provider = services.BuildServiceProvider();
+
+            var options = provider.GetRequiredService<IOptions<SftpClientOptions>>().Value;
+
+            options.SshPort.Should().Be(2022);
+            options.SshServer.Should().Be("sftp.example.com");
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData(" ")]
+        public void SectionPath_CantBeEmpty(string path)
+        {
+            var act = () => Services().AddSftpServices(path);
+
+            act.Should().Throw<ArgumentException>();
+        }
+
+        [Fact]
         public async Task InvalidOptions_FailTheHostStart()
         {
             using var host = new HostBuilder()
-                .ConfigureServices(services => services.AddSftpServices(o =>
+                .ConfigureServices(services => services.AddSftpServices(configure: o =>
                 {
                     Valid(o);
                     o.HostKeyFingerprintsSha256 = [];
@@ -203,7 +257,7 @@ namespace Curiosus.SFTP.UnitTests
         public async Task ValidOptions_StartTheHost()
         {
             using var host = new HostBuilder()
-                .ConfigureServices(services => services.AddSftpServices(Valid))
+                .ConfigureServices(services => services.AddSftpServices(configure: Valid))
                 .Build();
 
             await host.StartAsync();

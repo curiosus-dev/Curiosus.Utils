@@ -12,6 +12,9 @@ namespace Curiosus.SFTP
     /// </remarks>
     public class SftpClientOptions
     {
+        /// <summary>Default configuration section of the options.</summary>
+        public const string SectionName = "Sftp";
+
         /// <summary>
         /// SSH server.
         /// </summary>
