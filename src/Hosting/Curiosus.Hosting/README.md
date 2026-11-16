@@ -92,7 +92,8 @@ Other helpers:
 
 - `CuriosusWatchdog` — base `BackgroundService` that runs `ProcessAsync` at a fixed rate on a `PeriodicTimer`, pauses
   after an exception and takes a `TimeProvider` for tests.
-- `AddTempDirCleaner(TempFileOptions)` — hosted service that deletes stale temp files.
+- `AddTempDirCleaner().BindConfiguration("TempFiles")` — hosted service that deletes stale temp files; shares
+  `TempFileOptions` with `AddTempFileServices` of Curiosus.Tools.
 
 ## See also
 

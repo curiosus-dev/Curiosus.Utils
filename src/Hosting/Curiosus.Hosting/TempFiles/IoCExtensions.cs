@@ -1,8 +1,7 @@
 using System;
-using Curiosus.Configuration;
 using Curiosus.Tools.TempFiles;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace Curiosus.Hosting.TempFiles
 {
@@ -12,19 +11,24 @@ namespace Curiosus.Hosting.TempFiles
     public static class IoCExtensions
     {
         /// <summary>
-        /// Adds temp directory cleaner as hosted service.
+        /// Adds temp directory cleaner as hosted service, with <see cref="TempFileOptions"/> validated at start.
         /// </summary>
-        public static IServiceCollection AddTempDirCleaner(this IServiceCollection services, TempFileOptions tempFileOptions)
+        /// <remarks>
+        /// Shares the <see cref="TempFileOptions"/> registration with
+        /// <see cref="Curiosus.Tools.TempFiles.IoCExtensions.AddTempFileServices"/>: call both and bind the options once.
+        /// </remarks>
+        /// <param name="services">Service collection.</param>
+        /// <param name="configure">Configures options in code; bind them from configuration with
+        /// <c>.BindConfiguration("TempFiles")</c> on the result.</param>
+        /// <returns>Options builder of <see cref="TempFileOptions"/>.</returns>
+        public static OptionsBuilder<TempFileOptions> AddTempDirCleaner(
+            this IServiceCollection services,
+            Action<TempFileOptions>? configure = null)
         {
-            if (services == null) throw new ArgumentNullException(nameof(services));
-            if (tempFileOptions == null) throw new ArgumentNullException(nameof(tempFileOptions));
-
-            tempFileOptions.AssertValid();
-
-            services.TryAddSingleton(tempFileOptions);
+            var builder = services.AddTempFileOptions(configure);
             services.AddHostedService<TempDirCleaner>();
 
-            return services;
+            return builder;
         }
     }
 }

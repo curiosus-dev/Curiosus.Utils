@@ -9,6 +9,25 @@
   `using var scope = measurer.Measure("Import");` logs `{MeasurerName} -> {MeasurerSpentTime} ms` to the `performance`
   logger, as before, with the elapsed time as whole milliseconds; `scope.ReplaceName(...)` renames it inside the block
   and a second `Dispose` no longer logs again. ([#52](https://github.com/curiosus-dev/Curiosus.Utils/issues/52))
+- `AddTempFileOptions()` registers `TempFileOptions` alone, validated on start; `AddTempFileServices` and
+  `AddTempDirCleaner` of `Curiosus.Hosting` share it. ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+
+### Changed
+
+- **Breaking:** `TempFileOptions`, `HttpRequestParamsCalculatorOptions` and `CultureOptions` are options of
+  `Microsoft.Extensions.Options` validated with data annotations: they no longer implement `IValidatableOptions` and
+  `ILoggableOptions`. `AddTempFileServices` and `AddHttpRequestTimesCalculator` take an optional `Action<TOptions>`
+  instead of an options instance and return `OptionsBuilder<TOptions>`, validated when the host starts;
+  `TempFileStreamFactory`, `TempFilesInitService` and `HttpRequestParamsCalculator` take `IOptions<TOptions>`.
+  Migrate with `services.AddTempFileServices().BindConfiguration("TempFiles")`, see the
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools/3.0#options). ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+- `AddTempFileServices` registers the temp directory initializer once, however many times it is called.
+  ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+
+### Fixed
+
+- `HttpRequestParamsCalculatorOptions.DataRateMBps` and `TimeoutMultiplier` must be greater than 0: 0 passed the old
+  validation, and a `DataRateMBps` of 0 made `CalculateTimeout` divide by zero. ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
 
 ### Removed
 

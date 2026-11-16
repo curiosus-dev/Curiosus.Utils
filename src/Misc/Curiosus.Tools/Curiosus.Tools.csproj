@@ -32,10 +32,12 @@
     <ItemGroup>
       <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+      <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
       <PackageReference Include="NodaTime" />
     </ItemGroup>
 
     <ItemGroup>
+      <!-- Unused here since #44; kept until the packages built on Curiosus.Tools reference it themselves. -->
       <ProjectReference Include="..\..\Configuration\Curiosus.Configuration\Curiosus.Configuration.csproj" />
     </ItemGroup>
 

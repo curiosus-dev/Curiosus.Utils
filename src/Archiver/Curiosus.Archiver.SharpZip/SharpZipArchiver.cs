@@ -8,6 +8,7 @@ using ICSharpCode.SharpZipLib.Zip;
 using ICSharpCode.SharpZipLib.Zip.Compression;
 using Curiosus.Tools;
 using Curiosus.Tools.TempFiles;
+using Microsoft.Extensions.Options;
 
 namespace Curiosus.Archiver.SharpZip
 {
@@ -40,10 +41,13 @@ namespace Curiosus.Archiver.SharpZip
         /// <inheritdoc cref="SharpZipArchiver"/>
         public SharpZipArchiver(
             ITempFileStreamFactory tempFileStreamFactory,
-            TempFileOptions tempFileOptions)
+            IOptions<TempFileOptions> tempFileOptions)
         {
+            ArgumentNullException.ThrowIfNull(tempFileStreamFactory);
+            ArgumentNullException.ThrowIfNull(tempFileOptions);
+
             _tempFileStreamFactory = tempFileStreamFactory;
-            _tempFileOptions = tempFileOptions;
+            _tempFileOptions = tempFileOptions.Value;
             _arrayPool = ArrayPool<byte>.Create();
         }
 

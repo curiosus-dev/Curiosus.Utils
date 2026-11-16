@@ -2,9 +2,9 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Curiosus.Configuration;
 using Curiosus.Tools.AppInitializer;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Curiosus.Tools.TempFiles
 {
@@ -19,13 +19,14 @@ namespace Curiosus.Tools.TempFiles
         private readonly TempFileOptions _tempFileOptions;
         private readonly ILogger _logger;
 
+        /// <inheritdoc cref="TempFilesInitService"/>
         public TempFilesInitService(
-            TempFileOptions tempFileOptions, 
+            IOptions<TempFileOptions> tempFileOptions,
             ILogger<TempFilesInitService> logger)
         {
-            _tempFileOptions = tempFileOptions ?? throw new ArgumentNullException(nameof(tempFileOptions));
-            tempFileOptions.AssertValid();
-            
+            ArgumentNullException.ThrowIfNull(tempFileOptions);
+            _tempFileOptions = tempFileOptions.Value;
+
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 

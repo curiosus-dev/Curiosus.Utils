@@ -3,7 +3,6 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Threading;
-using Curiosus.Configuration;
 
 namespace Curiosus.Tools
 {
@@ -15,14 +14,14 @@ namespace Curiosus.Tools
         /// <summary>
         /// Sets a default culture for application.
         /// </summary>
-        /// <param name="options"></param>
-        /// <exception cref="ArgumentNullException"></exception>
+        /// <param name="options">Culture options.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="options"/> or its culture is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">The culture is empty or whitespace.</exception>
+        /// <exception cref="CultureNotFoundException">The culture is not supported.</exception>
         public static void SetDefaultCulture(CultureOptions options)
         {
-            if (options == null) 
-                throw new ArgumentNullException(nameof(options));
-
-            options.AssertValid();
+            ArgumentNullException.ThrowIfNull(options);
+            ArgumentException.ThrowIfNullOrWhiteSpace(options.DefaultCulture, nameof(options.DefaultCulture));
 
             var culture = new CultureInfo(options.DefaultCulture);
             

@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- **Breaking:** `AddSharpZipArchiver` takes an optional `Action<TempFileOptions>` instead of a `TempFileOptions`
+  instance and returns `OptionsBuilder<TempFileOptions>`, validated when the host starts; `SharpZipArchiver` takes
+  `IOptions<TempFileOptions>`. Migrate with `services.AddSharpZipArchiver().BindConfiguration("TempFiles")`, see the
+  [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-archiver-sharpzip/3.0#options). ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+
 ## [2.0.0] - 2026-09-27
 
 ### Changed

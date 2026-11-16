@@ -1,39 +1,28 @@
-using System;
-using System.Collections.Generic;
-using Curiosus.Configuration;
+using System.ComponentModel.DataAnnotations;
 
 namespace Curiosus.Tools.TempFiles
 {
     /// <summary>
     /// Options for working with temporary files.
     /// </summary>
-    public class TempFileOptions : ILoggableOptions, IValidatableOptions
+    public class TempFileOptions
     {
         /// <summary>
         /// Full path to temp directory.
         /// </summary>
+        [Required]
         public string TempPath { get; set; } = "./.tmp";
-        
+
         /// <summary>
-        /// How often the temp directory will be cleaning
+        /// How often the temp directory will be cleaning. At least 1.
         /// </summary>
+        [Range(1, int.MaxValue)]
         public int CleaningFrequencyHours { get; set; } = 24;
-        
+
         /// <summary>
-        /// Files lifetime in hours
+        /// Files lifetime in hours. At least 1.
         /// </summary>
+        [Range(1, int.MaxValue)]
         public int FileTtlHours { get; set; } = 24;
-
-        /// <inheritdoc />
-        public virtual IReadOnlyCollection<ConfigurationValidationError> Validate(string? prefix = null)
-        {
-            var errors = new ConfigurationValidationErrorCollection();
-
-            errors.AddErrorIf(String.IsNullOrWhiteSpace(TempPath), nameof(TempPath), "can not be empty");
-            errors.AddErrorIf(CleaningFrequencyHours < 1, nameof(CleaningFrequencyHours), "Can't be less than 1");
-            errors.AddErrorIf(FileTtlHours < 1, nameof(FileTtlHours), "Can't be less than 1");
-            
-            return errors;
-        }
     }
 }
