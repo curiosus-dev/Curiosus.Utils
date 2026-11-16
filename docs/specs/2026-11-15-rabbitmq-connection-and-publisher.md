@@ -45,7 +45,8 @@ Out of scope (non-goals):
 
 Functional:
 
-1. `services.AddCuriosusRabbitMQ("RabbitMQ")` binds `RabbitMQOptions` with `AddCuriosusOptions`, validates them when
+1. `services.AddCuriosusRabbitMQ()` binds `RabbitMQOptions` from `RabbitMQOptions.SectionName` (`"RabbitMQ"`) or another
+   section with `AddCuriosusOptions`, applies an optional `configure` action after binding, validates them when
    the host starts and registers the connection provider, the default serializer, the publisher and
    `RabbitMqRpcClientFactory` (which `AddRabbitMQRPC` registered) as singletons, plus `TimeProvider.System`.
    Registrations use `TryAdd`, so an app can register its own `IRabbitMQMessageSerializer` before or after the call.
@@ -141,6 +142,8 @@ Scenario: one connection
 ```csharp
 public class RabbitMQOptions
 {
+    public const string SectionName = "RabbitMQ";             // default configuration section
+
     [Required]
     public Uri ConnectionUri { get; set; } = null!;          // amqp:// or amqps://user:pass@host:port/vhost
 
@@ -156,7 +159,9 @@ public class RabbitMQOptions
 // RabbitMQ.Client can parse (it throws later with the password in the message otherwise), one path segment at most
 // (the virtual host; RabbitMQ.Client throws on more), PublishTimeout > 0. Error messages never contain the URI.
 
-public static IServiceCollection AddCuriosusRabbitMQ(this IServiceCollection services, string configSectionPath = "RabbitMQ");
+// binds the section, then applies configure; a missing section binds nothing (defaults + configure)
+public static IServiceCollection AddCuriosusRabbitMQ(this IServiceCollection services,
+    string configSectionPath = RabbitMQOptions.SectionName, Action<RabbitMQOptions>? configure = null);
 
 public interface IRabbitConnectionProvider
 {

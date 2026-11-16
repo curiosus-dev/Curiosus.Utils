@@ -13,6 +13,11 @@ namespace Curiosus.RabbitMQ;
 public class RabbitMQOptions
 {
     /// <summary>
+    /// Default configuration section of the options.
+    /// </summary>
+    public const string SectionName = "RabbitMQ";
+
+    /// <summary>
     /// URI of the broker: <c>amqp://user:password@host:5672/vhost</c>, or <c>amqps://</c> for TLS (port 5671 by
     /// default). Escape reserved characters of the user name, the password and the virtual host (<c>%2F</c> for the
     /// default <c>/</c> virtual host is optional: an empty path selects it).

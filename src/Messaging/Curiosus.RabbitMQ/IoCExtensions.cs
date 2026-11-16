@@ -22,15 +22,21 @@ public static class IoCExtensions
     /// this call to replace the default one. The connection is opened on first use, not when the host starts.
     /// </remarks>
     /// <param name="services">Service collection.</param>
-    /// <param name="configSectionPath">Path of the configuration section, <c>RabbitMQ</c> by default.</param>
+    /// <param name="configSectionPath">
+    /// Path of the configuration section, <see cref="RabbitMQOptions.SectionName"/> by default. A missing section binds
+    /// nothing: the defaults and <paramref name="configure"/> apply.
+    /// </param>
+    /// <param name="configure">Configures the options in code, after they are bound from the section.</param>
     public static IServiceCollection AddCuriosusRabbitMQ(
         this IServiceCollection services,
-        string configSectionPath = "RabbitMQ")
+        string configSectionPath = RabbitMQOptions.SectionName,
+        Action<RabbitMQOptions>? configure = null)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentException.ThrowIfNullOrWhiteSpace(configSectionPath);
 
-        services.AddCuriosusOptions<RabbitMQOptions>(configSectionPath);
+        var optionsBuilder = services.AddCuriosusOptions<RabbitMQOptions>(configSectionPath);
+        if (configure != null) optionsBuilder.Configure(configure);
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<RabbitMQOptions>, RabbitMQOptionsValidator>());
 
         services.TryAddSingleton(TimeProvider.System);

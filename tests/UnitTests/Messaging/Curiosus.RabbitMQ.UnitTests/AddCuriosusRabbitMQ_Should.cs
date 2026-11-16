@@ -50,6 +50,56 @@ public class AddCuriosusRabbitMQ_Should
     }
 
     [Fact]
+    public void BindDefaultSection()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["RabbitMQ:ConnectionUri"] = "amqp://rabbit.local/",
+                ["RabbitMQ:PublisherChannelCount"] = "2"
+            })
+            .Build();
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(configuration);
+
+        services.AddCuriosusRabbitMQ();
+
+        using var provider = services.BuildServiceProvider();
+        var options = provider.GetRequiredService<IOptions<RabbitMQOptions>>().Value;
+        RabbitMQOptions.SectionName.Should().Be("RabbitMQ");
+        options.ConnectionUri.Should().Be(new Uri("amqp://rabbit.local/"));
+        options.PublisherChannelCount.Should().Be(2);
+    }
+
+    [Fact]
+    public void BindCustomSection_ThenApplyConfigure()
+    {
+        using var provider = BuildServices(s => s.AddCuriosusRabbitMQ("Messaging", o =>
+        {
+            o.ClientName = "configured-in-code";
+            o.PublishTimeout = TimeSpan.FromSeconds(5);
+        }));
+
+        var options = provider.GetRequiredService<IOptions<RabbitMQOptions>>().Value;
+
+        options.ConnectionUri.Should().Be(new Uri("amqp://app:pass@rabbit.local/"), "bound from the section");
+        options.ClientName.Should().Be("configured-in-code", "configure runs after binding");
+        options.PublishTimeout.Should().Be(TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public void ConfigureInCode_WithoutSection()
+    {
+        using var provider = BuildServices(s => s.AddCuriosusRabbitMQ(
+            configure: o => o.ConnectionUri = new Uri("amqp://code.local/")));
+
+        var options = provider.GetRequiredService<IOptions<RabbitMQOptions>>().Value;
+
+        options.ConnectionUri.Should().Be(new Uri("amqp://code.local/"));
+        options.ClientName.Should().Be(Environment.MachineName);
+    }
+
+    [Fact]
     public void RegisterValidatorOnce()
     {
         var services = new ServiceCollection();

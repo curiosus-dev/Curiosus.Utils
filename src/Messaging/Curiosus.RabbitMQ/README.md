@@ -23,7 +23,10 @@ RabbitMQ:
 ```
 
 ```csharp
-builder.Services.AddCuriosusRabbitMQ(); // section "RabbitMQ"
+builder.Services.AddCuriosusRabbitMQ(); // section "RabbitMQ" (RabbitMQOptions.SectionName)
+
+// or another section, with options set in code after binding
+builder.Services.AddCuriosusRabbitMQ("Messaging:Rabbit", options => options.PublishTimeout = TimeSpan.FromSeconds(5));
 ```
 
 `AddCuriosusRabbitMQ` binds `RabbitMQOptions` and validates them when the host starts: the app doesn't start with a
