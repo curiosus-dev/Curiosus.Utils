@@ -9,12 +9,13 @@
 
 ### Changed
 
-- **Breaking:** `SmscOptions` moved to `Microsoft.Extensions.Options`: `AddSmscSmsSender(Action<SmscOptions>?, bool)`
-  returns `OptionsBuilder<SmscOptions>` and validates the options when the host starts (`SmscLogin` and `SmscPassword`
-  are required, now also not whitespace); `AddSmscSmsSender(SmscOptions, bool)` is removed, the `SmscSender`
-  constructor takes `IOptions<SmscOptions>`, and `SmscOptions` no longer implements
-  `IValidatableOptions`/`ILoggableOptions`. Register with `services.AddSmscSmsSender().BindConfiguration("Smsc")`, see
-  the [migration guide](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-sms-smsc/4.0#options)
+- **Breaking:** `SmscOptions` moved to `Microsoft.Extensions.Options`:
+  `AddSmscSmsSender(string configSectionPath = "Smsc", Action<SmscOptions>? configure = null, bool useAsDefaultSender = true)`
+  binds the section (`SmscOptions.SectionName`), applies `configure`, validates the options when the host starts
+  (`SmscLogin` and `SmscPassword` are required, now also not whitespace) and returns `OptionsBuilder<SmscOptions>`;
+  `AddSmscSmsSender(SmscOptions, bool)` is removed, the `SmscSender` constructor takes `IOptions<SmscOptions>`, and
+  `SmscOptions` no longer implements `IValidatableOptions`/`ILoggableOptions`. Register with
+  `services.AddSmscSmsSender()` (or pass the section of your configuration), see the [migration guide](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-sms-smsc/4.0#options)
   ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44)).
 
 ## [3.0.0] - 2026-10-03

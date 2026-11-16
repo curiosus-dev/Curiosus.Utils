@@ -6,11 +6,14 @@ namespace Curiosus.SMS.Smsc
     /// Options for <see cref="Curiosus.SMS.Smsc.SmscSender"/>.
     /// </summary>
     /// <remarks>
-    /// Register them with <see cref="IoCExtensions.AddSmscSmsSender"/> and bind from configuration with
-    /// <c>.BindConfiguration("Smsc")</c>; they are validated when the host starts.
+    /// <see cref="IoCExtensions.AddSmscSmsSender"/> binds them from the configuration section <see cref="SectionName"/>
+    /// and validates them when the host starts.
     /// </remarks>
     public class SmscOptions
     {
+        /// <summary>Default configuration section of the options.</summary>
+        public const string SectionName = "Smsc";
+
         /// <summary>
         /// Login for Smsc. Required.
         /// </summary>

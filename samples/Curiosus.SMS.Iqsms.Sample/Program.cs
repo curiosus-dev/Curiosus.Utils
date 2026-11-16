@@ -22,8 +22,8 @@ rootCommand.SetAction(async (parseResult, cancellationToken) =>
     var builder = CuriosusHost.CreateBuilder(args).AddCuriosusDefaults();
     builder.AddCuriosusNLog();
 
-    // IqsmsOptions are validated when the host starts: an empty login or password stops the app
-    builder.Services.AddIqsmsSender().BindConfiguration("Iqsms");
+    // binds the "Iqsms" section and validates it when the host starts: an empty login or password stops the app
+    builder.Services.AddIqsmsSender();
 
     var phoneNumber = parseResult.GetValue(phoneOption)!;
 

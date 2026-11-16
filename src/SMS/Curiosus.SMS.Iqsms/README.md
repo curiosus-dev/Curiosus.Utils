@@ -15,7 +15,7 @@ dotnet add package Curiosus.SMS.Iqsms
 
 `IqsmsOptions` requires `Login` and `Password`; `Sender` (sender name) is optional. They are validated when the host
 starts: a missing login or password stops the app with an `OptionsValidationException`.
-For example, bound from configuration:
+`AddIqsmsSender` binds them from the `Iqsms` section (`IqsmsOptions.SectionName`):
 
 ```yaml
 Iqsms:
@@ -27,14 +27,10 @@ Iqsms:
 
 ```csharp
 // registers IIqsmsSender and, by default, ISmsSender
-services.AddIqsmsSender().BindConfiguration("Iqsms");
+services.AddIqsmsSender();
 
-// or in code
-services.AddIqsmsSender(options =>
-{
-    options.Login = "my-login";
-    options.Password = "my-password";
-});
+// another section, and values set in code (they override the section)
+services.AddIqsmsSender("Sms:Iqsms", options => options.Sender = "MyCompany");
 ```
 
 ```csharp

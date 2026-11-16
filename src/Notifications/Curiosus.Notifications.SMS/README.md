@@ -16,8 +16,8 @@ dotnet add package Curiosus.Notifications.SMS
 Register an SMS sender, the channel and a builder that turns your metadata into SMS:
 
 ```csharp
-services.AddSmscSmsSender().BindConfiguration("Smsc");  // any ISmsSender implementation
-services.AddCuriosusSmsChannel();                        // also registers INotificator
+services.AddSmscSmsSender();         // any ISmsSender implementation, here bound from the "Smsc" section
+services.AddCuriosusSmsChannel();    // also registers INotificator
 services.AddCuriosusNotificationBuilder<LoginCodeSmsBuilder>();
 ```
 

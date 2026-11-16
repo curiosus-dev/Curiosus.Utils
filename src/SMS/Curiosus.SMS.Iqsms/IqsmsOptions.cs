@@ -6,11 +6,14 @@ namespace Curiosus.SMS.Iqsms;
 /// Options for <see cref="Curiosus.SMS.Iqsms.IqsmsSender"/>.
 /// </summary>
 /// <remarks>
-/// Register them with <see cref="IoCExtensions.AddIqsmsSender"/> and bind from configuration with
-/// <c>.BindConfiguration("Iqsms")</c>; they are validated when the host starts.
+/// <see cref="IoCExtensions.AddIqsmsSender"/> binds them from the configuration section <see cref="SectionName"/>
+/// and validates them when the host starts.
 /// </remarks>
 public class IqsmsOptions
 {
+    /// <summary>Default configuration section of the options.</summary>
+    public const string SectionName = "Iqsms";
+
     /// <summary>
     /// Login for iqsms. Required.
     /// </summary>

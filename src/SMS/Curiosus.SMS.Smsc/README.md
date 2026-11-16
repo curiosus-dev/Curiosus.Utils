@@ -15,7 +15,7 @@ dotnet add package Curiosus.SMS.Smsc
 
 `SmscOptions` requires `SmscLogin` and `SmscPassword`; `SmscSender` (sender name) is optional. They are validated
 when the host starts: a missing login or password stops the app with an `OptionsValidationException`.
-For example, bound from configuration:
+`AddSmscSmsSender` binds them from the `Smsc` section (`SmscOptions.SectionName`):
 
 ```yaml
 Smsc:
@@ -26,14 +26,10 @@ Smsc:
 
 ```csharp
 // registers ISmscSender and, by default, ISmsSender
-services.AddSmscSmsSender().BindConfiguration("Smsc");
+services.AddSmscSmsSender();
 
-// or in code
-services.AddSmscSmsSender(options =>
-{
-    options.SmscLogin = "my-login";
-    options.SmscPassword = "my-password";
-});
+// another section, and values set in code (they override the section)
+services.AddSmscSmsSender("Sms:Smsc", options => options.SmscSender = "MyCompany");
 ```
 
 ```csharp
