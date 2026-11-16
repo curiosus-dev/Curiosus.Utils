@@ -88,6 +88,20 @@ public class AddCuriosusRabbitMQ_Should
     }
 
     [Fact]
+    public void ReturnOptionsBuilder_ForMoreValidation_AlsoOnLaterCalls()
+    {
+        using var provider = BuildServices(s =>
+        {
+            s.AddCuriosusRabbitMQ("Messaging").Validate(o => o.PublisherChannelCount > 1, "first rule");
+            s.AddCuriosusRabbitMQ("Messaging").Validate(o => o.ClientName != "orders-api-1", "second rule");
+        });
+
+        var act = () => provider.GetRequiredService<IOptions<RabbitMQOptions>>().Value;
+
+        act.Should().Throw<OptionsValidationException>().Which.Failures.Should().BeEquivalentTo("second rule");
+    }
+
+    [Fact]
     public void ConfigureInCode_WithoutSection()
     {
         using var provider = BuildServices(s => s.AddCuriosusRabbitMQ(

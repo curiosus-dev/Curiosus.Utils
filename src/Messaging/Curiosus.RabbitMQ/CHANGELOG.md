@@ -20,7 +20,8 @@
 - **Breaking:** `RabbitMQOptions` are bound from configuration and validated when the host starts:
   `services.AddCuriosusRabbitMQ()` replaces `services.AddRabbitMQRPC(options)`: it binds the `RabbitMQ` section
   (`RabbitMQOptions.SectionName`, or the `configSectionPath` argument), then applies the optional `configure` action,
-  so options can also be set in code. `ConnectionUri`
+  so options can also be set in code, and returns `OptionsBuilder<RabbitMQOptions>` for more validation.
+  `ConnectionUri`
   (`amqp://user:password@host:5672/vhost` or `amqps://`) replaces `HostName`, `Port`, `UserName` and `Password`;
   `ExchangeName` became the `requestExchange` argument of `RabbitMqRpcClientFactory.CreateClientAsync`, whose
   constructor takes `IOptions<RabbitMQOptions>`. `ClientName` must match `^[A-Za-z0-9._-]{1,64}$` and is the machine

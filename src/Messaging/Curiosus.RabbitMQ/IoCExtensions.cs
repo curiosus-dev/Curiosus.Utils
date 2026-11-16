@@ -31,7 +31,10 @@ public static class IoCExtensions
     /// nothing: the defaults and <paramref name="configure"/> apply.
     /// </param>
     /// <param name="configure">Configures the options in code, after they are bound from the section.</param>
-    public static IServiceCollection AddCuriosusRabbitMQ(
+    /// <returns>
+    /// Options builder for more validation (<c>.Validate(...)</c>) or post-configuration of <see cref="RabbitMQOptions"/>.
+    /// </returns>
+    public static OptionsBuilder<RabbitMQOptions> AddCuriosusRabbitMQ(
         this IServiceCollection services,
         string configSectionPath = RabbitMQOptions.SectionName,
         Action<RabbitMQOptions>? configure = null)
@@ -42,8 +45,9 @@ public static class IoCExtensions
         // a second binding would apply the first section again, a second validation would report every error twice
         if (services.Any(d => d.ServiceType == typeof(RegistrationMarker)))
         {
-            if (configure != null) services.Configure(configure);
-            return services;
+            var laterBuilder = services.AddOptions<RabbitMQOptions>();
+            if (configure != null) laterBuilder.Configure(configure);
+            return laterBuilder;
         }
 
         services.AddSingleton<RegistrationMarker>();
@@ -57,7 +61,7 @@ public static class IoCExtensions
         services.TryAddSingleton<IRabbitPublisher, RabbitPublisher>();
         services.TryAddSingleton<RabbitMqRpcClientFactory>();
 
-        return services;
+        return optionsBuilder;
     }
 
     /// <summary>

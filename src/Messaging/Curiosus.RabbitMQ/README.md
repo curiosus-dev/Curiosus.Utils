@@ -27,6 +27,10 @@ builder.Services.AddCuriosusRabbitMQ(); // section "RabbitMQ" (RabbitMQOptions.S
 
 // or another section, with options set in code after binding
 builder.Services.AddCuriosusRabbitMQ("Messaging:Rabbit", options => options.PublishTimeout = TimeSpan.FromSeconds(5));
+
+// it returns the options builder: add your own rules
+builder.Services.AddCuriosusRabbitMQ()
+    .Validate(options => options.ConnectionUri.Scheme == "amqps", "Production connections use TLS");
 ```
 
 `AddCuriosusRabbitMQ` binds `RabbitMQOptions` and validates them when the host starts: the app doesn't start with a

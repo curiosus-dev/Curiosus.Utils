@@ -163,7 +163,7 @@ public class RabbitMQOptions
 // CancellationTokenSource limit). Error messages never contain the URI.
 
 // binds the section, then applies configure; a missing section binds nothing (defaults + configure)
-public static IServiceCollection AddCuriosusRabbitMQ(this IServiceCollection services,
+public static OptionsBuilder<RabbitMQOptions> AddCuriosusRabbitMQ(this IServiceCollection services,
     string configSectionPath = RabbitMQOptions.SectionName, Action<RabbitMQOptions>? configure = null);
 
 public interface IRabbitConnectionProvider
