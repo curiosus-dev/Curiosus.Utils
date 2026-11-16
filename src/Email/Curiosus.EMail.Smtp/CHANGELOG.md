@@ -16,9 +16,10 @@
   (`StartTls`, `SslOnConnect` or `None` for a local relay; `Auto` and `StartTlsWhenAvailable` fail validation) and
   `AllowInvalidServerCertificate` (accepts any certificate, meant for development relays; a warning is logged whenever it
   is set). See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-email-smtp/3.0). ([#86](https://github.com/curiosus-dev/Curiosus.Utils/issues/86))
-- **Breaking:** options use `Microsoft.Extensions.Options`. `AddSmtpEMailSender(Action<SmtpEMailOptions>? configure = null,
-  bool useAsDefaultSender = true)` returns `OptionsBuilder<SmtpEMailOptions>` and validates the options when the app
-  starts: bind them with `services.AddSmtpEMailSender().BindConfiguration("Smtp")` instead of passing an instance.
+- **Breaking:** options use `Microsoft.Extensions.Options`. `AddSmtpEMailSender(string configSectionPath = "Smtp",
+  Action<SmtpEMailOptions>? configure = null, bool useAsDefaultSender = true)` binds the options from the configuration
+  section (`SmtpEMailOptions.SectionName`), applies `configure`, validates them when the app starts and returns
+  `OptionsBuilder<SmtpEMailOptions>`: call `services.AddSmtpEMailSender()` instead of passing an instance.
   `SmtpEMailSender` takes `IOptions<SmtpEMailOptions>`. `ISmtpEMailOptions` is removed (use `SmtpEMailOptions`),
   `SmtpEMailOptions` no longer implements `IValidatableOptions`/`ILoggableOptions`, and `SmtpEMailOptionsValidator` is an
   `IValidateOptions<SmtpEMailOptions>` instead of a static class. The package no longer depends on

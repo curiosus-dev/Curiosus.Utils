@@ -34,8 +34,10 @@ UnisenderGo:
 using Curiosus.EMail;
 using Curiosus.Email.UnisenderGo;
 
-builder.Services.AddUnisenderGoEmailSender() // IUnisenderGoEmailSender and, by default, IEMailSender
-    .BindConfiguration("UnisenderGo");
+builder.Services.AddUnisenderGoEmailSender(); // binds "UnisenderGo"; IUnisenderGoEmailSender and, by default, IEMailSender
+
+// another section, and options changed in code after the binding
+builder.Services.AddUnisenderGoEmailSender("Mail:UnisenderGo", configure: o => o.TrackReads = false);
 
 // in a service that receives IEMailSender sender
 var response = await sender.SendAsync("user@example.com", "Welcome", "<p>Hello!</p>", isBodyHtml: true, ct);

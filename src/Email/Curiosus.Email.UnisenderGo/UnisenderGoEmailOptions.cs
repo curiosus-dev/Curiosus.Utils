@@ -11,6 +11,11 @@ namespace Curiosus.Email.UnisenderGo
     public class UnisenderGoEmailOptions
     {
         /// <summary>
+        /// Default configuration section of the options.
+        /// </summary>
+        public const string SectionName = "UnisenderGo";
+
+        /// <summary>
         /// API key.
         /// </summary>
         [Required]

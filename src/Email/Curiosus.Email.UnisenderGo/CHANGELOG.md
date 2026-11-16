@@ -4,9 +4,10 @@
 
 ### Changed
 
-- **Breaking:** options use `Microsoft.Extensions.Options`. `AddUnisenderGoEmailSender(Action<UnisenderGoEmailOptions>? configure = null,
-  bool useAsDefaultSender = true)` returns `OptionsBuilder<UnisenderGoEmailOptions>` and validates the options when the
-  app starts: bind them with `services.AddUnisenderGoEmailSender().BindConfiguration("UnisenderGo")` instead of passing
+- **Breaking:** options use `Microsoft.Extensions.Options`. `AddUnisenderGoEmailSender(string configSectionPath = "UnisenderGo",
+  Action<UnisenderGoEmailOptions>? configure = null, bool useAsDefaultSender = true)` binds the options from the
+  configuration section (`UnisenderGoEmailOptions.SectionName`), applies `configure`, validates them when the app starts
+  and returns `OptionsBuilder<UnisenderGoEmailOptions>`: call `services.AddUnisenderGoEmailSender()` instead of passing
   an instance. `UnisenderGoEmailSender` takes `IOptions<UnisenderGoEmailOptions>`. `UnisenderGoEmailOptions` no longer
   implements `IValidatableOptions`/`ILoggableOptions` (its rules are data annotations), and the package no longer
   depends on `Curiosus.Configuration`. See the

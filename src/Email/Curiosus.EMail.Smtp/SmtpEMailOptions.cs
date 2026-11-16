@@ -12,6 +12,11 @@ namespace Curiosus.EMail.Smtp
     public class SmtpEMailOptions
     {
         /// <summary>
+        /// Default configuration section of the options.
+        /// </summary>
+        public const string SectionName = "Smtp";
+
+        /// <summary>
         /// SMTP server host.
         /// </summary>
         [Required]
