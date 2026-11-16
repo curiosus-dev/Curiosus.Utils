@@ -55,6 +55,10 @@ public sealed class PostgresDbClockTests : IAsyncLifetime
     [Fact]
     public async Task SyncService_OverPostgres_SmallOffset()
     {
+        // the first query of a cold pool also opens the connection, which can take longer than MaxAcceptedRtt on CI
+        // and get the sample rejected; this test is about the offset of a normal round trip
+        await new PostgresDbClock(_dataSource).GetUtcNowAsync(CancellationToken.None);
+
         var timeProvider = new DbSyncTimeProvider();
         var service = new DbTimeSyncService(
             timeProvider,
