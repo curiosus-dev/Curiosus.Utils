@@ -7,11 +7,14 @@ namespace Curiosus.Tools.Web.Controllers
     /// <summary>
     /// External hosts that <see cref="MVCBaseController.RedirectInternal"/> may redirect to, for example the public domain
     /// of the site or the address of its front-end. Register with
-    /// <c>services.Configure&lt;RedirectAllowListOptions&gt;(o =&gt; o.AllowedHosts.Add("app.example.com"))</c> or bind a
-    /// section.
+    /// <see cref="RedirectAllowListServiceCollectionExtensions.AddRedirectAllowList"/> (section
+    /// <see cref="SectionName"/>) or <c>services.Configure&lt;RedirectAllowListOptions&gt;(...)</c>.
     /// </summary>
     public class RedirectAllowListOptions
     {
+        /// <summary>Default configuration section of the options.</summary>
+        public const string SectionName = "Redirects";
+
         /// <summary>
         /// Host names (<c>app.example.com</c>), compared case-insensitively and exactly: subdomains are not included.
         /// Only <c>http</c> and <c>https</c> URLs to these hosts are allowed.

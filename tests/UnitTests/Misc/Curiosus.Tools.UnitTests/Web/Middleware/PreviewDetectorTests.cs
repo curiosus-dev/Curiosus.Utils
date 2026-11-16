@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Curiosus.Tools.Web.Middleware;
 using FluentAssertions;
@@ -18,6 +19,16 @@ namespace Curiosus.Tools.UnitTests.Web.Middleware;
 public sealed class PreviewDetectorTests
 {
     private const string PreviewBot = "WhatsApp/2.19.333 A";
+
+    private static ServiceCollection Services(params (string Key, string Value)[] values)
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(values.Select(v => new KeyValuePair<string, string?>(v.Key, v.Value)))
+            .Build();
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(configuration);
+        return services;
+    }
 
     private static async Task<PathString> SendAsync(Action<IApplicationBuilder> use, IServiceProvider services, string userAgent)
     {
@@ -43,8 +54,8 @@ public sealed class PreviewDetectorTests
     [InlineData("Mozilla/5.0", "/articles/5")]
     public async Task UsePreviewDetector_RewritesThePathOfPreviewRequests(string userAgent, string expectedPath)
     {
-        var services = new ServiceCollection();
-        services.AddPreviewDetector(o => o.RedirectPath = "/preview");
+        var services = Services();
+        services.AddPreviewDetector(configure: o => o.RedirectPath = "/preview");
         using var provider = services.BuildServiceProvider();
 
         var path = await SendAsync(app => app.UsePreviewDetector(), provider, userAgent);
@@ -73,19 +84,39 @@ public sealed class PreviewDetectorTests
     }
 
     [Fact]
-    public void AddPreviewDetector_BindsConfiguration()
+    public void AddPreviewDetector_BindsTheDefaultSection()
     {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["PreviewDetect:RedirectPath"] = "/preview" })
-            .Build();
-        var services = new ServiceCollection();
-        services.AddSingleton<IConfiguration>(configuration);
+        var services = Services(("PreviewDetect:RedirectPath", "/preview"));
 
-        services.AddPreviewDetector().BindConfiguration("PreviewDetect");
+        services.AddPreviewDetector();
         using var provider = services.BuildServiceProvider();
 
         provider.GetRequiredService<IOptions<PreviewDetectOptions>>().Value.RedirectPath
             .Should().Be(new PathString("/preview"));
+    }
+
+    [Fact]
+    public void AddPreviewDetector_BindsACustomSection()
+    {
+        var services = Services(("Web:Preview:RedirectPath", "/preview"));
+
+        services.AddPreviewDetector("Web:Preview");
+        using var provider = services.BuildServiceProvider();
+
+        provider.GetRequiredService<IOptions<PreviewDetectOptions>>().Value.RedirectPath
+            .Should().Be(new PathString("/preview"));
+    }
+
+    [Fact]
+    public void AddPreviewDetector_ConfigureOverridesTheSection()
+    {
+        var services = Services(("PreviewDetect:RedirectPath", "/preview"));
+
+        services.AddPreviewDetector(configure: o => o.RedirectPath = "/bots");
+        using var provider = services.BuildServiceProvider();
+
+        provider.GetRequiredService<IOptions<PreviewDetectOptions>>().Value.RedirectPath
+            .Should().Be(new PathString("/bots"));
     }
 
     [Fact]

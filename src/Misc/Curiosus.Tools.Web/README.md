@@ -20,8 +20,8 @@ using Curiosus.Tools.Web.ModelBinders;
 using Curiosus.Tools.Web.ReverseProxy;
 
 // services
-services.AddReverseProxy().BindConfiguration("ReverseProxy");   // PathBase, ProxyIps; validated on start
-services.AddMimeTypeMapping();                                  // MimeMappingService
+services.AddReverseProxy();                             // section ReverseProxy: PathBase, ProxyIps; validated on start
+services.AddMimeTypeMapping();                          // MimeMappingService
 services.AddMvc(options => options.ModelBinderProviders.Insert(0, new TrimStringModelBinderProvider()));
 
 // pipeline
@@ -32,6 +32,12 @@ app.UseRequestLogging();                                // dumps request bodies,
 app.UseRouting();
 ```
 
+```json
+{
+  "ReverseProxy": { "PathBase": "/api", "ProxyIps": [ "10.0.0.1" ] }
+}
+```
+
 `UseRequestLogging` resolves a non-generic `ILogger` from DI (registered by
 [Curiosus.Hosting.Web](https://www.nuget.org/packages/Curiosus.Hosting.Web)).
 
@@ -40,11 +46,14 @@ What else is inside:
 - **Model binding** — `TrimStringModelBinderProvider`, `InvariantDecimalModelBinderProvider`,
   `DateTimeModelBinderProvider`, `DelimitedArrayModelBinder`, `TrimStringSystemJsonConverter` for `[FromBody]` strings.
 - **Middleware** — `UseUserTracer` (trace id cookie, needs `UniqueIdGenerator.Initialize`),
-  `UseLocalizationSetter` (language cookie), `AddPreviewDetector()` + `UsePreviewDetector()` (rewrites the path
-  for link-preview bots to `RedirectPath`; or `UsePreviewDetector("/preview")` without registration).
-- **Options-driven services** — `AddCuriosusDataProtection()` (section `DataProtection`)
-  (`ApplicationName`, `KeyRingPath`, `DisableAutomaticKeyGeneration`; protection is always on),
-  `AddReCaptcha().BindConfiguration("ReCaptcha")` + `ReCaptchaService`, `AddSiteMap(mvcBuilder)` + `SiteMapBuilder`,
+  `UseLocalizationSetter` (language cookie), `AddPreviewDetector()` (section `PreviewDetect`) +
+  `UsePreviewDetector()` (rewrites the path for link-preview bots to `RedirectPath`; or
+  `UsePreviewDetector("/preview")` without registration).
+- **Options-driven services** — each `AddXxx(configSectionPath, configure)` binds its section (the default below, or
+  the path you pass), applies `configure` after it and validates on start: `AddCuriosusDataProtection()` (section
+  `DataProtection`: `ApplicationName`, `KeyRingPath`, `DisableAutomaticKeyGeneration`; protection is always on),
+  `AddReCaptcha()` (section `ReCaptcha`) + `ReCaptchaService`, `AddRedirectAllowList()` (section `Redirects`:
+  `AllowedHosts` for `MVCBaseController.RedirectInternal`), `AddSiteMap(mvcBuilder)` + `SiteMapBuilder`,
   `ConfigureCookiesForOldBrowsers()` (SameSite fixes).
 - **MVC** — `MVCBaseController` (error views, AJAX responses, redirects), `SiteError`,
   `ModelStateExtensions.AddModelErrorIf`, `Page<T>`/`Paginator`, `InvariantDecimalTagHelper`.

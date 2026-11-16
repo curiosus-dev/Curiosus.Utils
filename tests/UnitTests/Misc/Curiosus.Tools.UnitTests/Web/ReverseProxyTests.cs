@@ -1,6 +1,7 @@
 #nullable enable
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -18,11 +20,21 @@ namespace Curiosus.Tools.UnitTests.Web;
 
 public sealed class ReverseProxyTests
 {
-    [Fact]
-    public void AddReverseProxy_ConfiguresForwardedHeaders_Once()
+    private static ServiceCollection Services(params (string Key, string Value)[] values)
     {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(values.Select(v => new KeyValuePair<string, string?>(v.Key, v.Value)))
+            .Build();
         var services = new ServiceCollection();
-        services.AddReverseProxy(o => o.ProxyIps = ["10.0.0.1", " "]);
+        services.AddSingleton<IConfiguration>(configuration);
+        return services;
+    }
+
+    [Fact]
+    public void AddReverseProxy_ConfiguresForwardedHeadersFromTheDefaultSection_Once()
+    {
+        var services = Services(("ReverseProxy:ProxyIps:0", "10.0.0.1"), ("ReverseProxy:ProxyIps:1", " "));
+        services.AddReverseProxy();
         services.AddReverseProxy();
         using var provider = services.BuildServiceProvider();
 
@@ -33,15 +45,24 @@ public sealed class ReverseProxyTests
     }
 
     [Fact]
+    public void AddReverseProxy_BindsACustomSection_ThenConfigureOverrides()
+    {
+        var services = Services(("Web:Proxy:PathBase", "/api"), ("Web:Proxy:ProxyIps:0", "10.0.0.1"));
+        services.AddReverseProxy("Web:Proxy", o => o.PathBase = "/app");
+        using var provider = services.BuildServiceProvider();
+
+        var options = provider.GetRequiredService<IOptions<ReverseProxyOptions>>().Value;
+
+        options.PathBase.Should().Be("/app");
+        options.ProxyIps.Should().Equal("10.0.0.1");
+    }
+
+    [Fact]
     public async Task UseReverseProxy_AppliesForwardedHeadersAndPathBase()
     {
-        var services = new ServiceCollection();
+        var services = Services(("ReverseProxy:PathBase", "/api"), ("ReverseProxy:ProxyIps:0", "10.0.0.1"));
         services.AddLogging();
-        services.AddReverseProxy(o =>
-        {
-            o.PathBase = "/api";
-            o.ProxyIps = ["10.0.0.1"];
-        });
+        services.AddReverseProxy();
         using var provider = services.BuildServiceProvider();
 
         var app = new ApplicationBuilder(provider);
@@ -84,11 +105,12 @@ public sealed class ReverseProxyTests
     public async Task InvalidOptions_FailTheStart(string? pathBase, string? proxyIp, string failedOption)
     {
         var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { DisableDefaults = true });
-        builder.Services.AddReverseProxy(o =>
+        builder.Services.AddReverseProxy(configure: o =>
         {
             o.PathBase = pathBase;
             if (proxyIp != null) o.ProxyIps = ["10.0.0.1", proxyIp];
         });
+        builder.Services.AddReverseProxy();   // a second call doesn't report the errors twice
         using var host = builder.Build();
 
         var act = () => host.StartAsync();

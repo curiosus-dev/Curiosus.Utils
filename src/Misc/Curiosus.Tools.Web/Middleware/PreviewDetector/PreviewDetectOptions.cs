@@ -9,6 +9,9 @@ namespace Curiosus.Tools.Web.Middleware
     /// </summary>
     public class PreviewDetectOptions
     {
+        /// <summary>Default configuration section of the options.</summary>
+        public const string SectionName = "PreviewDetect";
+
         /// <summary>
         /// The path to redirect to if a Preview request is detected, for example <c>/preview</c>. Required.
         /// </summary>

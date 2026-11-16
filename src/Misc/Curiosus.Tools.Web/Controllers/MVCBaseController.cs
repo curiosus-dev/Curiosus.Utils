@@ -28,7 +28,7 @@ namespace Curiosus.Tools.Web.Controllers
         /// <remarks>
         /// <c>https://evil.example</c>, <c>//evil.example</c>, <c>/\evil.example</c> or <c>javascript:</c> go to Home/Index:
         /// a redirect to them after a login would be an open redirect. Allow the public domains and the front-end address
-        /// with <c>services.Configure&lt;RedirectAllowListOptions&gt;(...)</c>.
+        /// with <c>services.AddRedirectAllowList()</c> (section <c>Redirects</c>).
         /// </remarks>
         protected ActionResult RedirectInternal(string? returnUrl = null)
         {

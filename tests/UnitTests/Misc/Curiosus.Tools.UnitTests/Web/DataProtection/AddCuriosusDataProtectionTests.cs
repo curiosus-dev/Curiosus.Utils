@@ -113,11 +113,32 @@ public sealed class AddCuriosusDataProtectionTests : IDisposable
         if (disableGeneration) values.Add(("DisableAutomaticKeyGeneration", "true"));
         builder.Configuration.AddConfiguration(Configuration(values.ToArray()));
         builder.Services.AddCuriosusDataProtection();
+        builder.Services.AddCuriosusDataProtection();   // a second call doesn't report the error twice
 
         using var host = builder.Build();
         var act = () => host.StartAsync();
 
-        await act.Should().ThrowAsync<OptionsValidationException>();
+        (await act.Should().ThrowAsync<OptionsValidationException>()).Which.Failures.Should().ContainSingle();
+    }
+
+    [Fact]
+    public void BindsACustomSection_ThenConfigureOverrides()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Web:Keys:ApplicationName"] = "app",
+                ["Web:Keys:KeyRingPath"] = "/does-not-matter",
+            })
+            .Build();
+        var services = Services(configuration);
+
+        services.AddCuriosusDataProtection("Web:Keys", o => o.KeyRingPath = _keyRing);
+        using var provider = services.BuildServiceProvider();
+
+        var options = provider.GetRequiredService<IOptions<CuriosusDataProtectionOptions>>().Value;
+        options.ApplicationName.Should().Be("app");
+        options.KeyRingPath.Should().Be(_keyRing);
     }
 
     public void Dispose()

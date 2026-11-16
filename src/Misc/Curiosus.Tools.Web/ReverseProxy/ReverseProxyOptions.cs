@@ -12,6 +12,9 @@ namespace Curiosus.Tools.Web.ReverseProxy
     /// </remarks>
     public class ReverseProxyOptions
     {
+        /// <summary>Default configuration section of the options.</summary>
+        public const string SectionName = "ReverseProxy";
+
         /// <summary>
         /// Path base under which the proxy publishes the app, starting with <c>/</c>, for example <c>/api</c>;
         /// not set when the app is published at the root.

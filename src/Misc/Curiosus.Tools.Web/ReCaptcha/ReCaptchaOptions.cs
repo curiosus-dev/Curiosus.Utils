@@ -7,6 +7,9 @@ namespace Curiosus.Tools.Web.ReCaptcha
     /// </summary>
     public class ReCaptchaOptions
     {
+        /// <summary>Default configuration section of the options.</summary>
+        public const string SectionName = "ReCaptcha";
+
         /// <summary>
         /// Absolute address of the reCAPTCHA verification API. Default: <c>https://www.google.com/recaptcha/api/siteverify</c>.
         /// </summary>

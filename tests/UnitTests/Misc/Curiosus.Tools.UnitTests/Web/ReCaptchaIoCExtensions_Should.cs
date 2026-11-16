@@ -1,6 +1,7 @@
 #nullable enable
 
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Curiosus.Tools.Web.ReCaptcha;
@@ -17,17 +18,23 @@ namespace Curiosus.Tools.UnitTests.Web
 {
     public class ReCaptchaIoCExtensions_Should
     {
+        private static ServiceCollection Services(params (string Key, string Value)[] values)
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(values.Select(v => new KeyValuePair<string, string?>(v.Key, v.Value)))
+                .Build();
+            var services = new ServiceCollection();
+            services.AddSingleton<IConfiguration>(configuration);
+            return services;
+        }
+
         [Fact]
         public async Task AddReCaptcha_VerifiesThroughNamedHttpClient()
         {
             // arrange
             var handler = new FakeHttpMessageHandler().Respond(HttpStatusCode.OK, "{\"success\":true}");
-            var services = new ServiceCollection();
-            services.AddReCaptcha(o =>
-            {
-                o.ReCaptchaClientKey = "client";
-                o.ReCaptchaServerKey = "server";
-            });
+            var services = Services(("ReCaptcha:ReCaptchaClientKey", "client"), ("ReCaptcha:ReCaptchaServerKey", "server"));
+            services.AddReCaptcha();
             services.AddHttpClient(ReCaptchaService.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => handler);
             await using var provider = services.BuildServiceProvider();
 
@@ -54,22 +61,16 @@ namespace Curiosus.Tools.UnitTests.Web
         }
 
         [Fact]
-        public void AddReCaptcha_BindsConfiguration()
+        public void AddReCaptcha_BindsTheDefaultSection()
         {
             // arrange
-            var configuration = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string?>
-                {
-                    ["ReCaptcha:ReCaptchaApiUrl"] = "https://recaptcha.example/verify",
-                    ["ReCaptcha:ReCaptchaClientKey"] = "client",
-                    ["ReCaptcha:ReCaptchaServerKey"] = "server",
-                })
-                .Build();
-            var services = new ServiceCollection();
-            services.AddSingleton<IConfiguration>(configuration);
+            var services = Services(
+                ("ReCaptcha:ReCaptchaApiUrl", "https://recaptcha.example/verify"),
+                ("ReCaptcha:ReCaptchaClientKey", "client"),
+                ("ReCaptcha:ReCaptchaServerKey", "server"));
 
             // act
-            services.AddReCaptcha().BindConfiguration("ReCaptcha");
+            services.AddReCaptcha();
             using var provider = services.BuildServiceProvider();
 
             // assert
@@ -80,11 +81,30 @@ namespace Curiosus.Tools.UnitTests.Web
         }
 
         [Fact]
+        public void AddReCaptcha_BindsACustomSection_ThenConfigureOverrides()
+        {
+            // arrange
+            var services = Services(
+                ("Web:Captcha:ReCaptchaClientKey", "client"),
+                ("Web:Captcha:ReCaptchaServerKey", "server"));
+
+            // act
+            services.AddReCaptcha("Web:Captcha", o => o.ReCaptchaServerKey = "from-code");
+            using var provider = services.BuildServiceProvider();
+
+            // assert
+            var options = provider.GetRequiredService<IOptions<ReCaptchaOptions>>().Value;
+            options.ReCaptchaClientKey.Should().Be("client");
+            options.ReCaptchaServerKey.Should().Be("from-code");
+        }
+
+        [Fact]
         public async Task InvalidOptions_FailTheStart()
         {
             // arrange
             var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { DisableDefaults = true });
-            builder.Services.AddReCaptcha(o => o.ReCaptchaClientKey = "client");
+            builder.Services.AddReCaptcha(configure: o => o.ReCaptchaClientKey = "client");
+            builder.Services.AddReCaptcha();
             using var host = builder.Build();
 
             // act
@@ -110,17 +130,14 @@ namespace Curiosus.Tools.UnitTests.Web
         public void InvalidValue_FailsValidation(string option, string value)
         {
             // arrange
-            var configuration = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string?>
-                {
-                    ["ReCaptcha:ReCaptchaClientKey"] = "client",
-                    ["ReCaptcha:ReCaptchaServerKey"] = "server-secret",
-                    ["ReCaptcha:" + option] = value,
-                })
-                .Build();
-            var services = new ServiceCollection();
-            services.AddSingleton<IConfiguration>(configuration);
-            services.AddReCaptcha().BindConfiguration("ReCaptcha");
+            var values = new Dictionary<string, string>
+            {
+                ["ReCaptcha:ReCaptchaClientKey"] = "client",
+                ["ReCaptcha:ReCaptchaServerKey"] = "server-secret",
+                ["ReCaptcha:" + option] = value,
+            };
+            var services = Services(values.Select(v => (v.Key, v.Value)).ToArray());
+            services.AddReCaptcha();
             using var provider = services.BuildServiceProvider();
 
             // act

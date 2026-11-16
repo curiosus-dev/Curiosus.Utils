@@ -11,22 +11,21 @@ namespace Curiosus.Tools.Web.ReCaptcha
     public static class IoCExtensions
     {
         /// <summary>
-        /// Registers <see cref="ReCaptchaService"/>, its <see cref="ReCaptchaOptions"/> validated when the host starts and
-        /// the <c>HttpClient</c> named <see cref="ReCaptchaService.HttpClientName"/>.
+        /// Registers <see cref="ReCaptchaService"/>, its <see cref="ReCaptchaOptions"/> bound from the configuration section
+        /// and validated when the host starts, and the <c>HttpClient</c> named <see cref="ReCaptchaService.HttpClientName"/>.
         /// </summary>
         /// <param name="services">Service collection.</param>
-        /// <param name="configure">Configures options in code; bind them from configuration with
-        /// <c>.BindConfiguration("ReCaptcha")</c> on the result.</param>
+        /// <param name="configSectionPath">Path of the configuration section, <see cref="ReCaptchaOptions.SectionName"/>
+        /// by default. A missing section binds nothing.</param>
+        /// <param name="configure">Configures options in code, after the section is bound. Only the first call binds its
+        /// section and registers validation; later calls add their <paramref name="configure"/> only.</param>
         /// <returns>Options builder, validated at start.</returns>
         public static OptionsBuilder<ReCaptchaOptions> AddReCaptcha(
             this IServiceCollection services,
+            string configSectionPath = ReCaptchaOptions.SectionName,
             Action<ReCaptchaOptions>? configure = null)
         {
-            ArgumentNullException.ThrowIfNull(services);
-
-            var builder = services.AddOptions<ReCaptchaOptions>();
-            if (configure != null) builder.Configure(configure);
-            builder.ValidateDataAnnotations().ValidateOnStart();
+            var builder = services.AddSectionOptions(configSectionPath, configure);
 
             services.AddHttpClient(ReCaptchaService.HttpClientName);
             services.TryAddSingleton<ReCaptchaService>();
