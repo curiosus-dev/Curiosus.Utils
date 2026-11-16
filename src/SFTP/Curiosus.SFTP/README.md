@@ -50,7 +50,7 @@ public class ReportUploader
 
 | Option | Description |
 | --- | --- |
-| `SshServer`, `SshPort`, `SshLogin` | Server, port and user name (server and login are required). |
+| `SshServer`, `SshPort`, `SshLogin` | Server, port (default `22`) and user name (server and login are required). |
 | `SshPassword` | Password authentication. |
 | `SshPrivateKeyPath`, `SshPrivateKeyPassphrase` | Private key authentication (used when no password is set). |
 | `RetryCount`, `RetryTimeoutSec` | Retries on socket and SSH errors (default 3 retries, 5 seconds apart). |
@@ -59,6 +59,9 @@ public class ReportUploader
 | `AllowAnyHostKey` | Skip the host key check: local development only. |
 
 Either `SshPassword` or `SshPrivateKeyPath` must be specified, and either `HostKeyFingerprintsSha256` or `AllowAnyHostKey`.
+The options are validated when the host starts: single properties by data annotations, these rules by
+`SftpClientOptionsValidator` (an `IValidateOptions<SftpClientOptions>`). `AddSftpServices` of
+[Curiosus.SFTP.SSH.NET](https://www.nuget.org/packages/Curiosus.SFTP.SSH.NET) registers both.
 
 ## See also
 

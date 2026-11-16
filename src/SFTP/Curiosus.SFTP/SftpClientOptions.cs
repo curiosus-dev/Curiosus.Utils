@@ -1,54 +1,60 @@
-using System;
 using System.Collections.Generic;
-using Curiosus.Configuration;
+using System.ComponentModel.DataAnnotations;
 
 namespace Curiosus.SFTP
 {
     /// <summary>
     /// Options for <see cref="ISftpClient"/>.
     /// </summary>
-    public class SftpClientOptions : ILoggableOptions, IValidatableOptions
+    /// <remarks>
+    /// Rules across properties (an authentication method, the host key) are checked by
+    /// <see cref="SftpClientOptionsValidator"/>.
+    /// </remarks>
+    public class SftpClientOptions
     {
-        private const string ShouldBeGreaterOrEqualZeroErrorMessage = "should be greater or equal to 0";
-
         /// <summary>
         /// SSH server.
         /// </summary>
+        [Required]
         public string SshServer { get; set; } = null!;
 
         /// <summary>
-        /// SSH port.
+        /// SSH port. Default: 22.
         /// </summary>
-        public int SshPort { get; set; }
+        [Range(1, 65535)]
+        public int SshPort { get; set; } = 22;
 
         /// <summary>
         /// SSH login.
         /// </summary>
+        [Required]
         public string SshLogin { get; set; } = null!;
 
         /// <summary>
-        /// SSH password.
+        /// SSH password. Either it or <see cref="SshPrivateKeyPath"/> is required; the password wins when both are set.
         /// </summary>
-        public string SshPassword { get; set; } = null!;
+        public string? SshPassword { get; set; }
 
         /// <summary>
         /// Absolute path to SSH key.
         /// </summary>
-        public string SshPrivateKeyPath { get; set; } = null!;
+        public string? SshPrivateKeyPath { get; set; }
 
         /// <summary>
         /// Passphrase for SSH key (non required).
         /// </summary>
-        public string SshPrivateKeyPassphrase { get; set; } = null!;
+        public string? SshPrivateKeyPassphrase { get; set; }
 
         /// <summary>
         /// Count of uploading retry.
         /// </summary>
+        [Range(0, int.MaxValue)]
         public int RetryCount { get; set; } = 3;
 
         /// <summary>
         /// Timeout between retries, sec.
         /// </summary>
+        [Range(0, int.MaxValue)]
         public int RetryTimeoutSec { get; set; } = 5;
 
         /// <summary>
@@ -68,37 +74,5 @@ namespace Curiosus.SFTP
         /// the server.
         /// </summary>
         public bool AllowAnyHostKey { get; set; }
-
-        /// <inheritdoc cref="IValidatableOptions" />
-        public virtual IReadOnlyCollection<ConfigurationValidationError> Validate(string? prefix = null)
-        {
-            var errors = new ConfigurationValidationErrorCollection(prefix);
-
-            errors.AddErrorIf(String.IsNullOrWhiteSpace(SshServer), nameof(SshServer), "can not be empty");
-            errors.AddErrorIf(String.IsNullOrWhiteSpace(SshLogin), nameof(SshLogin), "can not be empty");
-            errors.AddErrorIf(SshPort < 0, nameof(SshPort), ShouldBeGreaterOrEqualZeroErrorMessage);
-            errors.AddErrorIf(String.IsNullOrWhiteSpace(SshPassword) && String.IsNullOrWhiteSpace(SshPrivateKeyPath), "No auth method", $"specify {nameof(SshPassword)} or {nameof(SshPrivateKeyPath)}");
-            errors.AddErrorIf(RetryCount < 0, nameof(RetryCount), ShouldBeGreaterOrEqualZeroErrorMessage);
-            errors.AddErrorIf(RetryTimeoutSec < 0, nameof(RetryTimeoutSec), ShouldBeGreaterOrEqualZeroErrorMessage);
-
-            var fingerprints = HostKeyFingerprintsSha256 ?? [];
-            errors.AddErrorIf(
-                fingerprints.Count == 0 && !AllowAnyHostKey,
-                nameof(HostKeyFingerprintsSha256),
-                "specify the SHA-256 fingerprints of the server host key (ssh-keyscan -p <port> <host> | ssh-keygen -lf -)");
-            errors.AddErrorIf(
-                fingerprints.Count > 0 && AllowAnyHostKey,
-                nameof(AllowAnyHostKey),
-                $"can't be set together with {nameof(HostKeyFingerprintsSha256)}");
-            for (var i = 0; i < fingerprints.Count; i++)
-            {
-                errors.AddErrorIf(
-                    !SftpHostKeyFingerprint.IsValid(fingerprints[i]),
-                    $"{nameof(HostKeyFingerprintsSha256)}:{i}",
-                    "is not a SHA-256 fingerprint (base64 of 32 bytes, as printed by ssh-keygen -l)");
-            }
-
-            return errors;
-        }
     }
 }
