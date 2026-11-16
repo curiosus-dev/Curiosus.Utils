@@ -18,7 +18,7 @@ Configure `SftpClientOptions` (either `SshPassword` or `SshPrivateKeyPath` is re
 ```yaml
 Sftp:
   SshServer: sftp.example.com
-  SshPort: 22
+  SshPort: 22                       # the default
   SshLogin: user
   SshPrivateKeyPath: /secrets/id_rsa
   HostKeyFingerprintsSha256:        # required: ssh-keyscan -p <port> <host> | ssh-keygen -lf -
@@ -29,15 +29,12 @@ Sftp:
 ```
 
 ```csharp
-using Curiosus.SFTP;
 using Curiosus.SFTP.SSH.Net;
 using Curiosus.Tools.TempFiles;
 
-var sftpOptions = configuration.GetSection("Sftp").Get<SftpClientOptions>()!;
-
 // SftpClient needs ITempFileStreamFactory from Curiosus.Tools
 services.AddTempFileServices(new TempFileOptions());
-services.AddSftpServices(sftpOptions);
+services.AddSftpServices();   // binds the "Sftp" section
 ```
 
 ```csharp
@@ -49,11 +46,17 @@ await using var file = await client.DownloadFileFromServerAsync("/upload", "data
 ```
 
 `AddSftpServices` registers the options, `ISftpClientFactory` and an app initializer (`IAppInitializer`, executed
-by Curiosus.Hosting on start) that checks the connection when `CheckOnStart` is `true`.
+by Curiosus.Hosting on start) that checks the connection when `CheckOnStart` is `true`. It binds the
+options from the `Sftp` section (`SftpClientOptions.SectionName`; pass another path as the first argument), applies the
+optional `configure` delegate on top and returns the `OptionsBuilder<SftpClientOptions>`; a missing section binds
+nothing, so code-only configuration works. The
+options are validated when the host starts (data annotations and `SftpClientOptionsValidator`), so an invalid
+configuration fails with `OptionsValidationException` before the app runs. Every client takes the current options, so a
+reloaded configuration (a rotated password or host key) applies to the next `GetSftpClient()`.
 
 Notes:
 
-- `SshPort` has no default value, set it explicitly (usually `22`).
+- `SshPort` defaults to `22`.
 - The server host key must match one of `HostKeyFingerprintsSha256`, otherwise the connection fails with
   `SftpHostKeyVerificationException` (not retried). `AllowAnyHostKey: true` skips the check for local development.
 - If both a password and a private key are configured, password authentication is used.

@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Curiosus.SFTP.SSH.Net;
 using FluentAssertions;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace Curiosus.SFTP.UnitTests
@@ -26,20 +27,23 @@ namespace Curiosus.SFTP.UnitTests
             return options;
         }
 
+        private static ValidateOptionsResult Validate(SftpClientOptions options) =>
+            new SftpClientOptionsValidator().Validate(Microsoft.Extensions.Options.Options.DefaultName, options);
+
         [Fact]
         public void Validation_RequiresFingerprintsOrTheOptOut()
         {
-            Options(o => o.HostKeyFingerprintsSha256 = []).Validate()
-                .Should().ContainSingle(e => e.FieldName == nameof(SftpClientOptions.HostKeyFingerprintsSha256));
-            Options(o => { o.HostKeyFingerprintsSha256 = []; o.AllowAnyHostKey = true; }).Validate().Should().BeEmpty();
-            Options().Validate().Should().BeEmpty();
+            Validate(Options(o => o.HostKeyFingerprintsSha256 = [])).Failures
+                .Should().ContainSingle().Which.Should().StartWith($"Property {nameof(SftpClientOptions.HostKeyFingerprintsSha256)}:");
+            Validate(Options(o => { o.HostKeyFingerprintsSha256 = []; o.AllowAnyHostKey = true; })).Succeeded.Should().BeTrue();
+            Validate(Options()).Succeeded.Should().BeTrue();
         }
 
         [Fact]
         public void Validation_RejectsFingerprintsTogetherWithTheOptOut()
         {
-            Options(o => o.AllowAnyHostKey = true).Validate()
-                .Should().ContainSingle(e => e.FieldName == nameof(SftpClientOptions.AllowAnyHostKey));
+            Validate(Options(o => o.AllowAnyHostKey = true)).Failures
+                .Should().ContainSingle().Which.Should().StartWith($"Property {nameof(SftpClientOptions.AllowAnyHostKey)}:");
         }
 
         [Theory]
@@ -48,7 +52,7 @@ namespace Curiosus.SFTP.UnitTests
         [InlineData(" SHA256:" + Fingerprint + "= ")]
         public void Validation_AcceptsTheForms_OfSshKeygen(string fingerprint)
         {
-            Options(o => o.HostKeyFingerprintsSha256 = [fingerprint]).Validate().Should().BeEmpty();
+            Validate(Options(o => o.HostKeyFingerprintsSha256 = [fingerprint])).Succeeded.Should().BeTrue();
         }
 
         [Theory]
@@ -58,8 +62,8 @@ namespace Curiosus.SFTP.UnitTests
         [InlineData("AAAA")]   // 3 bytes
         public void Validation_RejectsMalformedFingerprints(string fingerprint)
         {
-            Options(o => o.HostKeyFingerprintsSha256 = [Fingerprint, fingerprint]).Validate()
-                .Should().ContainSingle(e => e.FieldName == "HostKeyFingerprintsSha256:1");
+            Validate(Options(o => o.HostKeyFingerprintsSha256 = [Fingerprint, fingerprint])).Failures
+                .Should().ContainSingle().Which.Should().StartWith("Property HostKeyFingerprintsSha256[1]:");
         }
 
         [Theory]

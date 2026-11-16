@@ -4,6 +4,7 @@
         <TargetFrameworks>$(CuriosusTargetFrameworks)</TargetFrameworks>
 
         <IsPackable>false</IsPackable>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>

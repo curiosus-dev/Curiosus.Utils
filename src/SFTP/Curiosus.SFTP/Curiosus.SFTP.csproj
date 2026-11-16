@@ -28,7 +28,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Configuration\Curiosus.Configuration\Curiosus.Configuration.csproj" />
+      <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
+    </ItemGroup>
+
+    <ItemGroup>
       <ProjectReference Include="..\..\Misc\Curiosus.Tools\Curiosus.Tools.csproj" />
     </ItemGroup>
     

@@ -12,11 +12,23 @@
 
 - `SftpClientOptions.HostKeyFingerprintsSha256`, `SftpClientOptions.AllowAnyHostKey`, `SftpHostKeyFingerprint` and
   `SftpHostKeyVerificationException`. ([#97](https://github.com/curiosus-dev/Curiosus.Utils/issues/97))
+- `SftpClientOptionsValidator`, an `IValidateOptions<SftpClientOptions>` with the rules across properties: a password or
+  a private key, and the host key fingerprints or `AllowAnyHostKey`; `SftpClientOptions.SectionName` (`"Sftp"`), the
+  default configuration section. ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
 
 ### Changed
 
 - **Breaking:** options validation fails without `HostKeyFingerprintsSha256` unless `AllowAnyHostKey` is set, with both,
   and with a malformed fingerprint. See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-sftp/3.0). ([#97](https://github.com/curiosus-dev/Curiosus.Utils/issues/97))
+- **Breaking:** `SftpClientOptions` moved to `Microsoft.Extensions.Options`: it no longer implements
+  `IValidatableOptions` and `ILoggableOptions`, so `Validate(prefix)` and `AssertValid()` are gone. Single properties
+  are checked by data annotations, the rest by `SftpClientOptionsValidator`, when the host starts. Register the options
+  with `AddSftpServices()` of `Curiosus.SFTP.SSH.NET`, which binds the `Sftp` section; to validate them yourself, run
+  `SftpClientOptionsValidator` and `Validator.TryValidateObject`. See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-sftp/3.0#options). ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+- **Breaking:** `SshPort` defaults to `22` and must be within 1–65535: the old default `0` passed validation and never
+  connected. `SshPassword`, `SshPrivateKeyPath` and `SshPrivateKeyPassphrase` are nullable. ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+- The package no longer references `Curiosus.Configuration` directly (it still comes through `Curiosus.Tools`) and
+  references `Microsoft.Extensions.Options.DataAnnotations`. ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
 
 ## [2.0.0] - 2026-09-27
 

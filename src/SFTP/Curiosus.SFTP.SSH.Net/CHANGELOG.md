@@ -14,6 +14,16 @@
 - **Breaking:** a host key that isn't configured fails every connection, including the start-up check, with
   `SftpHostKeyVerificationException`, which the retry policy does not retry; `AllowAnyHostKey` logs a warning on every
   connection. See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-sftp/3.0). ([#97](https://github.com/curiosus-dev/Curiosus.Utils/issues/97))
+- **Breaking:** `AddSftpServices(SftpClientOptions)` is replaced by
+  `AddSftpServices(string configSectionPath = "Sftp", Action<SftpClientOptions>? configure = null)`, which binds the
+  options from the configuration section (`SftpClientOptions.SectionName`), applies `configure` on top, returns
+  `OptionsBuilder<SftpClientOptions>` and validates the options (data annotations and `SftpClientOptionsValidator`) when
+  the host starts, not on the first resolve: replace the call with `services.AddSftpServices()`. A missing section binds
+  nothing, so code-only configuration works. `SftpClientOptions` is no longer registered as a singleton;
+  `SftpClientFactory` takes `IOptionsMonitor<SftpClientOptions>` (every new client takes the current options, so a
+  configuration reload applies to the next client) and `SftpInitializer` takes `IOptions<SftpClientOptions>`. A second
+  `AddSftpServices` call no longer adds a second start-up check. See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-sftp/3.0#options). ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
+- References `Microsoft.Extensions.Options.ConfigurationExtensions` and `Microsoft.Extensions.Options.DataAnnotations`. ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
 
 ## [2.1.0] - 2026-10-03
 

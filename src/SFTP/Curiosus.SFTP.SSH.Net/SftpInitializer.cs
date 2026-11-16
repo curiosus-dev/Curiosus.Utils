@@ -1,9 +1,9 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Curiosus.Configuration;
 using Curiosus.Tools.AppInitializer;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Curiosus.SFTP.SSH.Net
 {
@@ -16,15 +16,16 @@ namespace Curiosus.SFTP.SSH.Net
         private readonly ISftpClientFactory _sftpClientFactory;
         private readonly SftpClientOptions _sftpClientOptions;
         
+        /// <inheritdoc cref="SftpInitializer"/>
         public SftpInitializer(
-            ILogger<SftpInitializer> logger, 
-            ISftpClientFactory sftpClientFactory, 
-            SftpClientOptions sftpClientOptions)
+            ILogger<SftpInitializer> logger,
+            ISftpClientFactory sftpClientFactory,
+            IOptions<SftpClientOptions> sftpClientOptions)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _sftpClientFactory = sftpClientFactory ?? throw new ArgumentNullException(nameof(sftpClientFactory));
-            _sftpClientOptions = sftpClientOptions ?? throw new ArgumentNullException(nameof(sftpClientOptions));
-            _sftpClientOptions.AssertValid();
+            ArgumentNullException.ThrowIfNull(sftpClientOptions);
+            _sftpClientOptions = sftpClientOptions.Value;
         }
 
         /// <inheritdoc />
