@@ -50,6 +50,5 @@ public record SignUpRequest([property: ValidEmail] string Email); // DataAnnotat
 
 - [Migration guides](https://curiosus-dev.github.io/Curiosus.Utils/migrations) — upgrading from `Curiosity.*` 1.x and between major versions
 - [Curiosus.EMail.SMTP](https://www.nuget.org/packages/Curiosus.EMail.SMTP) — SMTP sender (MailKit)
-- [Curiosus.EMail.Mailgun](https://www.nuget.org/packages/Curiosus.EMail.Mailgun) — Mailgun sender
 - [Curiosus.EMail.UnisenderGo](https://www.nuget.org/packages/Curiosus.EMail.UnisenderGo) — Unisender Go sender
 - [Curiosus.Utils](https://github.com/curiosus-dev/Curiosus.Utils) — all packages
