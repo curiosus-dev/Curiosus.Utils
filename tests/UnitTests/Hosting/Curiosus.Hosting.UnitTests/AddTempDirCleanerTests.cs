@@ -1,3 +1,5 @@
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -25,7 +27,7 @@ namespace Curiosus.Hosting.UnitTests
             File.SetLastAccessTime(stale, DateTime.Now.AddHours(-2));
 
             var builder = CreateBuilder(("TempFiles:TempPath", dir.Path), ("TempFiles:FileTtlHours", "1"));
-            builder.Services.AddTempDirCleaner().BindConfiguration("TempFiles");
+            builder.Services.AddTempDirCleaner();
 
             using var host = builder.Build();
             await host.StartAsync();
@@ -50,7 +52,7 @@ namespace Curiosus.Hosting.UnitTests
         public async Task InvalidOptions_FailTheStart(string property, string value)
         {
             var builder = CreateBuilder(($"TempFiles:{property}", value));
-            builder.Services.AddTempDirCleaner().BindConfiguration("TempFiles");
+            builder.Services.AddTempDirCleaner();
 
             using var host = builder.Build();
             var act = () => host.StartAsync();
@@ -59,18 +61,50 @@ namespace Curiosus.Hosting.UnitTests
         }
 
         [Fact]
-        public void WithTempFileServices_SharesTheOptions_ValidatesOnce()
+        public void CustomSection_IsBound_AndConfigureOverridesIt()
         {
-            var services = new ServiceCollection();
-            services.AddLogging();
-            services.AddTempFileServices(o => o.FileTtlHours = 0);
-            services.AddTempDirCleaner();
+            using var provider = BuildProvider(
+                s => s.AddTempDirCleaner("App:Temp", o => o.FileTtlHours = 5),
+                ("App:Temp:TempPath", "/data/tmp"),
+                ("App:Temp:FileTtlHours", "48"));
 
-            using var provider = services.BuildServiceProvider();
+            var options = provider.GetRequiredService<IOptions<TempFileOptions>>().Value;
+            options.TempPath.Should().Be("/data/tmp");
+            options.FileTtlHours.Should().Be(5);
+        }
+
+        [Fact]
+        public void WithTempFileServices_SharesTheOptions_BindsAndValidatesOnce()
+        {
+            using var provider = BuildProvider(
+                s =>
+                {
+                    s.AddTempFileServices();
+                    s.AddTempDirCleaner();
+                    s.Count(d => d.ServiceType == typeof(IConfigureOptions<TempFileOptions>)).Should().Be(1);
+                },
+                ("TempFiles:FileTtlHours", "0"));
+
             var act = () => provider.GetRequiredService<IOptions<TempFileOptions>>().Value;
 
             act.Should().Throw<OptionsValidationException>().Which.Failures.Should().ContainSingle();
         }
+
+        private static ServiceProvider BuildProvider(
+            Action<IServiceCollection> register,
+            params (string Key, string Value)[] values)
+        {
+            var services = new ServiceCollection();
+            services.AddLogging();
+            services.AddSingleton<IConfiguration>(Configuration(values));
+            register(services);
+            return services.BuildServiceProvider();
+        }
+
+        private static IConfigurationRoot Configuration(params (string Key, string Value)[] values) =>
+            new ConfigurationBuilder()
+                .AddInMemoryCollection(values.Select(x => new KeyValuePair<string, string?>(x.Key, x.Value)))
+                .Build();
 
         private static HostApplicationBuilder CreateBuilder(params (string Key, string Value)[] values)
         {

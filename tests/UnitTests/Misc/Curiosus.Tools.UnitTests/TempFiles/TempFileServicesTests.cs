@@ -1,3 +1,5 @@
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -19,10 +21,10 @@ public sealed class TempFileServicesTests : IDisposable
     private readonly string _tempPath = Path.Combine(Path.GetTempPath(), "curiosus-tools-" + Guid.NewGuid().ToString("N"));
 
     [Fact]
-    public async Task AddTempFileServices_BindsOptions_AndCreatesStreamsInTheTempDirectory()
+    public async Task AddTempFileServices_BindsTheDefaultSection_AndCreatesStreamsInTheTempDirectory()
     {
         var builder = CreateBuilder(("TempFiles:TempPath", _tempPath));
-        builder.Services.AddTempFileServices().BindConfiguration("TempFiles");
+        builder.Services.AddTempFileServices();
 
         using var host = builder.Build();
         await host.StartAsync();
@@ -37,6 +39,38 @@ public sealed class TempFileServicesTests : IDisposable
         await host.StopAsync();
     }
 
+    [Fact]
+    public void CustomSection_IsBound()
+    {
+        using var provider = BuildProvider(
+            s => s.AddTempFileServices("App:Temp"),
+            ("App:Temp:TempPath", _tempPath),
+            ("TempFiles:TempPath", "other"));
+
+        provider.GetRequiredService<IOptions<TempFileOptions>>().Value.TempPath.Should().Be(_tempPath);
+    }
+
+    [Fact]
+    public void Configure_OverridesTheBoundValue()
+    {
+        using var provider = BuildProvider(
+            s => s.AddTempFileServices(configure: o => o.FileTtlHours = 5),
+            ("TempFiles:TempPath", _tempPath),
+            ("TempFiles:FileTtlHours", "48"));
+
+        var options = provider.GetRequiredService<IOptions<TempFileOptions>>().Value;
+        options.TempPath.Should().Be(_tempPath);
+        options.FileTtlHours.Should().Be(5);
+    }
+
+    [Fact]
+    public void MissingSection_KeepsTheDefaults()
+    {
+        using var provider = BuildProvider(s => s.AddTempFileServices());
+
+        provider.GetRequiredService<IOptions<TempFileOptions>>().Value.TempPath.Should().Be("./.tmp");
+    }
+
     [Theory]
     [InlineData("TempPath", " ")]
     [InlineData("CleaningFrequencyHours", "0")]
@@ -44,7 +78,7 @@ public sealed class TempFileServicesTests : IDisposable
     public async Task InvalidOptions_FailTheStart(string property, string value)
     {
         var builder = CreateBuilder(($"TempFiles:{property}", value));
-        builder.Services.AddTempFileServices().BindConfiguration("TempFiles");
+        builder.Services.AddTempFileServices();
 
         using var host = builder.Build();
         var act = () => host.StartAsync();
@@ -53,30 +87,55 @@ public sealed class TempFileServicesTests : IDisposable
     }
 
     [Fact]
-    public void SeveralRegistrations_ValidateOnce_AndAddOneInitializer()
+    public void SeveralRegistrations_BindAndValidateOnce_AndAddOneInitializer()
     {
         var services = new ServiceCollection();
-        services.AddTempFileServices(o => o.FileTtlHours = 0);
+        services.AddTempFileServices();
         services.AddTempFileServices();
         services.AddTempFileOptions();
 
+        services.Count(d => d.ServiceType == typeof(IConfigureOptions<TempFileOptions>)).Should().Be(1);
+        services.Count(d => d.ServiceType == typeof(IValidateOptions<TempFileOptions>)).Should().Be(1);
+        services.Count(d => d.ServiceType == typeof(IAppInitializer)).Should().Be(1);
+
+        services.AddSingleton<IConfiguration>(Configuration(("TempFiles:FileTtlHours", "0")));
         using var provider = services.BuildServiceProvider();
         var act = () => provider.GetRequiredService<IOptions<TempFileOptions>>().Value;
 
         act.Should().Throw<OptionsValidationException>().Which.Failures.Should().ContainSingle();
-        services.Count(d => d.ServiceType == typeof(IAppInitializer)).Should().Be(1);
     }
 
     [Fact]
-    public void Configure_IsApplied()
+    public void SecondRegistration_AddsOnlyItsConfigure()
+    {
+        using var provider = BuildProvider(
+            s =>
+            {
+                s.AddTempFileServices();
+                s.AddTempFileOptions("Other", o => o.FileTtlHours = 5);
+            },
+            ("TempFiles:TempPath", _tempPath),
+            ("Other:TempPath", "ignored"));
+
+        var options = provider.GetRequiredService<IOptions<TempFileOptions>>().Value;
+        options.TempPath.Should().Be(_tempPath);
+        options.FileTtlHours.Should().Be(5);
+    }
+
+    private static ServiceProvider BuildProvider(
+        Action<IServiceCollection> register,
+        params (string Key, string Value)[] values)
     {
         var services = new ServiceCollection();
-        services.AddTempFileServices(o => o.TempPath = _tempPath);
-
-        using var provider = services.BuildServiceProvider();
-
-        provider.GetRequiredService<IOptions<TempFileOptions>>().Value.TempPath.Should().Be(_tempPath);
+        services.AddSingleton<IConfiguration>(Configuration(values));
+        register(services);
+        return services.BuildServiceProvider();
     }
+
+    private static IConfigurationRoot Configuration(params (string Key, string Value)[] values) =>
+        new ConfigurationBuilder()
+            .AddInMemoryCollection(values.Select(x => new KeyValuePair<string, string?>(x.Key, x.Value)))
+            .Build();
 
     private static HostApplicationBuilder CreateBuilder(params (string Key, string Value)[] values)
     {

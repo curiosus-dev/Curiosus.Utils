@@ -12,21 +12,23 @@ namespace Curiosus.Tools.HttpRequestTimeoutCalculator
     {
         /// <summary>
         /// Adds to IoC <see cref="IHttpRequestParamsCalculator"/> with <see cref="HttpRequestParamsCalculatorOptions"/>
-        /// validated at start.
+        /// bound from the configuration section and validated at start.
         /// </summary>
+        /// <remarks>
+        /// Only the first call binds its <paramref name="configSectionPath"/> and registers the validation, so errors
+        /// are reported once; later calls only add their <paramref name="configure"/> and their section path is ignored.
+        /// </remarks>
         /// <param name="services">Service collection.</param>
-        /// <param name="configure">Configures options in code; bind them from configuration with
-        /// <c>.BindConfiguration("HttpRequestParams")</c> on the result.</param>
+        /// <param name="configSectionPath">Configuration section of the options; a missing section leaves the
+        /// defaults.</param>
+        /// <param name="configure">Configures options in code, after the section is bound.</param>
         /// <returns>Options builder of <see cref="HttpRequestParamsCalculatorOptions"/>.</returns>
         public static OptionsBuilder<HttpRequestParamsCalculatorOptions> AddHttpRequestTimesCalculator(
             this IServiceCollection services,
+            string configSectionPath = HttpRequestParamsCalculatorOptions.SectionName,
             Action<HttpRequestParamsCalculatorOptions>? configure = null)
         {
-            ArgumentNullException.ThrowIfNull(services);
-
-            var builder = services.AddOptions<HttpRequestParamsCalculatorOptions>();
-            if (configure != null) builder.Configure(configure);
-            builder.ValidateDataAnnotations().ValidateOnStart();
+            var builder = services.AddBoundOptions(configSectionPath, configure);
 
             services.TryAddSingleton<IHttpRequestParamsCalculator, HttpRequestParamsCalculator>();
 

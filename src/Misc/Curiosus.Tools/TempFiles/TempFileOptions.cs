@@ -7,6 +7,9 @@ namespace Curiosus.Tools.TempFiles
     /// </summary>
     public class TempFileOptions
     {
+        /// <summary>Default configuration section of the options.</summary>
+        public const string SectionName = "TempFiles";
+
         /// <summary>
         /// Full path to temp directory.
         /// </summary>

@@ -16,11 +16,15 @@ namespace Curiosus.Archiver.SharpZip
         /// (<see cref="Curiosus.Tools.TempFiles.IoCExtensions.AddTempFileServices"/>).
         /// </summary>
         /// <param name="services">Service collection.</param>
-        /// <param name="configure">Configures temp file options in code; bind them from configuration with
-        /// <c>.BindConfiguration("TempFiles")</c> on the result.</param>
+        /// <param name="configSectionPath">Configuration section of the temp file options; a missing section leaves the
+        /// defaults. Only the first temp file registration of the app (this one, <c>AddTempFileServices</c>,
+        /// <c>AddTempDirCleaner</c>) binds its section and registers the validation; later ones only add their
+        /// <paramref name="configure"/>.</param>
+        /// <param name="configure">Configures temp file options in code, after the section is bound.</param>
         /// <returns>Options builder of <see cref="TempFileOptions"/>, validated at start.</returns>
         public static OptionsBuilder<TempFileOptions> AddSharpZipArchiver(
             this IServiceCollection services,
+            string configSectionPath = TempFileOptions.SectionName,
             Action<TempFileOptions>? configure = null)
         {
             ArgumentNullException.ThrowIfNull(services);
@@ -28,7 +32,7 @@ namespace Curiosus.Archiver.SharpZip
             services.TryAddSingleton<IArchiver, SharpZipArchiver>();
 
             // requires temp file subsystem
-            return services.AddTempFileServices(configure);
+            return services.AddTempFileServices(configSectionPath, configure);
         }
     }
 }

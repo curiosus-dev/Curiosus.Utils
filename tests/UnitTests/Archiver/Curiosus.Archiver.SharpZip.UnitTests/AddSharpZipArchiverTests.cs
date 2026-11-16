@@ -28,7 +28,7 @@ public sealed class AddSharpZipArchiverTests : IDisposable
         await File.WriteAllTextAsync(Path.Combine(source, "a.txt"), "hello");
 
         var builder = CreateBuilder(("TempFiles:TempPath", tempPath));
-        builder.Services.AddSharpZipArchiver().BindConfiguration("TempFiles");
+        builder.Services.AddSharpZipArchiver();
         using var host = builder.Build();
         await host.StartAsync();
 
@@ -49,7 +49,7 @@ public sealed class AddSharpZipArchiverTests : IDisposable
     public async Task InvalidOptions_FailTheStart(string property, string value)
     {
         var builder = CreateBuilder(($"TempFiles:{property}", value));
-        builder.Services.AddSharpZipArchiver().BindConfiguration("TempFiles");
+        builder.Services.AddSharpZipArchiver();
 
         using var host = builder.Build();
         var act = () => host.StartAsync();
@@ -58,14 +58,39 @@ public sealed class AddSharpZipArchiverTests : IDisposable
     }
 
     [Fact]
-    public void Configure_IsApplied()
+    public void WithTempFileServices_ReportsErrorsOnce()
     {
         var services = new ServiceCollection();
-        services.AddSharpZipArchiver(o => o.TempPath = _root);
+        services.AddSingleton<IConfiguration>(new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["TempFiles:FileTtlHours"] = "0" })
+            .Build());
+        services.AddSharpZipArchiver();
+        services.AddTempFileServices();
 
         using var provider = services.BuildServiceProvider();
+        var act = () => provider.GetRequiredService<IOptions<TempFileOptions>>().Value;
 
-        provider.GetRequiredService<IOptions<TempFileOptions>>().Value.TempPath.Should().Be(_root);
+        act.Should().Throw<OptionsValidationException>().Which.Failures.Should().ContainSingle();
+    }
+
+    [Fact]
+    public void CustomSection_IsBound_AndConfigureOverridesIt()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Zip:Temp:TempPath"] = "/data/zip",
+                ["Zip:Temp:FileTtlHours"] = "48"
+            })
+            .Build());
+        services.AddSharpZipArchiver("Zip:Temp", o => o.FileTtlHours = 5);
+
+        using var provider = services.BuildServiceProvider();
+        var options = provider.GetRequiredService<IOptions<TempFileOptions>>().Value;
+
+        options.TempPath.Should().Be("/data/zip");
+        options.FileTtlHours.Should().Be(5);
     }
 
     private static HostApplicationBuilder CreateBuilder(params (string Key, string Value)[] values)

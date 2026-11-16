@@ -17,7 +17,7 @@ dotnet add package Curiosus.Archiver.SharpZip
 `AddSharpZipArchiver` registers `SharpZipArchiver` as a singleton `IArchiver` and also registers
 the temp file services from [Curiosus.Tools](https://www.nuget.org/packages/Curiosus.Tools)
 (`TempFileOptions`, `ITempFileStreamFactory` and an app initializer that creates the temp directory).
-It returns the options builder of `TempFileOptions`: bind it to a section, the options are validated when the host
+`TempFileOptions` are bound from the `TempFiles` section (defaults when it is missing) and validated when the host
 starts.
 
 ```yaml
@@ -32,7 +32,7 @@ using Curiosus.Archiver;
 using Curiosus.Archiver.SharpZip;
 using Curiosus.Tools.TempFiles;
 
-builder.Services.AddSharpZipArchiver().BindConfiguration("TempFiles");
+builder.Services.AddSharpZipArchiver();
 
 // later, in a service
 public class LogsArchiver(IArchiver archiver)
@@ -42,7 +42,7 @@ public class LogsArchiver(IArchiver archiver)
 }
 ```
 
-The section name (`TempFiles` above) is up to you. Pass `useZip64: false` if the archive must be opened
+Another section: `AddSharpZipArchiver("App:TempFiles")`; values in code: `AddSharpZipArchiver(configure: o => ...)`. Pass `useZip64: false` if the archive must be opened
 by old software (Windows XP, Android before 6.0).
 
 ## See also

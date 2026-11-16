@@ -56,10 +56,11 @@
   `${configsetting}` instead. Relative `Log` paths
   resolve against the content root. See the [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting/4.0#logging-curiosusnlogconfigurator--addcuriosusnlog).
   ([#43](https://github.com/curiosus-dev/Curiosus.Utils/issues/43))
-- **Breaking:** `AddTempDirCleaner` takes an optional `Action<TempFileOptions>` instead of a `TempFileOptions` instance
-  and returns `OptionsBuilder<TempFileOptions>`, validated when the host starts and shared with `AddTempFileServices` of
-  `Curiosus.Tools`; `TempDirCleaner` takes `IOptions<TempFileOptions>`. Migrate with
-  `services.AddTempDirCleaner().BindConfiguration("TempFiles")`, see the
+- **Breaking:** `AddTempDirCleaner` takes an optional section path (default `TempFiles`) and an optional
+  `Action<TempFileOptions>` instead of a `TempFileOptions` instance: it binds the section, validates on start and
+  returns `OptionsBuilder<TempFileOptions>`, shared with `AddTempFileServices` of `Curiosus.Tools` (only the first of
+  these calls binds and registers validation). `TempDirCleaner` takes `IOptions<TempFileOptions>`. Migrate with
+  `services.AddTempDirCleaner()`, see the
   [migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-hosting/4.0#options-of-addtempdircleaner)
   and the [Curiosus.Tools 3.0 migration notes](https://curiosus-dev.github.io/Curiosus.Utils/migrations/curiosus-tools/3.0#options).
   ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))

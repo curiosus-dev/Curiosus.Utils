@@ -19,8 +19,7 @@ using Curiosus.Tools.AppInitializer;
 using Curiosus.Tools.TempFiles;
 
 // startup: DI registrations
-services.AddTempFileServices()                            // ITempFileStreamFactory, ./.tmp by default
-    .BindConfiguration("TempFiles");                      // TempFileOptions, validated on start
+services.AddTempFileServices();   // ITempFileStreamFactory; TempFileOptions from "TempFiles", ./.tmp by default
 services.AddAppInitializer<WarmUpCacheInitializer>();     // IAppInitializer, run on start by Curiosus.Hosting
 
 // unique 64-bit ids based on time; generatorId must differ between running processes
@@ -51,7 +50,7 @@ Main areas:
 - **Collections and threading** — `CircularBuffer`, list/dictionary/hash set extensions, `DynamicSemaphoreSlim`.
 - **Diagnostics** — `PerformanceMeasurer.Measure` (register with `AddCuriosusPerformanceMeasurer()`).
 - **IO and HTTP** — temp file streams, stream extensions, `IHttpRequestParamsCalculator` for size-based timeouts
-  (`services.AddHttpRequestTimesCalculator().BindConfiguration("HttpRequestParams")`).
+  (`services.AddHttpRequestTimesCalculator()`, options from the `HttpRequestParams` section).
 
 See the [sample app](https://github.com/curiosus-dev/Curiosus.Utils/tree/main/samples/Curiosus.Tools.Sample)
 for phone, transliteration and sensitive data examples.

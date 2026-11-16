@@ -7,6 +7,9 @@ namespace Curiosus.Tools
     /// </summary>
     public class CultureOptions
     {
+        /// <summary>Default configuration section of the options.</summary>
+        public const string SectionName = "Culture";
+
         /// <summary>
         /// Default culture for application.
         /// </summary>

@@ -7,6 +7,9 @@ namespace Curiosus.Tools.HttpRequestTimeoutCalculator
     /// </summary>
     public class HttpRequestParamsCalculatorOptions
     {
+        /// <summary>Default configuration section of the options.</summary>
+        public const string SectionName = "HttpRequestParams";
+
         /// <summary>
         /// Data rate in MegaByte per second. Must be greater than 0.
         /// </summary>
