@@ -8,6 +8,9 @@ namespace Curiosus.DateTime.DbSync;
 /// </summary>
 public class DbSyncTimeOptions
 {
+    /// <summary>Default configuration section of the options.</summary>
+    public const string SectionName = "DbTimeSync";
+
     /// <summary>
     /// Period of resyncs after the first successful one. Default: 30 minutes.
     /// </summary>

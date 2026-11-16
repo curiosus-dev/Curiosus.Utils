@@ -55,7 +55,7 @@ start without it.
 
 ```csharp
 services.AddOptions<DbOptions>()
-    .BindConfiguration("Db")
+    .BindConfiguration(DbOptions.SectionName)    // "Db"
     .ValidateDataAnnotations()
     .ValidateOnStart();
 

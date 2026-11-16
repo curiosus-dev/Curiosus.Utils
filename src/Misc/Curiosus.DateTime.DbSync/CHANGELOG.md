@@ -9,8 +9,10 @@
   - `DbSyncTimeProvider : TimeProvider` replaces `DbSyncDateTimeService : IDateTimeService`: `GetUtcNow()` is the local
     time plus the offset "database − local"; timers and `GetTimestamp()` stay on the local monotonic clock. It is sealed:
     extend it by composition.
-  - `AddCuriosusDbSyncTimeProvider()` replaces `AddDbSyncDateTimeServices(<T>)`: options are bound with
-    `BindConfiguration` and validated at start; the provider becomes the app-wide `TimeProvider`.
+  - `AddCuriosusDbSyncTimeProvider(configSectionPath = "DbTimeSync", configure, dataSourceKey)` replaces
+    `AddDbSyncDateTimeServices(<T>)`: it binds `DbSyncTimeOptions` from the section
+    (`DbSyncTimeOptions.SectionName`), applies `configure` after it and validates at start; the provider becomes the
+    app-wide `TimeProvider`. ([#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
   - The database time is read by `IDbClock`, by default `PostgresDbClock` over the `DbDataSource` registered in DI
     (`dataSourceKey` for a keyed one), instead of `ICuriosusDataContextFactory`. The package no longer references
     `Curiosus.DAL` and `Curiosus.Tools`.

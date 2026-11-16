@@ -16,12 +16,15 @@
 - `AddCuriosusConfiguration(path, optional)`: `config[.secret].yml`, `config.{Environment}[.secret].yml` and, outside
   `Production`, `config.{Environment}.{UserName}[.secret].yml`, with environment variables and command line arguments
   kept on top; `-c` takes a directory or a single file. ([#41](https://github.com/curiosus-dev/Curiosus.Utils/issues/41))
-- `AddCuriosusNLog` for `IHostApplicationBuilder` and `CuriosusNLogOptions` (the `Log` section): loads NLog.config
-  relative to the content root, sets the `outputdir` (absolute path) and `appname` variables, makes `${configsetting}`
+- `AddCuriosusNLog(configSectionPath = "Log", configure, configureNLogExtensions)` for `IHostApplicationBuilder` and
+  `CuriosusNLogOptions` (the `Log` section, `CuriosusNLogOptions.SectionName`): binds the section, applies `configure`
+  after it and validates the options, loads NLog.config relative to the content root, sets the `outputdir` (absolute
+  path) and `appname` variables, makes `${configsetting}`
   read the app configuration and replaces the logging providers with NLog; `configureNLogExtensions` registers more
   NLog extensions. Variables that NLog.config doesn't declare are not an error. The
-  app calls it itself, so it can drop NLog later without touching the rest of its setup.
-  ([#43](https://github.com/curiosus-dev/Curiosus.Utils/issues/43))
+  app calls it itself, so it can drop NLog later without touching the rest of its setup. Only the first call sets
+  NLog up; a later call adds its `configure` to the options only.
+  ([#43](https://github.com/curiosus-dev/Curiosus.Utils/issues/43), [#44](https://github.com/curiosus-dev/Curiosus.Utils/issues/44))
 
 ### Changed
 
