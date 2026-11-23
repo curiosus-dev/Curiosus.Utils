@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- `RabbitMQEventReceiverOptions.UseTls`: the receiver connects over TLS and validates the server certificate for
+  `HostName`; set `Port` to the TLS listener, 5671 by default ([#162](https://github.com/curiosus-dev/Curiosus.Utils/issues/162)).
+
 ### Changed
 
 - **Breaking:** the options are validated with data annotations of `Microsoft.Extensions.Options` when the host starts

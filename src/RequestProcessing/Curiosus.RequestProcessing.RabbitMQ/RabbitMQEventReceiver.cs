@@ -1,4 +1,5 @@
 using System;
+using System.Net.Security;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -134,17 +135,7 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver, IAsyncDi
     /// </summary>
     private async Task ConnectAsync(CancellationToken cancellationToken)
     {
-        var factory = new ConnectionFactory
-        {
-            HostName = _eventReceiverOptions.HostName,
-            AutomaticRecoveryEnabled = true,
-            NetworkRecoveryInterval = NetworkRecoveryPeriod,
-            TopologyRecoveryEnabled = true,
-            UserName = _eventReceiverOptions.UserName,
-            Password = _eventReceiverOptions.Password,
-            Port = _eventReceiverOptions.Port,
-            ClientProvidedName = $"{_eventReceiverOptions.ClientName}_event_receiver"
-        };
+        var factory = CreateConnectionFactory(_eventReceiverOptions);
 
         _connection = await factory.CreateConnectionAsync(cancellationToken);
         _connection.ConnectionShutdownAsync += HandleOnDisconnectedAsync;
@@ -152,10 +143,40 @@ public class RabbitMQEventReceiver : BackgroundService, IEventReceiver, IAsyncDi
         await InitChannelAsync(_connection, cancellationToken);
 
         _logger.LogInformation(
-            "Connected to RabbitMQ (host \"{RabbitHostName}\", queue = \"{QueueName}\", QoS = {QoS})",
+            "Connected to RabbitMQ (host \"{RabbitHostName}\", port {RabbitPort}, TLS {UseTls}, " +
+            "queue = \"{QueueName}\", QoS = {QoS})",
             _eventReceiverOptions.HostName,
+            _eventReceiverOptions.Port,
+            _eventReceiverOptions.UseTls,
             _eventReceiverOptions.QueueName,
             _qos);
+    }
+
+    /// <summary>
+    /// Creates the factory of the receiver's connection from its options.
+    /// </summary>
+    internal static ConnectionFactory CreateConnectionFactory(RabbitMQEventReceiverOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        return new ConnectionFactory
+        {
+            HostName = options.HostName,
+            AutomaticRecoveryEnabled = true,
+            NetworkRecoveryInterval = NetworkRecoveryPeriod,
+            TopologyRecoveryEnabled = true,
+            UserName = options.UserName,
+            Password = options.Password,
+            Port = options.Port,
+            ClientProvidedName = $"{options.ClientName}_event_receiver",
+            Ssl = new SslOption
+            {
+                Enabled = options.UseTls,
+                ServerName = options.HostName,
+                // any certificate error fails the connection: a certificate of another host, untrusted or expired
+                AcceptablePolicyErrors = SslPolicyErrors.None
+            }
+        };
     }
 
     private Task HandleOnDisconnectedAsync(object? sender, ShutdownEventArgs e)

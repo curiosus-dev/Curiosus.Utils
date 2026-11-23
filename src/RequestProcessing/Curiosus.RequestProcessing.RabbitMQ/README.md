@@ -29,7 +29,8 @@ RequestProcessor:
   WorkersCount: 4
   RabbitMQEventReceiver:
     HostName: localhost    # default localhost
-    Port: 5672             # default 5672
+    Port: 5672             # default 5672; 5671 for TLS
+    UseTls: false          # default false, see TLS below
     UserName: guest        # required
     Password: guest        # required
     ClientName: my-app     # connection name prefix, machine name by default
@@ -89,6 +90,20 @@ and rejections made before it and closes the connection; `DisposeAsync` stops th
 
 A complete consumer and producer is in
 [samples/RequestProcessing/RabbitMQ](https://github.com/curiosus-dev/Curiosus.Utils/tree/main/samples/RequestProcessing/RabbitMQ).
+
+## TLS
+
+With `UseTls: true` the receiver connects over TLS and fails to connect when the server certificate is not trusted by
+the machine, has expired or is issued for another host than `HostName`: connect by the name in the certificate, not by
+an IP address. Set `Port` to the TLS listener of the broker (5671 by default), it is not changed automatically.
+Client certificates are not supported.
+
+```yaml
+  RabbitMQEventReceiver:
+    HostName: rabbit.example.com
+    Port: 5671
+    UseTls: true
+```
 
 ## See also
 
