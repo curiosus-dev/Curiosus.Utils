@@ -33,6 +33,16 @@ public class RabbitMQEventReceiverOptions
     public int Port { get; set; } = 5672;
 
     /// <summary>
+    /// Whether to connect over TLS. Default: <c>false</c>.
+    /// </summary>
+    /// <remarks>
+    /// The server certificate must be trusted by the machine and valid for <see cref="HostName"/>: connect by the name
+    /// in the certificate, not by an IP address. Set <see cref="Port"/> to the TLS listener of the broker, 5671 by
+    /// default; it is not changed automatically.
+    /// </remarks>
+    public bool UseTls { get; set; }
+
+    /// <summary>
     /// Name of the client, part of the connection name shown in RabbitMQ.
     /// </summary>
     [Required]
